@@ -20,7 +20,7 @@ export const productCategorySearchType = t.Object({
     ...paginationType,
     name: t.Optional(t.String()),
     parent_id: t.Optional(t.String()),
-    status: t.Optional(t.Number()),
+    status: t.Optional(t.String()),
 })
 
 // ** Types

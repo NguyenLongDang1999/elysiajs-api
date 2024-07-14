@@ -86,4 +86,23 @@ export class AuthService {
             handleDatabaseError(error)
         }
     }
+
+    async profile(userId: string) {
+        try {
+            return await db.query.adminsSchema.findFirst({
+                where: and(
+                    eq(adminsSchema.deleted_flg, false),
+                    eq(adminsSchema.id, userId),
+                ),
+                columns: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    image_uri: true
+                }
+            })
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
 }

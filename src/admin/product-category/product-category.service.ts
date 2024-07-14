@@ -6,6 +6,7 @@ import { productCategorySchema } from '@db/schema/product-category'
 import { IProductCategorySearchDTO, IProductCategoryDTO } from './product-category.type'
 
 // ** Drizzle Imports
+import { alias } from 'drizzle-orm/pg-core'
 import { and, count, desc, eq, ilike, isNull } from 'drizzle-orm'
 
 // ** Utils Imports
@@ -18,9 +19,6 @@ import { IDeleteDTO } from '@src/types/core.type'
 export class ProductCategoryService {
     async getTableList(query: IProductCategorySearchDTO) {
         try {
-            const limit = Number(query.page) || undefined
-            const offset = Number(query.pageSize) || undefined
-
             const where = [eq(productCategorySchema.deleted_flg, false)]
 
             if (query.name) {
@@ -35,20 +33,27 @@ export class ProductCategoryService {
                 where.push(eq(productCategorySchema.status, Number(query.status)))
             }
 
-            const data = await db.query.productCategorySchema.findMany({
-                limit,
-                offset,
-                orderBy: (productCategory, { desc }) => [desc(productCategory.created_at)],
-                where: (_productCategory, { and }) => and(...where),
-                columns: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                    status: true,
-                    image_uri: true,
-                    created_at: true,
-                },
-            })
+            const parentCategory = alias(productCategorySchema, 'parentCategory')
+
+            const data = await db
+                .select({
+                    id: productCategorySchema.id,
+                    name: productCategorySchema.name,
+                    status: productCategorySchema.status,
+                    image_uri: productCategorySchema.image_uri,
+                    created_at: productCategorySchema.created_at,
+                    parentCategory: {
+                        id: parentCategory.id,
+                        name: parentCategory.name,
+                        image_uri: parentCategory.image_uri
+                    }
+                })
+                .from(productCategorySchema)
+                .leftJoin(parentCategory, eq(parentCategory.id, productCategorySchema.parent_id))
+                .where(and(...where))
+                .orderBy(desc(productCategorySchema.created_at))
+                .limit(Number(query.pageSize))
+                .offset(Number(query.page))
 
             const aggregations = await db
                 .select({
@@ -58,7 +63,10 @@ export class ProductCategoryService {
                 .where(and(...where))
 
             return {
-                data,
+                data: data.map(_d => ({
+                    ..._d,
+                    product: []
+                })),
                 aggregations: aggregations[0].value,
             }
         } catch (error) {

@@ -19,47 +19,10 @@ export const authController = new Elysia({ prefix: '/auth' })
     .decorate({
         AuthService: new AuthService(),
     })
-    .use(jwtPlugin)
     .use(AuthModels)
-    .post(
-        'sign-in',
-        async ({ AuthService, body, jwt, cookie }) => {
-            const { id } = await AuthService.signIn(body)
 
-            const accessTokenJWT = await jwt.sign({
-                sub: id,
-                exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP),
-            })
-
-            cookie.accessTokenAdmin.set({
-                value: accessTokenJWT,
-                maxAge: Number(JWT.ACCESS_TOKEN_EXP),
-                secure: Bun.env.NODE_ENV === 'production',
-                httpOnly: Bun.env.NODE_ENV === 'production',
-                sameSite: Bun.env.NODE_ENV === 'production',
-            })
-
-            const refreshTokenJWT = await jwt.sign({
-                sub: id,
-                exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP),
-            })
-
-            cookie.refreshTokenAdmin.set({
-                value: refreshTokenJWT,
-                maxAge: Number(JWT.REFRESH_TOKEN_EXP),
-                secure: Bun.env.NODE_ENV === 'production',
-                httpOnly: Bun.env.NODE_ENV === 'production',
-                sameSite: Bun.env.NODE_ENV === 'production',
-            })
-
-            await AuthService.updateRefreshToken(id, refreshTokenJWT)
-
-            return new Response('Successfully!')
-        },
-        {
-            body: 'signIn',
-        },
-    )
+authController
+    .use(jwtPlugin)
     .get('refresh', async ({ AuthService, jwt, error, cookie }) => {
         if (!cookie.refreshTokenAdmin) throw error('Forbidden')
 
@@ -99,6 +62,8 @@ export const authController = new Elysia({ prefix: '/auth' })
 
         return new Response('Successfully!')
     })
+
+authController
     .use(authPlugin)
     .get('sign-out', async ({ AuthService, user, cookie }) => {
         cookie.accessTokenAdmin.remove()
@@ -107,3 +72,46 @@ export const authController = new Elysia({ prefix: '/auth' })
         await AuthService.signOut(user?.id!)
         return new Response('Successfully!')
     })
+    .get('profile', ({ AuthService, user }) => AuthService.profile(user?.id!))
+
+authController
+    .use(jwtPlugin)
+    .post(
+        'sign-in',
+        async ({ AuthService, body, jwt, cookie }) => {
+            const { id } = await AuthService.signIn(body)
+
+            const accessTokenJWT = await jwt.sign({
+                sub: id,
+                exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP),
+            })
+
+            cookie.accessTokenAdmin.set({
+                value: accessTokenJWT,
+                maxAge: Number(JWT.ACCESS_TOKEN_EXP),
+                secure: Bun.env.NODE_ENV === 'production',
+                httpOnly: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production',
+            })
+
+            const refreshTokenJWT = await jwt.sign({
+                sub: id,
+                exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP),
+            })
+
+            cookie.refreshTokenAdmin.set({
+                value: refreshTokenJWT,
+                maxAge: Number(JWT.REFRESH_TOKEN_EXP),
+                secure: Bun.env.NODE_ENV === 'production',
+                httpOnly: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production',
+            })
+
+            await AuthService.updateRefreshToken(id, refreshTokenJWT)
+
+            return new Response('Successfully!')
+        },
+        {
+            body: 'signIn',
+        },
+    )

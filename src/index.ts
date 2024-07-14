@@ -7,6 +7,14 @@ import { swagger } from '@elysiajs/swagger'
 import { admin } from './admin'
 
 const app = new Elysia({ prefix: '/api' })
+    .onTransform(({ query }) => {
+        if (query.page && query.pageSize) {
+            (query as any).page = parseInt(query.page);
+            (query as any).pageSize = parseInt(query.pageSize);
+    
+            (query as any).page = (((query as any).page - 1) * (query as any).pageSize) as number;
+        }
+    })
     .onAfterHandle(({ request, set }) => {
         if (request.method !== 'OPTIONS') return
 
