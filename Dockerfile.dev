@@ -1,0 +1,19 @@
+# #############################
+# # BUILD FOR LOCAL DEVELOPMENT
+# #############################
+
+FROM node:20.12.2 AS development
+
+RUN npm install -g bun
+
+WORKDIR /app
+
+COPY package.json bun.lockb ./
+
+RUN bun install
+
+COPY . .
+
+EXPOSE 3333
+
+CMD [ "bun", "dev" ]

@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+    app:
+        container_name: elysia-app
+        restart: unless-stopped
+        build:
+            context: .
+            target: development
+            dockerfile: ./Dockerfile.dev
+        ports:
+            - ${PORT}:${PORT}
+        depends_on:
+            - db
+            - redis
+        env_file:
+            - .env
+        volumes:
+            - ./src:/app/src
+            - /app/node_modules
+        networks:
+            - elysia_network
+
+    db:
+        image: postgres:16
+        container_name: elysia-db
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+        ports:
+            - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        networks:
+            - elysia_network
+
+    redis:
+        image: redis:6-alpine
+        container_name: redis-server
+        ports:  
+            - ${REDIS_PORT}:${REDIS_PORT}
+        networks:
+            - elysia_network
+
+volumes:
+    pgdata:
+    redisdata:
+
+networks:
+    elysia_network:
