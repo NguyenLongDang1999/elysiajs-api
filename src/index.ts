@@ -7,11 +7,21 @@ import { swagger } from '@elysiajs/swagger'
 import { admin } from './admin'
 
 const app = new Elysia({ prefix: '/api' })
+    .onAfterHandle(({ request, set }) => {
+        if (request.method !== 'OPTIONS') return
+
+        const allowHeader = set.headers['Access-Control-Allow-Headers']
+
+        if (allowHeader === '*') {
+            set.headers['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers') ?? ''
+        }
+    })
     .use(swagger())
     .use(
         cors({
             credentials: true,
             origin: [Bun.env.CMS_URL!, Bun.env.USER_URL!],
+            allowedHeaders: ['Content-Type', 'Authorization']
         }),
     )
     .use(admin)
