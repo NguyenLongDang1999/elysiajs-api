@@ -6,7 +6,7 @@ import { swagger } from '@elysiajs/swagger'
 // ** Router Imports
 import { admin } from './admin'
 
-const app = new Elysia({ prefix: '/api' })
+const app = new Elysia({ prefix: '/api', normalize: true })
     .onTransform(({ query }) => {
         if (query.page && query.pageSize) {
             (query as any).page = parseInt(query.page);
