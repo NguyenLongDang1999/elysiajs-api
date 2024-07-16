@@ -20,61 +20,6 @@ export const authController = new Elysia({ prefix: '/auth' })
         AuthService: new AuthService(),
     })
     .use(AuthModels)
-
-authController
-    .use(jwtPlugin)
-    .get('refresh', async ({ AuthService, jwt, error, cookie }) => {
-        if (!cookie.refreshTokenAdmin) throw error('Forbidden')
-
-        const jwtPayload = await jwt.verify(cookie.refreshTokenAdmin.value)
-
-        if (!jwtPayload) throw error('Unauthorized')
-
-        const response = await AuthService.refreshTokens(jwtPayload.sub!, cookie.refreshTokenAdmin.value)
-
-        const accessTokenJWT = await jwt.sign({
-            sub: response?.id!,
-            exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP),
-        })
-
-        cookie.accessTokenAdmin.set({
-            value: accessTokenJWT,
-            maxAge: Number(JWT.ACCESS_TOKEN_EXP),
-            secure: Bun.env.NODE_ENV === 'production',
-            httpOnly: Bun.env.NODE_ENV === 'production',
-            sameSite: Bun.env.NODE_ENV === 'production',
-        })
-
-        const refreshTokenJWT = await jwt.sign({
-            sub: response?.id!,
-            exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP),
-        })
-
-        cookie.refreshTokenAdmin.set({
-            value: refreshTokenJWT,
-            maxAge: Number(JWT.REFRESH_TOKEN_EXP),
-            secure: Bun.env.NODE_ENV === 'production',
-            httpOnly: Bun.env.NODE_ENV === 'production',
-            sameSite: Bun.env.NODE_ENV === 'production',
-        })
-
-        await AuthService.updateRefreshToken(response?.id!, refreshTokenJWT)
-
-        return new Response('Successfully!')
-    })
-
-authController
-    .use(authPlugin)
-    .get('sign-out', async ({ AuthService, user, cookie }) => {
-        cookie.accessTokenAdmin.remove()
-        cookie.refreshTokenAdmin.remove()
-
-        await AuthService.signOut(user?.id!)
-        return new Response('Successfully!')
-    })
-    .get('profile', ({ AuthService, user }) => AuthService.profile(user?.id!))
-
-authController
     .use(jwtPlugin)
     .post(
         'sign-in',
@@ -115,3 +60,51 @@ authController
             body: 'signIn',
         },
     )
+    .get('refresh', async ({ AuthService, jwt, error, cookie }) => {
+        if (!cookie.refreshTokenAdmin) throw error('Forbidden')
+
+        const jwtPayload = await jwt.verify(cookie.refreshTokenAdmin.value)
+
+        if (!jwtPayload) throw error('Unauthorized')
+
+        const response = await AuthService.refreshTokens(jwtPayload.sub!, cookie.refreshTokenAdmin.value)
+
+        const accessTokenJWT = await jwt.sign({
+            sub: response?.id!,
+            exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP),
+        })
+
+        cookie.accessTokenAdmin.set({
+            value: accessTokenJWT,
+            maxAge: Number(JWT.ACCESS_TOKEN_EXP),
+            secure: Bun.env.NODE_ENV === 'production',
+            httpOnly: Bun.env.NODE_ENV === 'production',
+            sameSite: Bun.env.NODE_ENV === 'production',
+        })
+
+        const refreshTokenJWT = await jwt.sign({
+            sub: response?.id!,
+            exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP),
+        })
+
+        cookie.refreshTokenAdmin.set({
+            value: refreshTokenJWT,
+            maxAge: Number(JWT.REFRESH_TOKEN_EXP),
+            secure: Bun.env.NODE_ENV === 'production',
+            httpOnly: Bun.env.NODE_ENV === 'production',
+            sameSite: Bun.env.NODE_ENV === 'production',
+        })
+
+        await AuthService.updateRefreshToken(response?.id!, refreshTokenJWT)
+
+        return new Response('Successfully!')
+    })
+    .use(authPlugin)
+    .get('sign-out', async ({ AuthService, user, cookie }) => {
+        cookie.accessTokenAdmin.remove()
+        cookie.refreshTokenAdmin.remove()
+
+        await AuthService.signOut(user?.id!)
+        return new Response('Successfully!')
+    })
+    .get('profile', ({ AuthService, user }) => AuthService.profile(user?.id!))

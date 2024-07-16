@@ -6,7 +6,8 @@
     "dev": "bun run --watch src/index.ts",
     "migrate": "bunx drizzle-kit generate && bun run ./src/database/drizzle/migrate.ts",
     "format": "prettier --write \"src/**/*.ts\"",
-    "lint": "eslint \"{src}/**/*.ts\" --fix"
+    "lint": "eslint \"{src}/**/*.ts\" --fix",
+    "drizzle:seed": "bun run ./src/database/drizzle/seed/system-settings.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.0.4",

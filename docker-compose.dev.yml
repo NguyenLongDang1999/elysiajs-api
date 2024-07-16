@@ -38,7 +38,7 @@ services:
 
     redis:
         image: redis:6-alpine
-        container_name: redis-server
+        container_name: elysia-redis
         ports:  
             - ${REDIS_PORT}:${REDIS_PORT}
         networks:
