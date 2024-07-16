@@ -39,7 +39,7 @@ export class FileManagerService {
 
         const pathName = this.buildPath(
             path,
-            createFileManagerDto.folder_name + (createFileManagerDto.is_folder ? '/' : ''),
+            createFileManagerDto.folder_name + (createFileManagerDto.is_folder ? '/' : '')
         )
         const url = `${await this.getBaseUrl()}${storageName?.value}/${pathName}`
 
@@ -57,17 +57,17 @@ export class FileManagerService {
 
     private async sendRequest(method: string, url: string, data?: any) {
         try {
-            const accessKey = await this.systemSettingBunnyCDN('access_key');
+            const accessKey = await this.systemSettingBunnyCDN('access_key')
             const response = await fetch(url, {
                 method,
                 body: data,
                 headers: {
-                    'Accept': '*/*',
+                    Accept: '*/*',
                     Accesskey: accessKey?.value as string
                 }
             })
 
-            return await response.json();
+            return await response.json()
         } catch (error) {
             handleDatabaseError(error)
         }
@@ -102,7 +102,10 @@ export class FileManagerService {
                         ilike(systemSettingsSchema.key, `secret_key_bunnycdn_${key}`)
                     )
                 )
-                .leftJoin(systemSettingOptionsSchema, eq(systemSettingOptionsSchema.system_setting_id, systemSettingsSchema.id))
+                .leftJoin(
+                    systemSettingOptionsSchema,
+                    eq(systemSettingOptionsSchema.system_setting_id, systemSettingsSchema.id)
+                )
 
             return systemSetting.find((_s) => _s.key.endsWith(key))
         } catch (error) {

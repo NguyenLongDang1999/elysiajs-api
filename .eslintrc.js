@@ -17,7 +17,14 @@ module.exports = {
   },
   ignorePatterns: ['.eslintrc.js'],
   rules: {
-    'prettier/prettier': 0,
+    'prettier/prettier': ['warn', {
+      'endOfLine': 'auto',
+      'singleQuote': true,
+      'semi': false,
+      'useTabs': false,
+      'tabWidth': 4,
+      'trailingComma': 'none'
+    }],
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
@@ -26,21 +33,29 @@ module.exports = {
     'comma-dangle': ['error', 'never'],
     'object-curly-spacing': ['error', 'always'],
     'comma-spacing': [
-        'error',
-        {
-            before: false,
-            after: true,
-        },
+      'error',
+      {
+        before: false,
+        after: true,
+      },
     ],
     'quotes': ['error', 'single'],
     'semi': ['error', 'never'],
-    "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": [
-      "warn",
-      { 
-        "argsIgnorePattern": "^_",
-        "varsIgnorePattern": "^_",
-        "caughtErrorsIgnorePattern": "^_"
+    'no-unused-vars': 'off',
+    'indent': ['error', 4, { 'SwitchCase': 1 }],
+    'comma-dangle': ['error', {
+      'arrays': 'never',
+      'objects': 'never',
+      'imports': 'never',
+      'exports': 'never',
+      'functions': 'never'
+    }],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {
+        'argsIgnorePattern': '^_',
+        'varsIgnorePattern': '^_',
+        'caughtErrorsIgnorePattern': '^_'
       },
     ]
   },

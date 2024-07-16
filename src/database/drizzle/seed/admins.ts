@@ -23,7 +23,7 @@ async function main() {
         email: 'longdang0412@gmail.com',
         phone: '0389747179',
         role: 10,
-        password: hashPassword,
+        password: hashPassword
     })
 
     console.log('Seed complete.')

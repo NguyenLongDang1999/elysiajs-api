@@ -12,10 +12,10 @@ import { authPlugin } from '../plugins/auth'
 
 export const fileManagerController = new Elysia({ prefix: '/file-manager' })
     .decorate({
-        FileManagerService: new FileManagerService(),
+        FileManagerService: new FileManagerService()
     })
     .use(authPlugin)
     .use(FileManagerModels)
     .get('/', ({ FileManagerService, query }) => FileManagerService.getTableList(query), {
-        query: 'fileManagerSearch',
+        query: 'fileManagerSearch'
     })

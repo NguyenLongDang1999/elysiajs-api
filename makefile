@@ -1,3 +1,6 @@
+studio:
+	bunx drizzle-kit studio
+
 migrate:
 	bun run migrate
 

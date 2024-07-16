@@ -1,7 +1,7 @@
 // ** Elysia Imports
-import { Elysia } from 'elysia'
 import { cors } from '@elysiajs/cors'
 import { swagger } from '@elysiajs/swagger'
+import { Elysia } from 'elysia'
 
 // ** Router Imports
 import { admin } from './admin'
@@ -9,10 +9,9 @@ import { admin } from './admin'
 const app = new Elysia({ prefix: '/api', normalize: true })
     .onTransform(({ query }) => {
         if (query.page && query.pageSize) {
-            (query as any).page = parseInt(query.page);
-            (query as any).pageSize = parseInt(query.pageSize);
-    
-            (query as any).page = (((query as any).page - 1) * (query as any).pageSize) as number;
+            ;(query as any).page = parseInt(query.page)
+            ;(query as any).pageSize = parseInt(query.pageSize)
+            ;(query as any).page = (((query as any).page - 1) * (query as any).pageSize) as number
         }
     })
     .onAfterHandle(({ request, set }) => {
@@ -30,7 +29,7 @@ const app = new Elysia({ prefix: '/api', normalize: true })
             credentials: true,
             origin: [Bun.env.CMS_URL!, Bun.env.USER_URL!],
             allowedHeaders: ['Content-Type', 'Authorization']
-        }),
+        })
     )
     .use(admin)
     .get('/', () => 'Hello Elysia')

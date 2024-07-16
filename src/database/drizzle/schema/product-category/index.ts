@@ -25,13 +25,13 @@ export const productCategorySchema = pgTable(
         updated_at: timestamp('updated_at')
             .notNull()
             .$onUpdate(() => new Date()),
-        deleted_flg: boolean('deleted_flg').default(false),
+        deleted_flg: boolean('deleted_flg').default(false)
     },
     (table) => {
         return {
-            statusIdx: index().on(table.status, table.parent_id),
+            statusIdx: index().on(table.status, table.parent_id)
         }
-    },
+    }
 )
 
 // ** Relations
@@ -39,6 +39,6 @@ export const productCategoryRelations = relations(productCategorySchema, ({ one,
     productCategory: one(productCategorySchema, {
         relationName: 'productCategory',
         fields: [productCategorySchema.parent_id],
-        references: [productCategorySchema.id],
-    }),
+        references: [productCategorySchema.id]
+    })
 }))

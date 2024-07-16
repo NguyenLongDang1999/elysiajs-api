@@ -9,8 +9,8 @@ const jwtPlugin = (app: Elysia) =>
     app.use(
         jwt({
             name: JWT.JWT_NAME,
-            secret: Bun.env.JWT_ACCESS_SECRET!,
-        }),
+            secret: Bun.env.JWT_ACCESS_SECRET!
+        })
     )
 
 export { jwtPlugin }

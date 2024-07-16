@@ -13,14 +13,14 @@ export const productCategoryType = t.Object({
     description: t.Optional(t.String()),
     status: t.Optional(t.Number()),
     meta_title: t.Optional(t.String()),
-    meta_description: t.Optional(t.String()),
+    meta_description: t.Optional(t.String())
 })
 
 export const productCategorySearchType = t.Object({
     ...paginationType,
     name: t.Optional(t.String()),
     parent_id: t.Optional(t.String()),
-    status: t.Optional(t.String()),
+    status: t.Optional(t.String())
 })
 
 // ** Types

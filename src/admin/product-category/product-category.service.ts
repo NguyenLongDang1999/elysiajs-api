@@ -57,17 +57,17 @@ export class ProductCategoryService {
 
             const aggregations = await db
                 .select({
-                    value: count(productCategorySchema.id),
+                    value: count(productCategorySchema.id)
                 })
                 .from(productCategorySchema)
                 .where(and(...where))
 
             return {
-                data: data.map(_d => ({
+                data: data.map((_d) => ({
                     ..._d,
                     product: []
                 })),
-                aggregations: aggregations[0].value,
+                aggregations: aggregations[0].value
             }
         } catch (error) {
             handleDatabaseError(error)
@@ -77,7 +77,7 @@ export class ProductCategoryService {
     async create(data: IProductCategoryDTO) {
         try {
             return await db.insert(productCategorySchema).values(data).returning({
-                id: productCategorySchema.id,
+                id: productCategorySchema.id
             })
         } catch (error) {
             handleDatabaseError(error)
@@ -87,7 +87,7 @@ export class ProductCategoryService {
     async update(id: string, data: IProductCategoryDTO) {
         try {
             return await db.update(productCategorySchema).set(data).where(eq(productCategorySchema.id, id)).returning({
-                id: productCategorySchema.id,
+                id: productCategorySchema.id
             })
         } catch (error) {
             handleDatabaseError(error)
@@ -107,8 +107,8 @@ export class ProductCategoryService {
                     image_uri: true,
                     description: true,
                     meta_title: true,
-                    meta_description: true,
-                },
+                    meta_description: true
+                }
             })
         } catch (error) {
             handleDatabaseError(error)
@@ -124,11 +124,11 @@ export class ProductCategoryService {
                     .update(productCategorySchema)
                     .set({
                         deleted_flg: false,
-                        slug: slugTimestamp(query.slug!),
+                        slug: slugTimestamp(query.slug!)
                     })
                     .where(eq(productCategorySchema.id, id))
                     .returning({
-                        id: productCategorySchema.id,
+                        id: productCategorySchema.id
                     })
             }
         } catch (error) {
@@ -144,8 +144,8 @@ export class ProductCategoryService {
                     and(eq(productCategorySchema.deleted_flg, false), isNull(productCategorySchema.parent_id)),
                 columns: {
                     id: true,
-                    name: true,
-                },
+                    name: true
+                }
             })
 
             const categoryNested = []
@@ -167,8 +167,8 @@ export class ProductCategoryService {
                 and(eq(productCategorySchema.deleted_flg, false), eq(productCategorySchema.parent_id, parent_id)),
             columns: {
                 id: true,
-                name: true,
-            },
+                name: true
+            }
         })
 
         const customLevelName = '|--- '.repeat(level)

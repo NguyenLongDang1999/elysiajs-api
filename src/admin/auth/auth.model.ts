@@ -5,5 +5,5 @@ import { Elysia } from 'elysia'
 import { signInType } from './auth.type'
 
 export const AuthModels = new Elysia().model({
-    signIn: signInType,
+    signIn: signInType
 })

@@ -8,5 +8,5 @@ import { deleteType } from '@src/types/core.type'
 export const productCategoryModels = new Elysia().model({
     productCategory: productCategoryType,
     productCategorySearch: productCategorySearchType,
-    productCategoryDelete: deleteType,
+    productCategoryDelete: deleteType
 })

@@ -5,12 +5,12 @@ import { t, Static } from 'elysia'
 export const signInType = t.Object({
     email: t.String({
         minLength: 1,
-        format: 'email',
+        format: 'email'
     }),
     password: t.String({
         minLength: 6,
-        maxLength: 20,
-    }),
+        maxLength: 20
+    })
 })
 
 // ** Types

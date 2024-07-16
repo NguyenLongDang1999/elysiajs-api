@@ -5,5 +5,5 @@ import { Elysia } from 'elysia'
 import { fileManagerSearchType } from './file-manager.type'
 
 export const FileManagerModels = new Elysia().model({
-    fileManagerSearch: fileManagerSearchType,
+    fileManagerSearch: fileManagerSearchType
 })

@@ -4,11 +4,11 @@ import { t, Static } from 'elysia'
 // ** Types Definition
 export const fileManagerType = t.Object({
     folder_name: t.String({ minLength: 1 }),
-    is_folder: t.Optional(t.Boolean()),
+    is_folder: t.Optional(t.Boolean())
 })
 
 export const fileManagerSearchType = t.Object({
-    path: t.String({ minLength: 1 }),
+    path: t.String({ minLength: 1 })
 })
 
 // ** Types

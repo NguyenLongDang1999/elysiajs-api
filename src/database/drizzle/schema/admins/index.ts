@@ -27,11 +27,11 @@ export const adminsSchema = pgTable(
         updated_at: timestamp('updated_at')
             .notNull()
             .$onUpdate(() => new Date()),
-        deleted_flg: boolean('deleted_flg').default(false),
+        deleted_flg: boolean('deleted_flg').default(false)
     },
     (table) => {
         return {
-            statusIdx: index().on(table.status, table.role, table.gender),
+            statusIdx: index().on(table.status, table.role, table.gender)
         }
-    },
+    }
 )

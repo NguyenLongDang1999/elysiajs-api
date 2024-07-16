@@ -12,19 +12,19 @@ import { authPlugin } from '../plugins/auth'
 
 export const productCategoryController = new Elysia({ prefix: '/product-categories' })
     .decorate({
-        ProductCategoryService: new ProductCategoryService(),
+        ProductCategoryService: new ProductCategoryService()
     })
     .use(authPlugin)
     .use(productCategoryModels)
     .get('/', ({ ProductCategoryService, query }) => ProductCategoryService.getTableList(query), {
-        query: 'productCategorySearch',
+        query: 'productCategorySearch'
     })
     .get('data-list', ({ ProductCategoryService }) => ProductCategoryService.getDataList())
     .get('/:id', ({ ProductCategoryService, params }) => ProductCategoryService.retrieve(params.id))
     .post('/', ({ ProductCategoryService, body }) => ProductCategoryService.create(body), { body: 'productCategory' })
     .patch('/:id', ({ ProductCategoryService, body, params }) => ProductCategoryService.update(params.id, body), {
-        body: 'productCategory',
+        body: 'productCategory'
     })
     .delete('/:id', ({ ProductCategoryService, query, params }) => ProductCategoryService.delete(params.id, query), {
-        query: 'productCategoryDelete',
+        query: 'productCategoryDelete'
     })

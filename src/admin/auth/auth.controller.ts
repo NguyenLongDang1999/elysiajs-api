@@ -17,7 +17,7 @@ import { authPlugin } from '../plugins/auth'
 
 export const authController = new Elysia({ prefix: '/auth' })
     .decorate({
-        AuthService: new AuthService(),
+        AuthService: new AuthService()
     })
     .use(AuthModels)
     .use(jwtPlugin)
@@ -28,7 +28,7 @@ export const authController = new Elysia({ prefix: '/auth' })
 
             const accessTokenJWT = await jwt.sign({
                 sub: id,
-                exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP),
+                exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP)
             })
 
             cookie.accessTokenAdmin.set({
@@ -36,12 +36,12 @@ export const authController = new Elysia({ prefix: '/auth' })
                 maxAge: Number(JWT.ACCESS_TOKEN_EXP),
                 secure: Bun.env.NODE_ENV === 'production',
                 httpOnly: Bun.env.NODE_ENV === 'production',
-                sameSite: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production'
             })
 
             const refreshTokenJWT = await jwt.sign({
                 sub: id,
-                exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP),
+                exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP)
             })
 
             cookie.refreshTokenAdmin.set({
@@ -49,7 +49,7 @@ export const authController = new Elysia({ prefix: '/auth' })
                 maxAge: Number(JWT.REFRESH_TOKEN_EXP),
                 secure: Bun.env.NODE_ENV === 'production',
                 httpOnly: Bun.env.NODE_ENV === 'production',
-                sameSite: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production'
             })
 
             await AuthService.updateRefreshToken(id, refreshTokenJWT)
@@ -57,8 +57,8 @@ export const authController = new Elysia({ prefix: '/auth' })
             return new Response('Successfully!')
         },
         {
-            body: 'signIn',
-        },
+            body: 'signIn'
+        }
     )
     .get('refresh', async ({ AuthService, jwt, error, cookie }) => {
         if (!cookie.refreshTokenAdmin) throw error('Forbidden')
@@ -71,7 +71,7 @@ export const authController = new Elysia({ prefix: '/auth' })
 
         const accessTokenJWT = await jwt.sign({
             sub: response?.id!,
-            exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP),
+            exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP)
         })
 
         cookie.accessTokenAdmin.set({
@@ -79,12 +79,12 @@ export const authController = new Elysia({ prefix: '/auth' })
             maxAge: Number(JWT.ACCESS_TOKEN_EXP),
             secure: Bun.env.NODE_ENV === 'production',
             httpOnly: Bun.env.NODE_ENV === 'production',
-            sameSite: Bun.env.NODE_ENV === 'production',
+            sameSite: Bun.env.NODE_ENV === 'production'
         })
 
         const refreshTokenJWT = await jwt.sign({
             sub: response?.id!,
-            exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP),
+            exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP)
         })
 
         cookie.refreshTokenAdmin.set({
@@ -92,7 +92,7 @@ export const authController = new Elysia({ prefix: '/auth' })
             maxAge: Number(JWT.REFRESH_TOKEN_EXP),
             secure: Bun.env.NODE_ENV === 'production',
             httpOnly: Bun.env.NODE_ENV === 'production',
-            sameSite: Bun.env.NODE_ENV === 'production',
+            sameSite: Bun.env.NODE_ENV === 'production'
         })
 
         await AuthService.updateRefreshToken(response?.id!, refreshTokenJWT)

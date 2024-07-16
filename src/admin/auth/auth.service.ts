@@ -20,8 +20,8 @@ export class AuthService {
             where: and(eq(adminsSchema.deleted_flg, false), eq(adminsSchema.email, data.email)),
             columns: {
                 id: true,
-                password: true,
-            },
+                password: true
+            }
         })
 
         if (!user) throw error('Not Found')
@@ -35,7 +35,7 @@ export class AuthService {
 
     hashData(data: string) {
         return Bun.password.hash(data, {
-            algorithm: 'argon2id',
+            algorithm: 'argon2id'
         })
     }
 
@@ -59,8 +59,8 @@ export class AuthService {
                 where: and(eq(adminsSchema.deleted_flg, false), eq(adminsSchema.id, id)),
                 columns: {
                     id: true,
-                    refresh_token: true,
-                },
+                    refresh_token: true
+                }
             })
 
             if (!user || !user.refresh_token) throw error('Forbidden')
@@ -90,10 +90,7 @@ export class AuthService {
     async profile(userId: string) {
         try {
             return await db.query.adminsSchema.findFirst({
-                where: and(
-                    eq(adminsSchema.deleted_flg, false),
-                    eq(adminsSchema.id, userId),
-                ),
+                where: and(eq(adminsSchema.deleted_flg, false), eq(adminsSchema.id, userId)),
                 columns: {
                     id: true,
                     name: true,

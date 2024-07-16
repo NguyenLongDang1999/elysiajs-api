@@ -1,6 +1,18 @@
 {
+    "editor.guides.bracketPairs": "active",
+    "editor.quickSuggestions": {
+        "strings": true
+    },
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit",
+        "source.fixAll.stylelint": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "eslint.format.enable": true,
     "typescript.tsdk": "node_modules/typescript/lib",
     "cSpell.words": [
         "Elysia"
     ]
-}
+  }
+  
