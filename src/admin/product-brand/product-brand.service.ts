@@ -102,8 +102,22 @@ export class ProductBrandService {
 
     async create(data: IProductBrandDTO) {
         try {
-            return await db.insert(productBrandSchema).values(data).returning({
-                id: productBrandSchema.id
+            return await db.transaction(async (tx) => {
+                const [productBrand] = await tx
+                    .insert(productBrandSchema)
+                    .values(data)
+                    .returning({ id: productBrandSchema.id });
+
+                const productCategoryBrands = data.product_category_id.map(product_category_id => ({
+                    product_brand_id: productBrand.id,
+                    product_category_id
+                }));
+
+                await tx
+                    .insert(productCategoryBrandSchema)
+                    .values(productCategoryBrands);
+
+                return productBrand;
             })
         } catch (error) {
             handleDatabaseError(error)
@@ -122,17 +136,39 @@ export class ProductBrandService {
 
     async retrieve(id: string) {
         try {
-            return await db.query.productBrandSchema.findFirst({
-                where: and(eq(productBrandSchema.id, id), eq(productBrandSchema.deleted_flg, false)),
-                columns: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                    status: true,
-                    image_uri: true,
-                    description: true
-                }
-            })
+            const productBrandResult = await db
+                .select({
+                    id: productBrandSchema.id,
+                    name: productBrandSchema.name,
+                    slug: productBrandSchema.slug,
+                    status: productBrandSchema.status,
+                    image_uri: productBrandSchema.image_uri,
+                    description: productBrandSchema.description
+                })
+                .from(productBrandSchema)
+                .where(and(eq(productBrandSchema.id, id), eq(productBrandSchema.deleted_flg, false)))
+                .limit(1);
+
+            if (productBrandResult.length === 0) {
+                return null;
+            }
+
+            const productBrand = productBrandResult[0];
+
+            const categoryIdsResult = await db
+                .select({
+                    product_category_id: productCategoryBrandSchema.product_category_id
+                })
+                .from(productCategoryBrandSchema)
+                .where(eq(productCategoryBrandSchema.product_brand_id, productBrand.id));
+
+            const product_category_id = categoryIdsResult.map(row => row.product_category_id);
+
+            return {
+                ...productBrand,
+                product_category_id
+            };
+
         } catch (error) {
             handleDatabaseError(error)
         }
