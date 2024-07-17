@@ -3,10 +3,10 @@ import { db } from '@src/database/drizzle'
 import { systemSettingOptionsSchema, systemSettingsSchema } from '@src/database/drizzle/schema'
 
 // ** Types Imports
-import { IFileManagerDTO, IFileManagerSearchDTO } from './file-manager.type'
+import { IFileManagerDTO, IFileManagerSearchDTO, IFileManagerUploadDTO } from './file-manager.type'
 
 // ** Drizzle Imports
-import { and, count, desc, eq, ilike, isNull } from 'drizzle-orm'
+import { and, eq, ilike } from 'drizzle-orm'
 
 // ** Utils Imports
 import { handleDatabaseError } from '@utils/error-handling'
@@ -25,20 +25,20 @@ export class FileManagerService {
         }
     }
 
-    async create(createFileManagerDto: IFileManagerDTO, path: string) {
+    async create(createFileManagerDto: IFileManagerDTO, query: IFileManagerSearchDTO) {
         const storageName = await this.systemSettingBunnyCDN('storage_name')
 
-        const pathName = this.buildPath(path, createFileManagerDto.folder_name + '/')
+        const pathName = this.buildPath(query.path, createFileManagerDto.folder_name + '/')
         const url = `${await this.getBaseUrl()}${storageName?.value}/${pathName}`
 
         return this.sendRequest('put', url)
     }
 
-    async delete(createFileManagerDto: IFileManagerDTO, path: string) {
+    async delete(createFileManagerDto: IFileManagerDTO, query: IFileManagerSearchDTO) {
         const storageName = await this.systemSettingBunnyCDN('storage_name')
 
         const pathName = this.buildPath(
-            path,
+            query.path,
             createFileManagerDto.folder_name + (createFileManagerDto.is_folder ? '/' : '')
         )
         const url = `${await this.getBaseUrl()}${storageName?.value}/${pathName}`
@@ -46,14 +46,14 @@ export class FileManagerService {
         return this.sendRequest('delete', url)
     }
 
-    // async uploadFile(path: string, file: Express.Multer.File) {
-    //     const storageName = await this.systemSettingBunnyCDN('storage_name')
+    async uploadFile(query: IFileManagerSearchDTO, body: IFileManagerUploadDTO) {
+        const storageName = await this.systemSettingBunnyCDN('storage_name')
+        const pathName = this.buildPath(query.path, body.file.name)
+        const url = `${await this.getBaseUrl()}${storageName?.value}/${pathName}`
+        const buffer = await body.file.arrayBuffer()
 
-    //     const pathName = this.buildPath(path, file.originalname)
-    //     const url = `${await this.getBaseUrl()}${storageName.value}/${pathName}`
-
-    //     return this.sendRequest('put', url, file.buffer)
-    // }
+        return this.sendRequest('put', url, buffer)
+    }
 
     private async sendRequest(method: string, url: string, data?: any) {
         try {

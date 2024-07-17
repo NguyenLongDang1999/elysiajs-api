@@ -1,5 +1,5 @@
 // ** Elysia Imports
-import { t, Static } from 'elysia'
+import { Static, t } from 'elysia'
 
 // ** Types Definition
 export const fileManagerType = t.Object({
@@ -7,11 +7,17 @@ export const fileManagerType = t.Object({
     is_folder: t.Optional(t.Boolean())
 })
 
+export const fileManagerUploadType = t.Object({
+    file: t.File()
+})
+
 export const fileManagerSearchType = t.Object({
-    path: t.String({ minLength: 1 })
+    path: t.String()
 })
 
 // ** Types
 export type IFileManagerDTO = Static<typeof fileManagerType>
+
+export type IFileManagerUploadDTO = Static<typeof fileManagerUploadType>
 
 export type IFileManagerSearchDTO = Static<typeof fileManagerSearchType>

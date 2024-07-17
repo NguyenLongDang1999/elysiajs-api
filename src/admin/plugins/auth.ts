@@ -23,7 +23,7 @@ const authPlugin = (app: Elysia) =>
             where: eq(adminsSchema.id, jwtPayload.sub!)
         })
 
-        if (!user) error('Unauthorized')
+        if (!user) throw error('Unauthorized')
 
         return { user }
     })
