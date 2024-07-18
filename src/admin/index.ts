@@ -8,7 +8,11 @@ import { productAttributeController } from './product-attribute/product-attribut
 import { productBrandController } from './product-brand/product-brand.controller'
 import { productCategoryController } from './product-category/product-category.controller'
 
+// ** Plugins Imports
+import { authPlugin } from './plugins/auth'
+
 export const admin = new Elysia({ prefix: '/admin' })
+    .use(authPlugin)
     .use(productCategoryController)
     .use(productBrandController)
     .use(productAttributeController)

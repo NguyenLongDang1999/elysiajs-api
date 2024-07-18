@@ -8,3 +8,11 @@ export enum JWT {
     REFRESH_TOKEN_EXP = 7 * 24 * 60 * 60, // 7 days
     JWT_NAME = 'jwt'
 }
+
+export enum REDIS_KEY {
+    PRODUCT_CATEGORY = 'product_category'
+}
+
+export enum EXPIRES_AT {
+    REDIS_EXPIRES_AT = 60 * 60
+}

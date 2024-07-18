@@ -10,6 +10,7 @@
     "drizzle:seed": "bun run ./src/database/drizzle/seed/system-settings.ts"
   },
   "dependencies": {
+    "@atakan75/elysia-redis": "^0.1.8",
     "@elysiajs/cors": "^1.0.4",
     "@elysiajs/jwt": "^1.0.2",
     "@elysiajs/swagger": "^1.0.5",

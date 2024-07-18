@@ -12,8 +12,8 @@ import { getExpTimestamp } from '@src/utils'
 import { JWT } from '@src/utils/enums'
 
 // ** Plugins Imports
-import { jwtPlugin } from '../plugins/jwt'
 import { authPlugin } from '../plugins/auth'
+import { jwtPlugin } from '../plugins/jwt'
 
 export const authController = new Elysia({ prefix: '/auth' })
     .decorate({
@@ -54,7 +54,7 @@ export const authController = new Elysia({ prefix: '/auth' })
 
             await AuthService.updateRefreshToken(id, refreshTokenJWT)
 
-            return new Response('Successfully!')
+            return { message: 'Successfully!' }
         },
         {
             body: 'signIn'

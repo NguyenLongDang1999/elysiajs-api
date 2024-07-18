@@ -12,7 +12,9 @@ import { eq } from 'drizzle-orm'
 import { jwtPlugin } from './jwt'
 
 const authPlugin = (app: Elysia) =>
-    app.use(jwtPlugin).derive(async ({ jwt, cookie: { accessTokenAdmin }, error }) => {
+    app.use(jwtPlugin).derive(async ({ jwt, cookie: { accessTokenAdmin }, error, path }) => {
+        if (path === '/api/admin/auth/sign-in') return
+
         if (!accessTokenAdmin.value) throw error('Unauthorized')
 
         const jwtPayload = await jwt.verify(accessTokenAdmin.value)

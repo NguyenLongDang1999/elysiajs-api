@@ -1,19 +1,21 @@
 // ** Database Imports
-import { db } from '@src/database/drizzle'
 import { productCategorySchema } from '@db/schema/product-category'
+import { db } from '@src/database/drizzle'
 
 // ** Types Imports
-import { IProductCategorySearchDTO, IProductCategoryDTO } from './product-category.type'
+import { IProductCategoryDTO, IProductCategorySearchDTO } from './product-category.type'
 
 // ** Drizzle Imports
-import { alias } from 'drizzle-orm/pg-core'
 import { and, count, desc, eq, ilike, isNull } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/pg-core'
 
 // ** Utils Imports
+import { createRedisKey, slugTimestamp } from '@src/utils'
+import { EXPIRES_AT, REDIS_KEY } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
-import { slugTimestamp } from '@src/utils'
 
 // ** Types Imports
+import { RedisClientType } from '@atakan75/elysia-redis'
 import { IDeleteDTO } from '@src/types/core.type'
 
 export class ProductCategoryService {
@@ -94,7 +96,7 @@ export class ProductCategoryService {
         }
     }
 
-    async retrieve(id: string) {
+    async retrieve(id: string, redis: RedisClientType) {
         try {
             return await db.query.productCategorySchema.findFirst({
                 where: and(eq(productCategorySchema.id, id), eq(productCategorySchema.deleted_flg, false)),
@@ -136,8 +138,14 @@ export class ProductCategoryService {
         }
     }
 
-    async getDataList() {
+    async getDataList(redis: RedisClientType) {
         try {
+            const productCategoryCached = await redis.get(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
+
+            if (productCategoryCached) {
+                return JSON.parse(productCategoryCached)
+            }
+
             const categoryList = await db.query.productCategorySchema.findMany({
                 orderBy: desc(productCategorySchema.created_at),
                 where: (_productCategory, { and }) =>
@@ -154,6 +162,12 @@ export class ProductCategoryService {
                 const categories = await this.renderTree(category.id, 1)
                 categoryNested.push(category, ...categories)
             }
+
+            await redis.set(
+                createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'),
+                JSON.stringify(categoryNested),
+                EXPIRES_AT.REDIS_EXPIRES_AT
+            )
 
             return categoryNested
         } catch (error) {

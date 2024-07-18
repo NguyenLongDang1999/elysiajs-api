@@ -7,14 +7,10 @@ import { productBrandModels } from './product-brand.model'
 // ** Service Imports
 import { ProductBrandService } from './product-brand.service'
 
-// ** Plugins Imports
-import { authPlugin } from '../plugins/auth'
-
 export const productBrandController = new Elysia({ prefix: '/product-brands' })
     .decorate({
         ProductBrandService: new ProductBrandService()
     })
-    .use(authPlugin)
     .use(productBrandModels)
     .get('/', ({ ProductBrandService, query }) => ProductBrandService.getTableList(query), {
         query: 'productBrandSearch'

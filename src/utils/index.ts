@@ -11,3 +11,7 @@ export const getExpTimestamp = (seconds: number) => {
 
     return Math.floor(expirationTimeMilliseconds / 1000)
 }
+
+export const createRedisKey = (prefix: string, identifier?: string) => {
+    return `${prefix}:${identifier}`
+}
