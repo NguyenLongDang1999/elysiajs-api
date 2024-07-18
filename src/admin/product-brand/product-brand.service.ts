@@ -6,7 +6,7 @@ import { db } from '@src/database/drizzle'
 import { IProductBrandDTO, IProductBrandSearchDTO } from './product-brand.type'
 
 // ** Drizzle Imports
-import { and, count, desc, eq, exists, ilike, isNull, SQL } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, inArray, isNull, SQL } from 'drizzle-orm'
 
 // ** Utils Imports
 import { slugTimestamp } from '@src/utils'
@@ -26,16 +26,12 @@ export class ProductBrandService {
 
             if (query.product_category_id) {
                 where.push(
-                    exists(
+                    inArray(
+                        productBrandSchema.id,
                         db
-                            .select()
+                            .select({ product_brand_id: productCategoryBrandSchema.product_brand_id })
                             .from(productCategoryBrandSchema)
-                            .where(
-                                and(
-                                    eq(productCategoryBrandSchema.product_category_id, query.product_category_id),
-                                    eq(productCategoryBrandSchema.product_brand_id, productBrandSchema.id)
-                                )
-                            )
+                            .where(eq(productCategoryBrandSchema.product_category_id, query.product_category_id))
                     )
                 )
             }
