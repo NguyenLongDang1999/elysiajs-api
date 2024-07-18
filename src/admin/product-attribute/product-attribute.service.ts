@@ -10,100 +10,85 @@ import { db } from '@src/database/drizzle'
 import { IProductAttributeDTO, IProductAttributeSearchDTO } from './product-attribute.type'
 
 // ** Drizzle Imports
-import { and, count, desc, eq, exists, ilike } from 'drizzle-orm'
+import { and, count, eq, ilike, inArray, SQL } from 'drizzle-orm'
 
 // ** Utils Imports
 import { handleDatabaseError } from '@utils/error-handling'
 
 // ** Types Imports
-import { productCategorySchema } from '@src/database/drizzle/schema'
 
 export class ProductAttributeService {
     async getTableList(query: IProductAttributeSearchDTO) {
         try {
-            const searchConditions = [
-                eq(productAttributeSchema.deleted_flg, false),
-                query.name ? ilike(productAttributeSchema.name, `%${query.name}%`) : undefined,
-                query.status ? eq(productAttributeSchema.status, Number(query.status)) : undefined,
-                query.product_category_id
-                    ? exists(
-                          db
-                              .select()
-                              .from(productCategoryAttributeSchema)
-                              .where(
-                                  and(
-                                      eq(
-                                          productCategoryAttributeSchema.product_attribute_id,
-                                          productAttributeSchema.id
-                                      ),
-                                      eq(productCategoryAttributeSchema.product_category_id, query.product_category_id)
-                                  )
-                              )
-                      )
-                    : undefined
-            ].filter(Boolean)
+            const where: SQL[] = [eq(productAttributeSchema.deleted_flg, false)]
 
-            const search = and(...searchConditions)
+            if (query.name) {
+                where.push(ilike(productAttributeSchema.name, `%${query.name}%`))
+            }
 
-            const [data, aggregations] = await Promise.all([
+            if (query.product_category_id) {
+                where.push(
+                    inArray(
+                        productAttributeSchema.id,
+                        db
+                            .select({ product_attribute_id: productCategoryAttributeSchema.product_attribute_id })
+                            .from(productCategoryAttributeSchema)
+                            .where(eq(productCategoryAttributeSchema.product_category_id, query.product_category_id))
+                    )
+                )
+            }
+
+            if (query.status) {
+                where.push(eq(productAttributeSchema.status, Number(query.status)))
+            }
+
+            const [data, [aggregations]] = await Promise.all([
+                db.query.productAttributeSchema.findMany({
+                    offset: query.page,
+                    limit: query.pageSize,
+                    orderBy: (productAttribute, { desc }) => [desc(productAttribute.created_at)],
+                    where: and(...where),
+                    columns: {
+                        id: true,
+                        name: true,
+                        status: true,
+                        created_at: true
+                    },
+                    with: {
+                        productAttributeValues: {
+                            columns: {
+                                id: true
+                            }
+                        },
+                        productCategoryAttributes: {
+                            with: {
+                                productCategory: {
+                                    columns: {
+                                        id: true,
+                                        name: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }),
                 db
                     .select({
-                        id: productAttributeSchema.id,
-                        name: productAttributeSchema.name,
-                        status: productAttributeSchema.status,
-                        created_at: productAttributeSchema.created_at
+                        value: count(productAttributeSchema.id)
                     })
                     .from(productAttributeSchema)
-                    .where(search)
-                    .orderBy(desc(productAttributeSchema.created_at))
-                    .limit(Number(query.pageSize))
-                    .offset(Number(query.page))
-                    .prepare('fetchAttributes')
-                    .execute(),
-                db
-                    .select({
-                        value: count()
-                    })
-                    .from(productAttributeSchema)
-                    .where(search)
-                    .prepare('countAttribute')
-                    .execute()
+                    .where(and(...where))
             ])
 
-            const productCategoryAttributes = await Promise.all(
-                data.map(async (item) => {
-                    const categories = await db
-                        .select({
-                            productCategory: {
-                                id: productCategorySchema.id,
-                                name: productCategorySchema.name
-                            }
-                            // value: count()
-                        })
-                        .from(productCategoryAttributeSchema)
-                        .leftJoin(
-                            productCategorySchema,
-                            eq(productCategoryAttributeSchema.product_category_id, productCategorySchema.id)
-                        )
-                        // .leftJoin(
-                        //     productAttributeValuesSchema,
-                        //     eq(productAttributeValuesSchema.product_attribute_id, productAttributeSchema.id)
-                        // )
-                        .where(
-                            and(
-                                eq(productCategoryAttributeSchema.product_attribute_id, item.id),
-                                eq(productCategorySchema.deleted_flg, false)
-                            )
-                        )
-                    return {
-                        ...item,
-                        productAttributeValues: [],
-                        productCategoryAttributes: categories.map((categoryItem) => categoryItem.productCategory)
-                    }
-                })
-            )
-
-            return { data: productCategoryAttributes, aggregations: aggregations[0].value }
+            return {
+                data: data.map((_data) => ({
+                    ..._data,
+                    productCategoryAttributes: _data.productCategoryAttributes.map(
+                        (_product) => _product.productCategory
+                    )
+                })),
+                aggregations: aggregations.value
+            }
         } catch (error) {
             handleDatabaseError(error)
         }

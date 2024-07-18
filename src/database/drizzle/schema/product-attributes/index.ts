@@ -1,4 +1,5 @@
 // ** Drizzle Imports
+import { relations } from 'drizzle-orm'
 import { boolean, pgTable, smallint, text, timestamp } from 'drizzle-orm/pg-core'
 
 // ** Third Party Imports
@@ -40,3 +41,28 @@ export const productCategoryAttributeSchema = pgTable('product-category-attribut
         .notNull()
         .references(() => productCategorySchema.id)
 })
+
+// ** Relations
+export const productAttributeRelations = relations(productAttributeSchema, ({ many }) => ({
+    productAttributeValues: many(productAttributeValuesSchema),
+    productCategoryAttributes: many(productCategoryAttributeSchema)
+}))
+
+export const productAttributeValuesRelations = relations(productAttributeValuesSchema, ({ one, many }) => ({
+    productAttribute: one(productAttributeSchema, {
+        fields: [productAttributeValuesSchema.product_attribute_id],
+        references: [productAttributeSchema.id]
+    }),
+    productVariantAttributeValues: many(productAttributeValuesSchema)
+}))
+
+export const productCategoryAttributeRelations = relations(productCategoryAttributeSchema, ({ one }) => ({
+    productAttribute: one(productAttributeSchema, {
+        fields: [productCategoryAttributeSchema.product_attribute_id],
+        references: [productAttributeSchema.id]
+    }),
+    productCategory: one(productCategorySchema, {
+        fields: [productCategoryAttributeSchema.product_category_id],
+        references: [productCategorySchema.id]
+    })
+}))
