@@ -19,10 +19,20 @@ export const productCategoryController = new Elysia({ prefix: '/product-categori
     })
     .get('data-list', ({ ProductCategoryService, redis }) => ProductCategoryService.getDataList(redis))
     .get('/:id', ({ ProductCategoryService, params, redis }) => ProductCategoryService.retrieve(params.id, redis))
-    .post('/', ({ ProductCategoryService, body }) => ProductCategoryService.create(body), { body: 'productCategory' })
-    .patch('/:id', ({ ProductCategoryService, body, params }) => ProductCategoryService.update(params.id, body), {
+    .post('/', ({ ProductCategoryService, body, redis }) => ProductCategoryService.create(body, redis), {
         body: 'productCategory'
     })
-    .delete('/:id', ({ ProductCategoryService, query, params }) => ProductCategoryService.delete(params.id, query), {
-        query: 'productCategoryDelete'
-    })
+    .patch(
+        '/:id',
+        ({ ProductCategoryService, body, params, redis }) => ProductCategoryService.update(params.id, body, redis),
+        {
+            body: 'productCategory'
+        }
+    )
+    .delete(
+        '/:id',
+        ({ ProductCategoryService, query, params, redis }) => ProductCategoryService.delete(params.id, query, redis),
+        {
+            query: 'productCategoryDelete'
+        }
+    )

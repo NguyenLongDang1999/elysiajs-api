@@ -76,21 +76,34 @@ export class ProductCategoryService {
         }
     }
 
-    async create(data: IProductCategoryDTO) {
+    async create(data: IProductCategoryDTO, redis: RedisClientType) {
         try {
-            return await db.insert(productCategorySchema).values(data).returning({
+            const productCategory = await db.insert(productCategorySchema).values(data).returning({
                 id: productCategorySchema.id
             })
+
+            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
+
+            return productCategory
         } catch (error) {
             handleDatabaseError(error)
         }
     }
 
-    async update(id: string, data: IProductCategoryDTO) {
+    async update(id: string, data: IProductCategoryDTO, redis: RedisClientType) {
         try {
-            return await db.update(productCategorySchema).set(data).where(eq(productCategorySchema.id, id)).returning({
-                id: productCategorySchema.id
-            })
+            const productCategory = await db
+                .update(productCategorySchema)
+                .set(data)
+                .where(eq(productCategorySchema.id, id))
+                .returning({
+                    id: productCategorySchema.id
+                })
+
+            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
+            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, id))
+
+            return productCategory
         } catch (error) {
             handleDatabaseError(error)
         }
@@ -98,7 +111,13 @@ export class ProductCategoryService {
 
     async retrieve(id: string, redis: RedisClientType) {
         try {
-            return await db.query.productCategorySchema.findFirst({
+            const productCategoryCached = await redis.get(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, id))
+
+            if (productCategoryCached) {
+                return JSON.parse(productCategoryCached)
+            }
+
+            const productCategory = await db.query.productCategorySchema.findFirst({
                 where: and(eq(productCategorySchema.id, id), eq(productCategorySchema.deleted_flg, false)),
                 columns: {
                     id: true,
@@ -112,17 +131,25 @@ export class ProductCategoryService {
                     meta_description: true
                 }
             })
+
+            await redis.set(
+                createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'),
+                JSON.stringify(productCategory),
+                EXPIRES_AT.REDIS_EXPIRES_AT
+            )
+
+            return productCategory
         } catch (error) {
             handleDatabaseError(error)
         }
     }
 
-    async delete(id: string, query: IDeleteDTO) {
+    async delete(id: string, query: IDeleteDTO, redis: RedisClientType) {
         try {
             if (query.force) {
-                return db.delete(productCategorySchema).where(eq(productCategorySchema.id, id))
+                await db.delete(productCategorySchema).where(eq(productCategorySchema.id, id))
             } else {
-                return await db
+                await db
                     .update(productCategorySchema)
                     .set({
                         deleted_flg: false,
@@ -133,6 +160,11 @@ export class ProductCategoryService {
                         id: productCategorySchema.id
                     })
             }
+
+            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
+            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, id))
+
+            return id
         } catch (error) {
             handleDatabaseError(error)
         }
