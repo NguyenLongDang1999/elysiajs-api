@@ -1,5 +1,9 @@
 // ** Database Imports
-import { productAttributeSchema, productAttributeValuesSchema, productCategoryAttributeSchema } from '@db/schema/product-attributes'
+import {
+    productAttributeSchema,
+    productAttributeValuesSchema,
+    productCategoryAttributeSchema
+} from '@db/schema/product-attributes'
 import { db } from '@src/database/drizzle'
 
 // ** Types Imports
@@ -23,16 +27,19 @@ export class ProductAttributeService {
                 query.status ? eq(productAttributeSchema.status, Number(query.status)) : undefined,
                 query.product_category_id
                     ? exists(
-                        db
-                            .select()
-                            .from(productCategoryAttributeSchema)
-                            .where(
-                                and(
-                                    eq(productCategoryAttributeSchema.product_attribute_id, productAttributeSchema.id),
-                                    eq(productCategoryAttributeSchema.product_category_id, query.product_category_id)
-                                )
-                            )
-                    )
+                          db
+                              .select()
+                              .from(productCategoryAttributeSchema)
+                              .where(
+                                  and(
+                                      eq(
+                                          productCategoryAttributeSchema.product_attribute_id,
+                                          productAttributeSchema.id
+                                      ),
+                                      eq(productCategoryAttributeSchema.product_category_id, query.product_category_id)
+                                  )
+                              )
+                      )
                     : undefined
             ].filter(Boolean)
 
@@ -70,7 +77,7 @@ export class ProductAttributeService {
                             productCategory: {
                                 id: productCategorySchema.id,
                                 name: productCategorySchema.name
-                            },
+                            }
                             // value: count()
                         })
                         .from(productCategoryAttributeSchema)
@@ -108,23 +115,23 @@ export class ProductAttributeService {
                 const [productAttribute] = await tx
                     .insert(productAttributeSchema)
                     .values(data)
-                    .returning({ id: productAttributeSchema.id });
+                    .returning({ id: productAttributeSchema.id })
 
-                await tx
-                    .insert(productCategoryAttributeSchema)
-                    .values(data.product_category_id.map(product_category_id => ({
+                await tx.insert(productCategoryAttributeSchema).values(
+                    data.product_category_id.map((product_category_id) => ({
                         product_attribute_id: productAttribute.id,
                         product_category_id
-                    })));
+                    }))
+                )
 
-                await tx
-                    .insert(productAttributeValuesSchema)
-                    .values(data.product_attribute_values.map(value => ({
+                await tx.insert(productAttributeValuesSchema).values(
+                    data.product_attribute_values.map((value) => ({
                         product_attribute_id: productAttribute.id,
                         value: value.value
-                    })));
+                    }))
+                )
 
-                return productAttribute;
+                return productAttribute
             })
         } catch (error) {
             handleDatabaseError(error)

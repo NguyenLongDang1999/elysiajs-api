@@ -24,3 +24,18 @@ export enum INPUT_TYPE {
     SELECT = 30,
     UPLOAD = 40
 }
+
+export enum PRODUCT_TYPE {
+    SINGLE = 10,
+    VARIANT = 20
+}
+
+export enum SPECIAL_PRICE_TYPE {
+    PRICE = 10,
+    PERCENT = 20
+}
+
+export enum MANAGE_INVENTORY {
+    YES = 10,
+    NO = 20
+}

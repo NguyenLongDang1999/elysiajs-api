@@ -65,10 +65,7 @@ export class ProductCategoryService {
                 .where(and(...where))
 
             return {
-                data: data.map((_d) => ({
-                    ..._d,
-                    product: []
-                })),
+                data,
                 aggregations: aggregations[0].value
             }
         } catch (error) {

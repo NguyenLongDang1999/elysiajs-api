@@ -29,7 +29,7 @@ export const productAttributeValuesSchema = pgTable('product-attribute-values', 
     value: text('value').notNull(),
     product_attribute_id: text('product_attribute_id')
         .notNull()
-        .references(() => productAttributeSchema.id),
+        .references(() => productAttributeSchema.id)
 })
 
 export const productCategoryAttributeSchema = pgTable('product-category-attribute', {
