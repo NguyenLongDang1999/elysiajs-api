@@ -1,4 +1,5 @@
 // ** Drizzle Imports
+import { relations } from 'drizzle-orm'
 import { boolean, pgTable, smallint, text, timestamp } from 'drizzle-orm/pg-core'
 
 // ** Third Party Imports
@@ -8,6 +9,7 @@ import { createId } from '@paralleldrive/cuid2'
 import { STATUS } from '@src/utils/enums'
 
 // ** Schema Imports
+import { productSchema } from '../product'
 import { productCategorySchema } from '../product-category'
 
 // ** Schema
@@ -33,3 +35,20 @@ export const productCategoryBrandSchema = pgTable('product-category-brand', {
         .notNull()
         .references(() => productCategorySchema.id)
 })
+
+// ** Relations
+export const productBrandRelations = relations(productBrandSchema, ({ many }) => ({
+    productCategoryBrand: many(productCategoryBrandSchema),
+    product: many(productSchema)
+}))
+
+export const productCategoryBrandRelations = relations(productCategoryBrandSchema, ({ one }) => ({
+    productBrand: one(productBrandSchema, {
+        fields: [productCategoryBrandSchema.product_brand_id],
+        references: [productBrandSchema.id]
+    }),
+    productCategory: one(productCategorySchema, {
+        fields: [productCategoryBrandSchema.product_category_id],
+        references: [productCategorySchema.id]
+    })
+}))

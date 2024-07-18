@@ -1,4 +1,4 @@
-studio:
+std:
 	bunx drizzle-kit studio
 
 migrate:

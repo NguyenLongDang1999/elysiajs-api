@@ -1,12 +1,15 @@
 // ** Drizzle Imports
-import { boolean, pgTable, text, timestamp, smallint, AnyPgColumn, index } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
+import { AnyPgColumn, boolean, index, pgTable, smallint, text, timestamp } from 'drizzle-orm/pg-core'
 
 // ** Third Party Imports
 import { createId } from '@paralleldrive/cuid2'
 
 // ** Utils Imports
 import { STATUS } from '@src/utils/enums'
+
+// ** Schema Imports
+import { productSchema } from '../product'
 
 // ** Schema
 export const productCategorySchema = pgTable(
@@ -36,9 +39,9 @@ export const productCategorySchema = pgTable(
 
 // ** Relations
 export const productCategoryRelations = relations(productCategorySchema, ({ one, many }) => ({
-    productCategory: one(productCategorySchema, {
-        relationName: 'productCategory',
+    parentCategory: one(productCategorySchema, {
         fields: [productCategorySchema.parent_id],
         references: [productCategorySchema.id]
-    })
+    }),
+    product: many(productSchema)
 }))

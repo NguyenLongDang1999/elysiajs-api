@@ -6,95 +6,91 @@ import { db } from '@src/database/drizzle'
 import { IProductBrandDTO, IProductBrandSearchDTO } from './product-brand.type'
 
 // ** Drizzle Imports
-import { and, count, desc, eq, exists, ilike, isNull } from 'drizzle-orm'
+import { and, count, desc, eq, exists, ilike, isNull, SQL } from 'drizzle-orm'
 
 // ** Utils Imports
 import { slugTimestamp } from '@src/utils'
 import { handleDatabaseError } from '@utils/error-handling'
 
 // ** Types Imports
-import { productCategorySchema } from '@src/database/drizzle/schema'
 import { IDeleteDTO } from '@src/types/core.type'
 
 export class ProductBrandService {
     async getTableList(query: IProductBrandSearchDTO) {
         try {
-            const searchConditions = [
-                eq(productBrandSchema.deleted_flg, false),
-                query.name ? ilike(productBrandSchema.name, `%${query.name}%`) : undefined,
-                query.status ? eq(productBrandSchema.status, Number(query.status)) : undefined,
-                query.product_category_id
-                    ? exists(
-                          db
-                              .select()
-                              .from(productCategoryBrandSchema)
-                              .where(
-                                  and(
-                                      eq(productCategoryBrandSchema.product_brand_id, productBrandSchema.id),
-                                      eq(productCategoryBrandSchema.product_category_id, query.product_category_id)
-                                  )
-                              )
-                      )
-                    : undefined
-            ].filter(Boolean)
+            const where: SQL[] = [eq(productBrandSchema.deleted_flg, false)]
 
-            const search = and(...searchConditions)
+            if (query.name) {
+                where.push(ilike(productBrandSchema.name, `%${query.name}%`))
+            }
 
-            const [data, aggregations] = await Promise.all([
+            if (query.product_category_id) {
+                where.push(
+                    exists(
+                        db
+                            .select()
+                            .from(productCategoryBrandSchema)
+                            .where(
+                                and(
+                                    eq(productCategoryBrandSchema.product_category_id, query.product_category_id),
+                                    eq(productCategoryBrandSchema.product_brand_id, productBrandSchema.id)
+                                )
+                            )
+                    )
+                )
+            }
+
+            if (query.status) {
+                where.push(eq(productBrandSchema.status, Number(query.status)))
+            }
+
+            const [data, [aggregations]] = await Promise.all([
+                db.query.productBrandSchema.findMany({
+                    offset: query.page,
+                    limit: query.pageSize,
+                    orderBy: (productBrand, { desc }) => [desc(productBrand.created_at)],
+                    where: and(...where),
+                    columns: {
+                        id: true,
+                        name: true,
+                        status: true,
+                        image_uri: true,
+                        created_at: true
+                    },
+                    with: {
+                        product: {
+                            where: (product, { eq }) => eq(product.deleted_flg, false),
+                            columns: {
+                                id: true
+                            }
+                        },
+                        productCategoryBrand: {
+                            with: {
+                                productCategory: {
+                                    columns: {
+                                        id: true,
+                                        name: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }),
                 db
                     .select({
-                        id: productBrandSchema.id,
-                        name: productBrandSchema.name,
-                        slug: productBrandSchema.slug,
-                        status: productBrandSchema.status,
-                        image_uri: productBrandSchema.image_uri,
-                        created_at: productBrandSchema.created_at
+                        value: count(productBrandSchema.id)
                     })
                     .from(productBrandSchema)
-                    .where(search)
-                    .orderBy(desc(productBrandSchema.created_at))
-                    .limit(Number(query.pageSize))
-                    .offset(Number(query.page))
-                    .prepare('fetchBrands')
-                    .execute(),
-                db
-                    .select({
-                        value: count()
-                    })
-                    .from(productBrandSchema)
-                    .where(search)
-                    .prepare('countBrands')
-                    .execute()
+                    .where(and(...where))
             ])
 
-            const productCategoryBrands = await Promise.all(
-                data.map(async (item) => {
-                    const categories = await db
-                        .select({
-                            productCategory: {
-                                id: productCategorySchema.id,
-                                name: productCategorySchema.name
-                            }
-                        })
-                        .from(productCategoryBrandSchema)
-                        .leftJoin(
-                            productCategorySchema,
-                            eq(productCategoryBrandSchema.product_category_id, productCategorySchema.id)
-                        )
-                        .where(
-                            and(
-                                eq(productCategoryBrandSchema.product_brand_id, item.id),
-                                eq(productCategorySchema.deleted_flg, false)
-                            )
-                        )
-                    return {
-                        ...item,
-                        productCategoryBrand: categories.map((categoryItem) => categoryItem.productCategory)
-                    }
-                })
-            )
-
-            return { data: productCategoryBrands, aggregations: aggregations[0].value }
+            return {
+                data: data.map((_data) => ({
+                    ..._data,
+                    productCategoryBrand: _data.productCategoryBrand.map((_product) => _product.productCategory)
+                })),
+                aggregations: aggregations.value
+            }
         } catch (error) {
             handleDatabaseError(error)
         }

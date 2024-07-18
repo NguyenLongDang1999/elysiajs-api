@@ -1,4 +1,5 @@
 // ** Drizzle Imports
+import { relations } from 'drizzle-orm'
 import { boolean, decimal, integer, json, pgTable, smallint, text, timestamp } from 'drizzle-orm/pg-core'
 
 // ** Third Party Imports
@@ -113,3 +114,15 @@ export const productRelationsSchema = pgTable('product-relations', {
         .references(() => productSchema.id),
     relation_type: smallint('relation_type')
 })
+
+// ** Relations
+export const productRelations = relations(productSchema, ({ one }) => ({
+    productCategory: one(productCategorySchema, {
+        fields: [productSchema.product_category_id],
+        references: [productCategorySchema.id]
+    }),
+    productBrand: one(productBrandSchema, {
+        fields: [productSchema.product_brand_id],
+        references: [productBrandSchema.id]
+    })
+}))

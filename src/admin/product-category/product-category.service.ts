@@ -11,7 +11,6 @@ import { IProductCategoryDTO, IProductCategorySearchDTO } from './product-catego
 
 // ** Drizzle Imports
 import { and, count, desc, eq, ilike, isNull } from 'drizzle-orm'
-import { alias } from 'drizzle-orm/pg-core'
 
 // ** Utils Imports
 import { createRedisKey, slugTimestamp } from '@src/utils'
@@ -35,38 +34,54 @@ export class ProductCategoryService {
                 where.push(eq(productCategorySchema.status, Number(query.status)))
             }
 
-            const parentCategory = alias(productCategorySchema, 'parentCategory')
-
-            const data = await db
-                .select({
-                    id: productCategorySchema.id,
-                    name: productCategorySchema.name,
-                    status: productCategorySchema.status,
-                    image_uri: productCategorySchema.image_uri,
-                    created_at: productCategorySchema.created_at,
-                    parentCategory: {
-                        id: parentCategory.id,
-                        name: parentCategory.name,
-                        image_uri: parentCategory.image_uri
+            const [data, [aggregations]] = await Promise.all([
+                db.query.productCategorySchema.findMany({
+                    offset: query.page,
+                    limit: query.pageSize,
+                    orderBy: (productCategory, { desc }) => [desc(productCategory.created_at)],
+                    where: and(...where),
+                    columns: {
+                        id: true,
+                        name: true,
+                        status: true,
+                        image_uri: true,
+                        created_at: true
+                    },
+                    with: {
+                        product: {
+                            where: (product, { eq }) => eq(product.deleted_flg, false),
+                            columns: {
+                                id: true
+                            }
+                        },
+                        parentCategory: {
+                            with: {
+                                product: {
+                                    where: (product, { eq }) => eq(product.deleted_flg, false),
+                                    columns: {
+                                        id: true
+                                    }
+                                }
+                            },
+                            columns: {
+                                id: true,
+                                name: true,
+                                image_uri: true
+                            }
+                        }
                     }
-                })
-                .from(productCategorySchema)
-                .leftJoin(parentCategory, eq(parentCategory.id, productCategorySchema.parent_id))
-                .where(and(...where))
-                .orderBy(desc(productCategorySchema.created_at))
-                .limit(Number(query.pageSize))
-                .offset(Number(query.page))
-
-            const aggregations = await db
-                .select({
-                    value: count(productCategorySchema.id)
-                })
-                .from(productCategorySchema)
-                .where(and(...where))
+                }),
+                db
+                    .select({
+                        value: count(productCategorySchema.id)
+                    })
+                    .from(productCategorySchema)
+                    .where(and(...where))
+            ])
 
             return {
                 data,
-                aggregations: aggregations[0].value
+                aggregations: aggregations.value
             }
         } catch (error) {
             handleDatabaseError(error)
