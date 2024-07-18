@@ -1,8 +1,12 @@
+// ** Elysia Imports
+import { RedisClientType } from '@atakan75/elysia-redis'
+
 // ** Database Imports
 import { productCategorySchema } from '@db/schema/product-category'
 import { db } from '@src/database/drizzle'
 
 // ** Types Imports
+import { IDeleteDTO } from '@src/types/core.type'
 import { IProductCategoryDTO, IProductCategorySearchDTO } from './product-category.type'
 
 // ** Drizzle Imports
@@ -13,10 +17,6 @@ import { alias } from 'drizzle-orm/pg-core'
 import { createRedisKey, slugTimestamp } from '@src/utils'
 import { EXPIRES_AT, REDIS_KEY } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
-
-// ** Types Imports
-import { RedisClientType } from '@atakan75/elysia-redis'
-import { IDeleteDTO } from '@src/types/core.type'
 
 export class ProductCategoryService {
     async getTableList(query: IProductCategorySearchDTO) {

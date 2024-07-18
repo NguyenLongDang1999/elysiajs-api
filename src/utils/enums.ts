@@ -10,9 +10,17 @@ export enum JWT {
 }
 
 export enum REDIS_KEY {
-    PRODUCT_CATEGORY = 'product_category'
+    PRODUCT_CATEGORY = 'product_category',
+    SYSTEM_SETTINGS = 'system_settings'
 }
 
 export enum EXPIRES_AT {
     REDIS_EXPIRES_AT = 60 * 60
+}
+
+export enum INPUT_TYPE {
+    TEXT = 10,
+    TEXTAREA = 20,
+    SELECT = 30,
+    UPLOAD = 40
 }

@@ -7,6 +7,7 @@ import { fileManagerController } from './file-manager/file-manager.controller'
 import { productAttributeController } from './product-attribute/product-attribute.controller'
 import { productBrandController } from './product-brand/product-brand.controller'
 import { productCategoryController } from './product-category/product-category.controller'
+import { systemSettingsController } from './system-settings/system-settings.controller'
 
 // ** Plugins Imports
 import { authPlugin } from './plugins/auth'
@@ -17,4 +18,5 @@ export const admin = new Elysia({ prefix: '/admin' })
     .use(productBrandController)
     .use(productAttributeController)
     .use(fileManagerController)
+    .use(systemSettingsController)
     .use(authController)
