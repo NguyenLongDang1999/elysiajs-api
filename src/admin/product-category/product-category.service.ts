@@ -10,7 +10,7 @@ import { IDeleteDTO } from '@src/types/core.type'
 import { IProductCategoryDTO, IProductCategorySearchDTO } from './product-category.type'
 
 // ** Drizzle Imports
-import { and, count, desc, eq, ilike, isNull } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, isNull, SQL } from 'drizzle-orm'
 
 // ** Utils Imports
 import { createRedisKey, slugTimestamp } from '@src/utils'
@@ -20,7 +20,7 @@ import { handleDatabaseError } from '@utils/error-handling'
 export class ProductCategoryService {
     async getTableList(query: IProductCategorySearchDTO) {
         try {
-            const where = [eq(productCategorySchema.deleted_flg, false)]
+            const where: SQL[] = [eq(productCategorySchema.deleted_flg, false)]
 
             if (query.name) {
                 where.push(ilike(productCategorySchema.name, `%${query.name}%`))
