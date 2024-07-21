@@ -15,7 +15,6 @@ export const productBrandController = new Elysia({ prefix: '/product-brands' })
     .get('/', ({ ProductBrandService, query }) => ProductBrandService.getTableList(query), {
         query: 'productBrandSearch'
     })
-    .get('data-list', ({ ProductBrandService }) => ProductBrandService.getDataList())
     .get('/:id', ({ ProductBrandService, params }) => ProductBrandService.retrieve(params.id))
     .post('/', ({ ProductBrandService, body }) => ProductBrandService.create(body), { body: 'productBrand' })
     .patch('/:id', ({ ProductBrandService, body, params }) => ProductBrandService.update(params.id, body), {

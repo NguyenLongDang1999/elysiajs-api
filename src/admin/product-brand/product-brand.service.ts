@@ -6,7 +6,7 @@ import { db } from '@src/database/drizzle'
 import { IProductBrandDTO, IProductBrandSearchDTO } from './product-brand.type'
 
 // ** Drizzle Imports
-import { and, count, desc, eq, ilike, inArray, isNull, SQL } from 'drizzle-orm'
+import { and, count, eq, ilike, inArray, SQL } from 'drizzle-orm'
 
 // ** Utils Imports
 import { slugTimestamp } from '@src/utils'
@@ -116,8 +116,23 @@ export class ProductBrandService {
 
     async update(id: string, data: IProductBrandDTO) {
         try {
-            return await db.update(productBrandSchema).set(data).where(eq(productBrandSchema.id, id)).returning({
-                id: productBrandSchema.id
+            return await db.transaction(async (tx) => {
+                const [productBrand] = await tx
+                    .update(productBrandSchema)
+                    .set(data)
+                    .where(eq(productBrandSchema.id, id))
+                    .returning({ id: productBrandSchema.id })
+
+                await tx.delete(productCategoryBrandSchema).where(eq(productBrandSchema.id, id))
+
+                const productCategoryBrands = data.product_category_id.map((product_category_id) => ({
+                    product_brand_id: productBrand.id,
+                    product_category_id
+                }))
+
+                await tx.insert(productCategoryBrandSchema).values(productCategoryBrands)
+
+                return productBrand
             })
         } catch (error) {
             handleDatabaseError(error)
@@ -182,58 +197,5 @@ export class ProductBrandService {
         } catch (error) {
             handleDatabaseError(error)
         }
-    }
-
-    async getDataList() {
-        try {
-            const categoryList = await db.query.productBrandSchema.findMany({
-                orderBy: desc(productBrandSchema.created_at),
-                where: (_productBrand, { and }) =>
-                    and(eq(productBrandSchema.deleted_flg, false), isNull(productBrandSchema.id)),
-                columns: {
-                    id: true,
-                    name: true
-                }
-            })
-
-            const categoryNested = []
-
-            for (const category of categoryList) {
-                const categories = await this.renderTree(category.id, 1)
-                categoryNested.push(category, ...categories)
-            }
-
-            return categoryNested
-        } catch (error) {
-            handleDatabaseError(error)
-        }
-    }
-
-    async renderTree(parent_id: string, level: number) {
-        const categories = await db.query.productBrandSchema.findMany({
-            where: (_productBrand, { and }) =>
-                and(eq(productBrandSchema.deleted_flg, false), eq(productBrandSchema.id, parent_id)),
-            columns: {
-                id: true,
-                name: true
-            }
-        })
-
-        const customLevelName = '|--- '.repeat(level)
-
-        let categoryNested: {
-            id: string
-            name: string
-        }[] = []
-
-        for (const category of categories) {
-            const name = customLevelName + category.name
-            categoryNested.push({ ...category, name: name })
-
-            const children = await this.renderTree(category.id, level + 1)
-            categoryNested = [...categoryNested, ...children]
-        }
-
-        return categoryNested
     }
 }
