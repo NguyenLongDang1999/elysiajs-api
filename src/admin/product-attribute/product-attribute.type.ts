@@ -13,6 +13,7 @@ export const productAttributeType = t.Object({
     }),
     product_attribute_values: t.Array(
         t.Object({
+            id: t.String(),
             value: t.String()
         }),
         { minItems: 1 }

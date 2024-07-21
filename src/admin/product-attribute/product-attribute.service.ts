@@ -127,15 +127,67 @@ export class ProductAttributeService {
         }
     }
 
-    // async update(id: string, data: IProductAttributeDTO) {
-    //     try {
-    //         return await db.update(productAttributeSchema).set(data).where(eq(productAttributeSchema.id, id)).returning({
-    //             id: productAttributeSchema.id
-    //         })
-    //     } catch (error) {
-    //         handleDatabaseError(error)
-    //     }
-    // }
+    async update(id: string, data: IProductAttributeDTO) {
+        try {
+            return await db.transaction(async (tx) => {
+                const [productAttribute] = await tx
+                    .update(productAttributeSchema)
+                    .set(data)
+                    .where(eq(productAttributeSchema.id, id))
+                    .returning({ id: productAttributeSchema.id })
+
+                await tx.delete(productCategoryAttributeSchema).where(eq(productCategoryAttributeSchema.product_attribute_id, id))
+
+                const productCategoryAttributes = data.product_category_id.map((product_category_id) => ({
+                    product_attribute_id: productAttribute.id,
+                    product_category_id
+                }))
+
+                await tx.insert(productCategoryAttributeSchema).values(productCategoryAttributes)
+
+                const existingOptions = await db.query.productAttributeValuesSchema.findMany({
+                    where: and(eq(productAttributeValuesSchema.product_attribute_id, id)),
+                })
+
+                const existingOptionsMap = new Map(existingOptions.map((option) => [option.id, option]))
+
+                for (const option of data.product_attribute_values) {
+                    const existingOption = existingOptionsMap.get(option.id)
+
+                    if (existingOption) {
+                        await tx
+                            .update(productAttributeValuesSchema)
+                            .set({
+                                value: option.value
+                            })
+                            .where(eq(productAttributeValuesSchema.id, existingOption.id))
+                            .returning({ id: productAttributeValuesSchema.id })
+
+                        existingOptionsMap.delete(option.id)
+                    } else {
+                        await tx.insert(productAttributeValuesSchema).values({
+                            value: option.value,
+                            product_attribute_id: id
+                        })
+                    }
+                }
+
+                if (existingOptionsMap.size > 0) {
+                    await tx.delete(productAttributeValuesSchema)
+                        .where(
+                            inArray(
+                                productAttributeValuesSchema.id,
+                                Array.from(existingOptionsMap.keys())
+                            )
+                        )
+                }
+
+                return productAttribute
+            })
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
 
     async retrieve(id: string) {
         try {
