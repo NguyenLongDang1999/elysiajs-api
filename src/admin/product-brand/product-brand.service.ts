@@ -49,6 +49,7 @@ export class ProductBrandService {
                     columns: {
                         id: true,
                         name: true,
+                        slug: true,
                         status: true,
                         image_uri: true,
                         created_at: true
@@ -186,7 +187,7 @@ export class ProductBrandService {
                 return await db
                     .update(productBrandSchema)
                     .set({
-                        deleted_flg: false,
+                        deleted_flg: true,
                         slug: slugTimestamp(query.slug!)
                     })
                     .where(eq(productBrandSchema.id, id))

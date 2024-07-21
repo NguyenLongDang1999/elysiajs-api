@@ -43,6 +43,7 @@ export class ProductCategoryService {
                     columns: {
                         id: true,
                         name: true,
+                        slug: true,
                         status: true,
                         image_uri: true,
                         created_at: true
@@ -164,7 +165,7 @@ export class ProductCategoryService {
                 await db
                     .update(productCategorySchema)
                     .set({
-                        deleted_flg: false,
+                        deleted_flg: true,
                         slug: slugTimestamp(query.slug!)
                     })
                     .where(eq(productCategorySchema.id, id))
@@ -206,8 +207,6 @@ export class ProductCategoryService {
                 const categories = await this.renderTree(category.id, 1)
                 categoryNested.push(category, ...categories)
             }
-
-            console.log(categoryNested);
 
             await redis.set(
                 createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'),
