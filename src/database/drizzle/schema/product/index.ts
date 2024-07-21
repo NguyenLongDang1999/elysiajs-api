@@ -116,7 +116,7 @@ export const productRelationsSchema = pgTable('product-relations', {
 })
 
 // ** Relations
-export const productRelations = relations(productSchema, ({ one }) => ({
+export const productRelations = relations(productSchema, ({ one, many }) => ({
     productCategory: one(productCategorySchema, {
         fields: [productSchema.product_category_id],
         references: [productCategorySchema.id]
@@ -124,5 +124,11 @@ export const productRelations = relations(productSchema, ({ one }) => ({
     productBrand: one(productBrandSchema, {
         fields: [productSchema.product_brand_id],
         references: [productBrandSchema.id]
-    })
+    }),
+    productImages: many(productImagesSchema),
+    productVariants: many(productVariantsSchema),
+}))
+
+export const productVariantsRelations = relations(productVariantsSchema, ({ one, many }) => ({
+
 }))
