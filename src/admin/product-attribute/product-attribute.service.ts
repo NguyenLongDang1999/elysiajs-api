@@ -13,9 +13,11 @@ import { IProductAttributeDTO, IProductAttributeSearchDTO } from './product-attr
 import { and, count, eq, ilike, inArray, SQL } from 'drizzle-orm'
 
 // ** Utils Imports
+import { slugTimestamp } from '@src/utils'
 import { handleDatabaseError } from '@utils/error-handling'
 
 // ** Types Imports
+import { IDeleteDTO } from '@src/types/core.type'
 
 export class ProductAttributeService {
     async getTableList(query: IProductAttributeSearchDTO) {
@@ -51,6 +53,7 @@ export class ProductAttributeService {
                     columns: {
                         id: true,
                         name: true,
+                        slug: true,
                         status: true,
                         created_at: true
                     },
@@ -227,24 +230,24 @@ export class ProductAttributeService {
         }
     }
 
-    // async delete(id: string, query: IDeleteDTO) {
-    //     try {
-    //         if (query.force) {
-    //             return db.delete(productAttributeSchema).where(eq(productAttributeSchema.id, id))
-    //         } else {
-    //             return await db
-    //                 .update(productAttributeSchema)
-    //                 .set({
-    //                     deleted_flg: false,
-    //                     slug: slugTimestamp(query.slug!)
-    //                 })
-    //                 .where(eq(productAttributeSchema.id, id))
-    //                 .returning({
-    //                     id: productAttributeSchema.id
-    //                 })
-    //         }
-    //     } catch (error) {
-    //         handleDatabaseError(error)
-    //     }
-    // }
+    async delete(id: string, query: IDeleteDTO) {
+        try {
+            if (query.force) {
+                return db.delete(productAttributeSchema).where(eq(productAttributeSchema.id, id))
+            } else {
+                return await db
+                    .update(productAttributeSchema)
+                    .set({
+                        deleted_flg: true,
+                        slug: slugTimestamp(query.slug!)
+                    })
+                    .where(eq(productAttributeSchema.id, id))
+                    .returning({
+                        id: productAttributeSchema.id
+                    })
+            }
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
 }

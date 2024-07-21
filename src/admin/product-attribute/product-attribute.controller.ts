@@ -22,6 +22,6 @@ export const productAttributeController = new Elysia({ prefix: '/product-attribu
     .patch('/:id', ({ ProductAttributeService, body, params }) => ProductAttributeService.update(params.id, body), {
         body: 'productAttribute'
     })
-// .delete('/:id', ({ ProductAttributeService, query, params }) => ProductAttributeService.delete(params.id, query), {
-//     query: 'productAttributeDelete'
-// })
+    .delete('/:id', ({ ProductAttributeService, query, params }) => ProductAttributeService.delete(params.id, query), {
+        query: 'productAttributeDelete'
+    })
