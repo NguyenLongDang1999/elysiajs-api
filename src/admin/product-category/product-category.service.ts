@@ -145,7 +145,7 @@ export class ProductCategoryService {
             })
 
             await redis.set(
-                createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'),
+                createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, id),
                 JSON.stringify(productCategory),
                 EXPIRES_AT.REDIS_EXPIRES_AT
             )
@@ -206,6 +206,8 @@ export class ProductCategoryService {
                 const categories = await this.renderTree(category.id, 1)
                 categoryNested.push(category, ...categories)
             }
+
+            console.log(categoryNested);
 
             await redis.set(
                 createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'),
