@@ -123,7 +123,7 @@ export class ProductBrandService {
                     .where(eq(productBrandSchema.id, id))
                     .returning({ id: productBrandSchema.id })
 
-                await tx.delete(productCategoryBrandSchema).where(eq(productBrandSchema.id, id))
+                await tx.delete(productCategoryBrandSchema).where(eq(productCategoryBrandSchema.product_brand_id, id))
 
                 const productCategoryBrands = data.product_category_id.map((product_category_id) => ({
                     product_brand_id: productBrand.id,
