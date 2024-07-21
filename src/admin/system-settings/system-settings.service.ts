@@ -13,7 +13,7 @@ import { and, desc, eq, ilike } from 'drizzle-orm'
 // ** Utils Imports
 import { systemSettingOptionsSchema, systemSettingsSchema } from '@src/database/drizzle/schema'
 import { createRedisKey } from '@src/utils'
-import { EXPIRES_AT, INPUT_TYPE, REDIS_KEY } from '@src/utils/enums'
+import { EXPIRES_AT, REDIS_KEY } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class SystemSettingsService {
@@ -82,26 +82,26 @@ export class SystemSettingsService {
             const theme_colour = systemSettings?.find((_s) => _s.key === 'system_theme_colour')
 
             if (!theme_colour) {
-                const systemSetting = await db
-                    .insert(systemSettingsSchema)
-                    .values({
-                        key: 'system_theme_colour',
-                        value: 'blue',
-                        label: 'Màu chủ đạo của Website',
-                        input_type: INPUT_TYPE.SELECT
-                    })
-                    .returning({
-                        id: systemSettingsSchema.id
-                    })
+                // const systemSetting = await db
+                //     .insert(systemSettingsSchema)
+                //     .values({
+                //         key: 'system_theme_colour',
+                //         value: 'blue',
+                //         label: 'Màu chủ đạo của Website',
+                //         input_type: INPUT_TYPE.SELECT
+                //     })
+                //     .returning({
+                //         id: systemSettingsSchema.id
+                //     })
 
-                await db
-                    .insert(systemSettingOptionsSchema)
-                    .values({
-                        key: 'blue',
-                        displayValue: 'Blue',
-                        system_setting_id: systemSetting[0].id
-                    })
-                    .returning()
+                // await db
+                //     .insert(systemSettingOptionsSchema)
+                //     .values({
+                //         key: 'blue',
+                //         displayValue: 'Blue',
+                //         system_setting_id: systemSetting[0].id
+                //     })
+                //     .returning()
             }
 
             return {

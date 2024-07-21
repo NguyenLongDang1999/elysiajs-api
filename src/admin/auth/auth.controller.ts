@@ -61,7 +61,7 @@ export const authController = new Elysia({ prefix: '/auth' })
         }
     )
     .get('refresh', async ({ AuthService, jwt, error, cookie }) => {
-        if (!cookie.refreshTokenAdmin) throw error('Forbidden')
+        if (!cookie.refreshTokenAdmin.value) throw error('Forbidden')
 
         const jwtPayload = await jwt.verify(cookie.refreshTokenAdmin.value)
 
