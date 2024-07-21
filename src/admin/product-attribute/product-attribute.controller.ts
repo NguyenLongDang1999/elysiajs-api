@@ -15,7 +15,7 @@ export const productAttributeController = new Elysia({ prefix: '/product-attribu
     .get('/', ({ ProductAttributeService, query }) => ProductAttributeService.getTableList(query), {
         query: 'productAttributeSearch'
     })
-    // .get('/:id', ({ ProductAttributeService, params }) => ProductAttributeService.retrieve(params.id))
+    .get('/:id', ({ ProductAttributeService, params }) => ProductAttributeService.retrieve(params.id))
     .post('/', ({ ProductAttributeService, body }) => ProductAttributeService.create(body), {
         body: 'productAttribute'
     })

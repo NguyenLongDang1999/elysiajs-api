@@ -102,19 +102,23 @@ export class ProductAttributeService {
                     .values(data)
                     .returning({ id: productAttributeSchema.id })
 
-                await tx.insert(productCategoryAttributeSchema).values(
-                    data.product_category_id.map((product_category_id) => ({
-                        product_attribute_id: productAttribute.id,
-                        product_category_id
-                    }))
-                )
+                if (data.product_category_id.length) {
+                    await tx.insert(productCategoryAttributeSchema).values(
+                        data.product_category_id.map((product_category_id) => ({
+                            product_attribute_id: productAttribute.id,
+                            product_category_id
+                        }))
+                    )
+                }
 
-                await tx.insert(productAttributeValuesSchema).values(
-                    data.product_attribute_values.map((value) => ({
-                        product_attribute_id: productAttribute.id,
-                        value: value.value
-                    }))
-                )
+                if (data.product_attribute_values.length) {
+                    await tx.insert(productAttributeValuesSchema).values(
+                        data.product_attribute_values.map((value) => ({
+                            product_attribute_id: productAttribute.id,
+                            value: value.value
+                        }))
+                    )
+                }
 
                 return productAttribute
             })
@@ -133,45 +137,43 @@ export class ProductAttributeService {
     //     }
     // }
 
-    // async retrieve(id: string) {
-    //     try {
-    //         const productAttributeResult = await db
-    //             .select({
-    //                 id: productAttributeSchema.id,
-    //                 name: productAttributeSchema.name,
-    //                 slug: productAttributeSchema.slug,
-    //                 status: productAttributeSchema.status,
-    //                 image_uri: productAttributeSchema.image_uri,
-    //                 description: productAttributeSchema.description
-    //             })
-    //             .from(productAttributeSchema)
-    //             .where(and(eq(productAttributeSchema.id, id), eq(productAttributeSchema.deleted_flg, false)))
-    //             .limit(1);
+    async retrieve(id: string) {
+        try {
+            const productAttribute = await db.query.productAttributeSchema.findFirst({
+                where: and(eq(productAttributeSchema.id, id), eq(productAttributeSchema.deleted_flg, false)),
+                columns: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    status: true,
+                    description: true,
+                },
+                with: {
+                    productAttributeValues: {
+                        columns: {
+                            id: true,
+                            value: true
+                        }
+                    },
+                    productCategoryAttributes: {
+                        columns: {
+                            product_category_id: true
+                        }
+                    }
+                }
+            })
 
-    //         if (productAttributeResult.length === 0) {
-    //             return null;
-    //         }
-
-    //         const productAttribute = productAttributeResult[0];
-
-    //         const categoryIdsResult = await db
-    //             .select({
-    //                 product_category_id: productCategoryBrandSchema.product_category_id
-    //             })
-    //             .from(productCategoryBrandSchema)
-    //             .where(eq(productCategoryBrandSchema.product_brand_id, productAttribute.id));
-
-    //         const product_category_id = categoryIdsResult.map(row => row.product_category_id);
-
-    //         return {
-    //             ...productAttribute,
-    //             product_category_id
-    //         };
-
-    //     } catch (error) {
-    //         handleDatabaseError(error)
-    //     }
-    // }
+            return {
+                ...productAttribute,
+                product_category_id: productAttribute?.productCategoryAttributes.map(
+                    ({ product_category_id }) => product_category_id,
+                ),
+                product_attribute_values: productAttribute?.productAttributeValues.map((valueItem) => valueItem),
+            }
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
 
     // async delete(id: string, query: IDeleteDTO) {
     //     try {
