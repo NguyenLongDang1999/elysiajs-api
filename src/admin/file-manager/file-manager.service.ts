@@ -1,12 +1,8 @@
 // ** Database Imports
-import { db } from '@src/database/drizzle'
-import { systemSettingOptionsSchema, systemSettingsSchema } from '@src/database/drizzle/schema'
+import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
 import { IFileManagerDTO, IFileManagerSearchDTO, IFileManagerUploadDTO } from './file-manager.type'
-
-// ** Drizzle Imports
-import { and, eq, ilike } from 'drizzle-orm'
 
 // ** Utils Imports
 import { handleDatabaseError } from '@utils/error-handling'
@@ -87,25 +83,18 @@ export class FileManagerService {
 
     private async systemSettingBunnyCDN(key: string) {
         try {
-            const systemSetting = await db
-                .select({
-                    id: systemSettingsSchema.id,
-                    key: systemSettingsSchema.key,
-                    label: systemSettingsSchema.label,
-                    value: systemSettingsSchema.value,
-                    input_type: systemSettingsSchema.input_type
-                })
-                .from(systemSettingsSchema)
-                .where(
-                    and(
-                        eq(systemSettingsSchema.deleted_flg, false),
-                        ilike(systemSettingsSchema.key, `secret_key_bunnycdn_${key}`)
-                    )
-                )
-                .leftJoin(
-                    systemSettingOptionsSchema,
-                    eq(systemSettingOptionsSchema.system_setting_id, systemSettingsSchema.id)
-                )
+            const systemSetting = await prismaClient.systemSettings.findMany({
+                orderBy: { created_at: 'desc' },
+                where: {
+                    deleted_flg: false,
+                    key: {
+                        startsWith: 'secret_key_bunnycdn_'
+                    }
+                },
+                include: {
+                    systemSettingOptions: true
+                }
+            })
 
             return systemSetting.find((_s) => _s.key.endsWith(key))
         } catch (error) {

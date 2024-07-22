@@ -1,72 +1,66 @@
-// ** Database Imports
-import {
-    productAttributeSchema,
-    productAttributeValuesSchema,
-    productCategoryAttributeSchema
-} from '@db/schema/product-attributes'
-import { db } from '@src/database/drizzle'
+// ** Prisma Imports
+import { Prisma } from '@prisma/client'
+import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
+import { IDeleteDTO } from '@src/types/core.type'
 import { IProductAttributeDTO, IProductAttributeSearchDTO } from './product-attribute.type'
-
-// ** Drizzle Imports
-import { and, count, eq, ilike, inArray, SQL } from 'drizzle-orm'
 
 // ** Utils Imports
 import { slugTimestamp } from '@src/utils'
 import { handleDatabaseError } from '@utils/error-handling'
 
-// ** Types Imports
-import { IDeleteDTO } from '@src/types/core.type'
-
 export class ProductAttributeService {
     async getTableList(query: IProductAttributeSearchDTO) {
         try {
-            const where: SQL[] = [eq(productAttributeSchema.deleted_flg, false)]
+            const take = Number(query.pageSize) || undefined
+            const skip = Number(query.page) || undefined
 
-            if (query.name) {
-                where.push(ilike(productAttributeSchema.name, `%${query.name}%`))
+            const search: Prisma.ProductAttributeWhereInput = {
+                deleted_flg: false,
+                name: {
+                    contains: query.name || undefined,
+                    mode: 'insensitive'
+                },
+                status: {
+                    equals: Number(query.status) || undefined
+                },
+                productCategoryAttributes: query.product_category_id
+                    ? {
+                          some: {
+                              product_category_id: { equals: query.product_category_id }
+                          }
+                      }
+                    : undefined
             }
 
-            if (query.product_category_id) {
-                where.push(
-                    inArray(
-                        productAttributeSchema.id,
-                        db
-                            .select({ product_attribute_id: productCategoryAttributeSchema.product_attribute_id })
-                            .from(productCategoryAttributeSchema)
-                            .where(eq(productCategoryAttributeSchema.product_category_id, query.product_category_id))
-                    )
-                )
-            }
-
-            if (query.status) {
-                where.push(eq(productAttributeSchema.status, Number(query.status)))
-            }
-
-            const [data, [aggregations]] = await Promise.all([
-                db.query.productAttributeSchema.findMany({
-                    offset: query.page,
-                    limit: query.pageSize,
-                    orderBy: (productAttribute, { desc }) => [desc(productAttribute.created_at)],
-                    where: and(...where),
-                    columns: {
+            const [data, count] = await Promise.all([
+                prismaClient.productAttribute.findMany({
+                    take,
+                    skip,
+                    orderBy: { created_at: 'desc' },
+                    where: search,
+                    select: {
                         id: true,
-                        name: true,
                         slug: true,
+                        name: true,
                         status: true,
-                        created_at: true
-                    },
-                    with: {
+                        created_at: true,
                         productAttributeValues: {
-                            columns: {
-                                id: true
+                            where: {
+                                deleted_flg: false
+                            },
+                            select: {
+                                _count: true
                             }
                         },
                         productCategoryAttributes: {
-                            with: {
+                            where: {
+                                productCategory: { deleted_flg: false }
+                            },
+                            select: {
                                 productCategory: {
-                                    columns: {
+                                    select: {
                                         id: true,
                                         name: true
                                     }
@@ -75,22 +69,21 @@ export class ProductAttributeService {
                         }
                     }
                 }),
-                db
-                    .select({
-                        value: count(productAttributeSchema.id)
-                    })
-                    .from(productAttributeSchema)
-                    .where(and(...where))
+                prismaClient.productAttribute.count({
+                    where: search
+                })
             ])
 
             return {
-                data: data.map((_data) => ({
-                    ..._data,
-                    productCategoryAttributes: _data.productCategoryAttributes.map(
-                        (_product) => _product.productCategory
-                    )
-                })),
-                aggregations: aggregations.value
+                data: data.map((item) => {
+                    return {
+                        ...item,
+                        productCategoryAttributes: item.productCategoryAttributes.map(
+                            (categoryItem) => categoryItem.productCategory
+                        )
+                    }
+                }),
+                aggregations: count
             }
         } catch (error) {
             handleDatabaseError(error)
@@ -99,31 +92,31 @@ export class ProductAttributeService {
 
     async create(data: IProductAttributeDTO) {
         try {
-            return await db.transaction(async (tx) => {
-                const [productAttribute] = await tx
-                    .insert(productAttributeSchema)
-                    .values(data)
-                    .returning({ id: productAttributeSchema.id })
+            const { product_category_id, product_attribute_values, ...productAttributeData } = data
 
-                if (data.product_category_id.length) {
-                    await tx.insert(productCategoryAttributeSchema).values(
-                        data.product_category_id.map((product_category_id) => ({
-                            product_attribute_id: productAttribute.id,
-                            product_category_id
-                        }))
-                    )
-                }
-
-                if (data.product_attribute_values.length) {
-                    await tx.insert(productAttributeValuesSchema).values(
-                        data.product_attribute_values.map((value) => ({
-                            product_attribute_id: productAttribute.id,
-                            value: value.value
-                        }))
-                    )
-                }
-
-                return productAttribute
+            return await prismaClient.$transaction(async (prisma) => {
+                return await prisma.productAttribute.create({
+                    data: {
+                        ...productAttributeData,
+                        productCategoryAttributes: {
+                            createMany: {
+                                data: product_category_id.map((categoryItem) => ({
+                                    product_category_id: categoryItem
+                                })),
+                                skipDuplicates: true
+                            }
+                        },
+                        productAttributeValues: {
+                            createMany: {
+                                data: product_attribute_values.map((valueItem) => ({
+                                    value: valueItem.value
+                                })),
+                                skipDuplicates: true
+                            }
+                        }
+                    },
+                    select: { id: true }
+                })
             })
         } catch (error) {
             handleDatabaseError(error)
@@ -132,58 +125,62 @@ export class ProductAttributeService {
 
     async update(id: string, data: IProductAttributeDTO) {
         try {
-            return await db.transaction(async (tx) => {
-                const [productAttribute] = await tx
-                    .update(productAttributeSchema)
-                    .set(data)
-                    .where(eq(productAttributeSchema.id, id))
-                    .returning({ id: productAttributeSchema.id })
+            const { product_category_id, product_attribute_values, ...productAttributeData } = data
 
-                await tx
-                    .delete(productCategoryAttributeSchema)
-                    .where(eq(productCategoryAttributeSchema.product_attribute_id, id))
+            return await prismaClient.$transaction(async (prisma) => {
+                const updatedProductAttribute = await prisma.productAttribute.update({
+                    where: { id },
+                    data: {
+                        ...productAttributeData,
+                        productCategoryAttributes: {
+                            deleteMany: {},
+                            createMany: {
+                                data: product_category_id.map((categoryItem) => ({
+                                    product_category_id: categoryItem
+                                })),
+                                skipDuplicates: true
+                            }
+                        }
+                    }
+                })
 
-                const productCategoryAttributes = data.product_category_id.map((product_category_id) => ({
-                    product_attribute_id: productAttribute.id,
-                    product_category_id
-                }))
-
-                await tx.insert(productCategoryAttributeSchema).values(productCategoryAttributes)
-
-                const existingOptions = await db.query.productAttributeValuesSchema.findMany({
-                    where: and(eq(productAttributeValuesSchema.product_attribute_id, id))
+                const existingOptions = await prisma.productAttributeValues.findMany({
+                    where: { product_attribute_id: id }
                 })
 
                 const existingOptionsMap = new Map(existingOptions.map((option) => [option.id, option]))
 
-                for (const option of data.product_attribute_values) {
+                for (const option of product_attribute_values) {
                     const existingOption = existingOptionsMap.get(option.id)
 
                     if (existingOption) {
-                        await tx
-                            .update(productAttributeValuesSchema)
-                            .set({
-                                value: option.value
-                            })
-                            .where(eq(productAttributeValuesSchema.id, existingOption.id))
-                            .returning({ id: productAttributeValuesSchema.id })
+                        await prisma.productAttributeValues.update({
+                            where: { id: existingOption.id },
+                            data: { value: option.value }
+                        })
 
                         existingOptionsMap.delete(option.id)
                     } else {
-                        await tx.insert(productAttributeValuesSchema).values({
-                            value: option.value,
-                            product_attribute_id: id
+                        await prisma.productAttributeValues.create({
+                            data: {
+                                value: option.value,
+                                product_attribute_id: id
+                            }
                         })
                     }
                 }
 
                 if (existingOptionsMap.size > 0) {
-                    await tx
-                        .delete(productAttributeValuesSchema)
-                        .where(inArray(productAttributeValuesSchema.id, Array.from(existingOptionsMap.keys())))
+                    await prisma.productAttributeValues.deleteMany({
+                        where: {
+                            id: {
+                                in: Array.from(existingOptionsMap.keys())
+                            }
+                        }
+                    })
                 }
 
-                return productAttribute
+                return updatedProductAttribute
             })
         } catch (error) {
             handleDatabaseError(error)
@@ -192,25 +189,25 @@ export class ProductAttributeService {
 
     async retrieve(id: string) {
         try {
-            const productAttribute = await db.query.productAttributeSchema.findFirst({
-                where: and(eq(productAttributeSchema.id, id), eq(productAttributeSchema.deleted_flg, false)),
-                columns: {
+            const productAttribute = await prismaClient.productAttribute.findFirst({
+                where: {
+                    id,
+                    deleted_flg: false
+                },
+                select: {
                     id: true,
                     name: true,
                     slug: true,
                     status: true,
-                    description: true
-                },
-                with: {
+                    description: true,
+                    productCategoryAttributes: {
+                        select: { product_category_id: true }
+                    },
                     productAttributeValues: {
-                        columns: {
+                        where: { deleted_flg: false },
+                        select: {
                             id: true,
                             value: true
-                        }
-                    },
-                    productCategoryAttributes: {
-                        columns: {
-                            product_category_id: true
                         }
                     }
                 }
@@ -221,7 +218,9 @@ export class ProductAttributeService {
                 product_category_id: productAttribute?.productCategoryAttributes.map(
                     ({ product_category_id }) => product_category_id
                 ),
-                product_attribute_values: productAttribute?.productAttributeValues.map((valueItem) => valueItem)
+                product_attribute_values: productAttribute?.productAttributeValues.map((valueItem) => valueItem),
+                productAttributeValues: undefined,
+                productCategoryAttributes: undefined
             }
         } catch (error) {
             handleDatabaseError(error)
@@ -231,19 +230,26 @@ export class ProductAttributeService {
     async delete(id: string, query: IDeleteDTO) {
         try {
             if (query.force) {
-                return db.delete(productAttributeSchema).where(eq(productAttributeSchema.id, id))
+                await prismaClient.productAttribute.delete({
+                    where: { id },
+                    select: {
+                        id: true
+                    }
+                })
             } else {
-                return await db
-                    .update(productAttributeSchema)
-                    .set({
+                await prismaClient.productAttribute.update({
+                    data: {
                         deleted_flg: true,
                         slug: slugTimestamp(query.slug!)
-                    })
-                    .where(eq(productAttributeSchema.id, id))
-                    .returning({
-                        id: productAttributeSchema.id
-                    })
+                    },
+                    where: { id },
+                    select: {
+                        id: true
+                    }
+                })
             }
+
+            return id
         } catch (error) {
             handleDatabaseError(error)
         }

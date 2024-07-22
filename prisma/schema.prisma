@@ -14,7 +14,7 @@ datasource db {
 }
 
 model ProductCategory {
-  id                        String                      @id @default(uuid())
+  id                        String                      @id @default(cuid())
   name                      String                      @db.VarChar
   slug                      String                      @unique @db.VarChar
   image_uri                 String?                     @db.VarChar
@@ -36,7 +36,7 @@ model ProductCategory {
 }
 
 model ProductBrand {
-  id                   String                 @id @default(uuid())
+  id                   String                 @id @default(cuid())
   name                 String                 @db.VarChar
   slug                 String                 @unique @db.VarChar
   image_uri            String?                @db.VarChar
@@ -61,7 +61,7 @@ model ProductCategoryBrand {
 }
 
 model ProductAttribute {
-  id                        String                      @id @default(uuid())
+  id                        String                      @id @default(cuid())
   name                      String                      @db.VarChar
   slug                      String                      @unique @db.VarChar
   description               String?                     @db.VarChar
@@ -76,7 +76,7 @@ model ProductAttribute {
 }
 
 model ProductAttributeValues {
-  id                            String                          @id @default(uuid())
+  id                            String                          @id @default(cuid())
   value                         String                          @db.VarChar
   product_attribute_id          String
   created_at                    DateTime                        @default(now())
@@ -96,7 +96,7 @@ model ProductCategoryAttributes {
 }
 
 model ProductCollection {
-  id                       String                     @id @default(uuid())
+  id                       String                     @id @default(cuid())
   title                    String                     @db.VarChar
   slug                     String                     @unique @db.VarChar
   status                   Int?                       @default(20) @db.SmallInt
@@ -118,7 +118,7 @@ model ProductCollectionProduct {
 }
 
 model Product {
-  id                       String                     @id @default(uuid())
+  id                       String                     @id @default(cuid())
   name                     String                     @db.VarChar
   slug                     String                     @unique @db.VarChar
   image_uri                String?                    @db.VarChar
@@ -148,7 +148,7 @@ model Product {
 }
 
 model ProductVariants {
-  id                            String                          @id @default(uuid())
+  id                            String                          @id @default(cuid())
   product_id                    String
   is_default                    Boolean                         @default(false) @db.Boolean
   label                         String?                         @db.VarChar
@@ -177,7 +177,7 @@ model ProductVariantAttributeValues {
 }
 
 model ProductImages {
-  id         String   @id @default(uuid())
+  id         String   @id @default(cuid())
   product_id String
   image_uri  String   @db.VarChar
   index      Int      @db.SmallInt
@@ -187,7 +187,7 @@ model ProductImages {
 }
 
 model ProductInventory {
-  id                           String                         @id @default(uuid())
+  id                           String                         @id @default(cuid())
   product_variant_id           String                         @unique
   quantity                     Int                            @db.Integer
   productVariants              ProductVariants                @relation(fields: [product_variant_id], references: [id], onDelete: Cascade)
@@ -195,7 +195,7 @@ model ProductInventory {
 }
 
 model ProductInventoryTransactions {
-  id                   String           @id @default(uuid())
+  id                   String           @id @default(cuid())
   admin_id             String?
   product_variant_id   String
   product_inventory_id String
@@ -208,7 +208,7 @@ model ProductInventoryTransactions {
 }
 
 model ProductRelations {
-  id                 String  @id @default(uuid())
+  id                 String  @id @default(cuid())
   product_id         String
   related_product_id String
   relation_type      Int     @db.SmallInt
@@ -217,7 +217,7 @@ model ProductRelations {
 }
 
 model FlashDeals {
-  id                String              @id @default(uuid())
+  id                String              @id @default(cuid())
   title             String              @db.VarChar
   slug              String              @unique @db.VarChar
   description       String?             @db.VarChar
@@ -244,7 +244,7 @@ model FlashDealProducts {
 }
 
 model Admins {
-  id                           String                         @id @default(uuid())
+  id                           String                         @id @default(cuid())
   name                         String                         @db.VarChar
   email                        String                         @unique @db.VarChar
   password                     String                         @db.VarChar
@@ -265,7 +265,7 @@ model Admins {
 }
 
 model SystemSettings {
-  id                   String                 @id @default(uuid())
+  id                   String                 @id @default(cuid())
   label                String                 @db.VarChar
   key                  String                 @unique @db.VarChar
   value                String?
@@ -279,7 +279,7 @@ model SystemSettings {
 }
 
 model SystemSettingOptions {
-  id                String         @id @default(uuid())
+  id                String         @id @default(cuid())
   system_setting_id String
   key               String         @db.VarChar
   displayValue      String         @db.VarChar

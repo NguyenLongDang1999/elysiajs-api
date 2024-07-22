@@ -1,24 +1,48 @@
 // ** Elysia Imports
 import { error } from 'elysia'
 
-// ** Database Imports
-import { db } from '@src/database/drizzle'
-import { adminsSchema } from '@src/database/drizzle/schema'
+// ** Prisma Imports
+import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
 import { IAuthSignInDTO } from './auth.type'
 
 // ** Drizzle Imports
-import { and, eq } from 'drizzle-orm'
 
 // ** Utils Imports
+import { HASH_PASSWORD } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class AuthService {
+    async seed() {
+        try {
+            await prismaClient.admins.deleteMany({
+                where: { email: 'longdang0412@gmail.com' }
+            })
+
+            const hashPassword = await Bun.password.hash('dang04121999', {
+                algorithm: HASH_PASSWORD.ALGORITHM
+            })
+
+            await prismaClient.admins.create({
+                data: {
+                    name: 'Administrator',
+                    email: 'longdang0412@gmail.com',
+                    phone: '0389747179',
+                    role: 10,
+                    password: hashPassword
+                }
+            })
+        } catch (error) {}
+    }
+
     async signIn(data: IAuthSignInDTO) {
-        const user = await db.query.adminsSchema.findFirst({
-            where: and(eq(adminsSchema.deleted_flg, false), eq(adminsSchema.email, data.email)),
-            columns: {
+        const user = await prismaClient.admins.findFirst({
+            where: {
+                email: data.email,
+                deleted_flg: false
+            },
+            select: {
                 id: true,
                 password: true
             }
@@ -26,7 +50,7 @@ export class AuthService {
 
         if (!user) throw error('Not Found')
 
-        const passwordMatches = await Bun.password.verify(data.password, user.password, 'argon2id')
+        const passwordMatches = await Bun.password.verify(data.password, user.password, HASH_PASSWORD.ALGORITHM)
 
         if (!passwordMatches) throw error('Bad Request')
 
@@ -35,7 +59,7 @@ export class AuthService {
 
     hashData(data: string) {
         return Bun.password.hash(data, {
-            algorithm: 'argon2id'
+            algorithm: HASH_PASSWORD.ALGORITHM
         })
     }
 
@@ -43,11 +67,13 @@ export class AuthService {
         try {
             const hashedRefreshToken = await this.hashData(refreshToken)
 
-            return await db
-                .update(adminsSchema)
-                .set({ refresh_token: hashedRefreshToken })
-                .where(eq(adminsSchema.id, userId))
-                .returning({ id: adminsSchema.id })
+            await prismaClient.admins.update({
+                where: { id: userId },
+                data: { refresh_token: hashedRefreshToken },
+                select: {
+                    id: true
+                }
+            })
         } catch (error) {
             handleDatabaseError(error)
         }
@@ -55,9 +81,9 @@ export class AuthService {
 
     async refreshTokens(id: string, refreshToken: string) {
         try {
-            const user = await db.query.adminsSchema.findFirst({
-                where: and(eq(adminsSchema.deleted_flg, false), eq(adminsSchema.id, id)),
-                columns: {
+            const user = await prismaClient.admins.findFirst({
+                where: { id },
+                select: {
                     id: true,
                     refresh_token: true
                 }
@@ -65,7 +91,11 @@ export class AuthService {
 
             if (!user || !user.refresh_token) throw error('Forbidden')
 
-            const refreshTokenMatches = await Bun.password.verify(refreshToken, user.refresh_token, 'argon2id')
+            const refreshTokenMatches = await Bun.password.verify(
+                refreshToken,
+                user.refresh_token,
+                HASH_PASSWORD.ALGORITHM
+            )
 
             if (!refreshTokenMatches) throw error('Forbidden')
 
@@ -77,21 +107,23 @@ export class AuthService {
 
     async signOut(userId: string) {
         try {
-            return await db
-                .update(adminsSchema)
-                .set({ refresh_token: null })
-                .where(eq(adminsSchema.id, userId))
-                .returning({ id: adminsSchema.id })
+            return await prismaClient.admins.update({
+                where: { id: userId },
+                data: { refresh_token: null },
+                select: {
+                    id: true
+                }
+            })
         } catch (error) {
             handleDatabaseError(error)
         }
     }
 
-    async profile(userId: string) {
+    async profile(id: string) {
         try {
-            return await db.query.adminsSchema.findFirst({
-                where: and(eq(adminsSchema.deleted_flg, false), eq(adminsSchema.id, userId)),
-                columns: {
+            return await prismaClient.admins.findFirst({
+                where: { id },
+                select: {
                     id: true,
                     name: true,
                     email: true,

@@ -1,6 +1,3 @@
-std:
-	bunx prisma studio
-
 migrate:
 	bun run migrate
 
@@ -12,3 +9,15 @@ ddb:
 
 format:
 	bun format && bun lint
+
+g:
+	bunx prisma generate
+
+db:
+	bunx prisma db push
+
+std:
+	bunx prisma studio
+
+seed:
+	bunx prisma db seed

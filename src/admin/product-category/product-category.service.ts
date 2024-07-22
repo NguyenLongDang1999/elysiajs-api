@@ -1,16 +1,13 @@
 // ** Elysia Imports
 import { RedisClientType } from '@atakan75/elysia-redis'
 
-// ** Database Imports
-import { productCategorySchema } from '@db/schema/product-category'
-import { db } from '@src/database/drizzle'
+// ** Prisma Imports
+import { Prisma } from '@prisma/client'
+import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
 import { IDeleteDTO } from '@src/types/core.type'
 import { IProductCategoryDTO, IProductCategorySearchDTO } from './product-category.type'
-
-// ** Drizzle Imports
-import { and, count, desc, eq, ilike, isNull, SQL } from 'drizzle-orm'
 
 // ** Utils Imports
 import { createRedisKey, slugTimestamp } from '@src/utils'
@@ -20,69 +17,74 @@ import { handleDatabaseError } from '@utils/error-handling'
 export class ProductCategoryService {
     async getTableList(query: IProductCategorySearchDTO) {
         try {
-            const where: SQL[] = [eq(productCategorySchema.deleted_flg, false)]
+            const take = Number(query.pageSize) || undefined
+            const skip = Number(query.page) || undefined
 
-            if (query.name) {
-                where.push(ilike(productCategorySchema.name, `%${query.name}%`))
+            const search: Prisma.ProductCategoryWhereInput = {
+                deleted_flg: false,
+                name: {
+                    contains: query.name || undefined,
+                    mode: 'insensitive'
+                },
+                parent_id: {
+                    equals: query.parent_id || undefined
+                },
+                status: {
+                    equals: query.status || undefined
+                },
+                productCategoryBrand: query.product_brand_id
+                    ? {
+                          some: {
+                              product_brand_id: { contains: query.product_brand_id }
+                          }
+                      }
+                    : undefined
             }
 
-            if (query.parent_id) {
-                where.push(eq(productCategorySchema.parent_id, query.parent_id))
-            }
-
-            if (query.status) {
-                where.push(eq(productCategorySchema.status, query.status))
-            }
-
-            const [data, [aggregations]] = await Promise.all([
-                db.query.productCategorySchema.findMany({
-                    offset: query.page,
-                    limit: query.pageSize,
-                    orderBy: (productCategory, { desc }) => [desc(productCategory.created_at)],
-                    where: and(...where),
-                    columns: {
+            const [data, count] = await Promise.all([
+                prismaClient.productCategory.findMany({
+                    take,
+                    skip,
+                    orderBy: {
+                        created_at: 'desc'
+                    },
+                    where: search,
+                    select: {
                         id: true,
                         name: true,
                         slug: true,
                         status: true,
                         image_uri: true,
-                        created_at: true
-                    },
-                    with: {
+                        created_at: true,
                         product: {
-                            where: (product, { eq }) => eq(product.deleted_flg, false),
-                            columns: {
-                                id: true
+                            where: { deleted_flg: false },
+                            select: {
+                                _count: true
                             }
                         },
                         parentCategory: {
-                            with: {
-                                product: {
-                                    where: (product, { eq }) => eq(product.deleted_flg, false),
-                                    columns: {
-                                        id: true
-                                    }
-                                }
-                            },
-                            columns: {
+                            select: {
                                 id: true,
                                 name: true,
-                                image_uri: true
+                                image_uri: true,
+                                product: {
+                                    where: { deleted_flg: false },
+                                    select: {
+                                        _count: true
+                                    }
+                                }
                             }
                         }
                     }
                 }),
-                db
-                    .select({
-                        value: count(productCategorySchema.id)
-                    })
-                    .from(productCategorySchema)
-                    .where(and(...where))
+                prismaClient.productCategory.count({
+                    where: search
+                })
             ])
 
             return {
                 data,
-                aggregations: aggregations.value
+                aggregations: count
             }
         } catch (error) {
             handleDatabaseError(error)
@@ -91,13 +93,16 @@ export class ProductCategoryService {
 
     async create(data: IProductCategoryDTO, redis: RedisClientType) {
         try {
-            const productCategory = await db.insert(productCategorySchema).values(data).returning({
-                id: productCategorySchema.id
+            const createdCategory = await prismaClient.productCategory.create({
+                data,
+                select: {
+                    id: true
+                }
             })
 
             await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
 
-            return productCategory
+            return createdCategory
         } catch (error) {
             handleDatabaseError(error)
         }
@@ -105,13 +110,13 @@ export class ProductCategoryService {
 
     async update(id: string, data: IProductCategoryDTO, redis: RedisClientType) {
         try {
-            const productCategory = await db
-                .update(productCategorySchema)
-                .set(data)
-                .where(eq(productCategorySchema.id, id))
-                .returning({
-                    id: productCategorySchema.id
-                })
+            const productCategory = await prismaClient.productCategory.update({
+                data,
+                where: { id },
+                select: {
+                    id: true
+                }
+            })
 
             await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
             await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, id))
@@ -130,9 +135,12 @@ export class ProductCategoryService {
                 return JSON.parse(productCategoryCached)
             }
 
-            const productCategory = await db.query.productCategorySchema.findFirst({
-                where: and(eq(productCategorySchema.id, id), eq(productCategorySchema.deleted_flg, false)),
-                columns: {
+            const productCategory = await prismaClient.productCategory.findFirst({
+                where: {
+                    id,
+                    deleted_flg: false
+                },
+                select: {
                     id: true,
                     name: true,
                     slug: true,
@@ -160,18 +168,23 @@ export class ProductCategoryService {
     async delete(id: string, query: IDeleteDTO, redis: RedisClientType) {
         try {
             if (query.force) {
-                await db.delete(productCategorySchema).where(eq(productCategorySchema.id, id))
+                await prismaClient.productCategory.delete({
+                    where: { id },
+                    select: {
+                        id: true
+                    }
+                })
             } else {
-                await db
-                    .update(productCategorySchema)
-                    .set({
+                await prismaClient.productCategory.update({
+                    data: {
                         deleted_flg: true,
                         slug: slugTimestamp(query.slug!)
-                    })
-                    .where(eq(productCategorySchema.id, id))
-                    .returning({
-                        id: productCategorySchema.id
-                    })
+                    },
+                    where: { id },
+                    select: {
+                        id: true
+                    }
+                })
             }
 
             await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
@@ -191,11 +204,13 @@ export class ProductCategoryService {
                 return JSON.parse(productCategoryCached)
             }
 
-            const categoryList = await db.query.productCategorySchema.findMany({
-                orderBy: desc(productCategorySchema.created_at),
-                where: (_productCategory, { and }) =>
-                    and(eq(productCategorySchema.deleted_flg, false), isNull(productCategorySchema.parent_id)),
-                columns: {
+            const categoryList = await prismaClient.productCategory.findMany({
+                orderBy: { created_at: 'desc' },
+                where: {
+                    parent_id: null,
+                    deleted_flg: false
+                },
+                select: {
                     id: true,
                     name: true
                 }
@@ -221,10 +236,12 @@ export class ProductCategoryService {
     }
 
     async renderTree(parent_id: string, level: number) {
-        const categories = await db.query.productCategorySchema.findMany({
-            where: (_productCategory, { and }) =>
-                and(eq(productCategorySchema.deleted_flg, false), eq(productCategorySchema.parent_id, parent_id)),
-            columns: {
+        const categories = await prismaClient.productCategory.findMany({
+            where: {
+                parent_id,
+                deleted_flg: false
+            },
+            select: {
                 id: true,
                 name: true
             }

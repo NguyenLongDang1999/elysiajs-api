@@ -39,3 +39,7 @@ export enum MANAGE_INVENTORY {
     YES = 10,
     NO = 20
 }
+
+export enum HASH_PASSWORD {
+    ALGORITHM = 'argon2id'
+}

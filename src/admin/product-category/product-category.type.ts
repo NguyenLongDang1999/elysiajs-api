@@ -21,6 +21,7 @@ export const productCategorySearchType = t.Object({
     ...paginationType,
     name: t.Optional(t.String()),
     parent_id: t.Optional(t.String()),
+    product_brand_id: t.Optional(t.String()),
     status: t
         .Transform(t.Optional(t.String()))
         .Decode((value) => parseInt(value))

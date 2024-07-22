@@ -1,9 +1,6 @@
 {
   "name": "elysia-api",
   "version": "1.0.50",
-  "prisma": {
-    "seed": "bun run src/database/prisma/seed.ts"
-  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
@@ -18,7 +15,8 @@
     "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/client": "^5.17.0",
     "elysia": "latest",
-    "immer": "^10.1.1"
+    "immer": "^10.1.1",
+    "valibot": "^0.36.0"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.0.0",

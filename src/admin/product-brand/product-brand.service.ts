@@ -1,70 +1,63 @@
-// ** Database Imports
-import { productBrandSchema, productCategoryBrandSchema } from '@db/schema/product-brands'
-import { db } from '@src/database/drizzle'
+// ** Prisma Imports
+import { Prisma } from '@prisma/client'
+import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
+import { IDeleteDTO } from '@src/types/core.type'
 import { IProductBrandDTO, IProductBrandSearchDTO } from './product-brand.type'
-
-// ** Drizzle Imports
-import { and, count, eq, ilike, inArray, SQL } from 'drizzle-orm'
 
 // ** Utils Imports
 import { slugTimestamp } from '@src/utils'
 import { handleDatabaseError } from '@utils/error-handling'
 
-// ** Types Imports
-import { IDeleteDTO } from '@src/types/core.type'
-
 export class ProductBrandService {
     async getTableList(query: IProductBrandSearchDTO) {
         try {
-            const where: SQL[] = [eq(productBrandSchema.deleted_flg, false)]
+            const take = Number(query.pageSize) || undefined
+            const skip = Number(query.page) || undefined
 
-            if (query.name) {
-                where.push(ilike(productBrandSchema.name, `%${query.name}%`))
+            const search: Prisma.ProductBrandWhereInput = {
+                deleted_flg: false,
+                name: {
+                    contains: query.name || undefined,
+                    mode: 'insensitive'
+                },
+                status: {
+                    equals: Number(query.status) || undefined
+                },
+                productCategoryBrand: {
+                    some: {
+                        product_category_id: { equals: query.product_category_id || undefined }
+                    }
+                }
             }
 
-            if (query.product_category_id) {
-                where.push(
-                    inArray(
-                        productBrandSchema.id,
-                        db
-                            .select({ product_brand_id: productCategoryBrandSchema.product_brand_id })
-                            .from(productCategoryBrandSchema)
-                            .where(eq(productCategoryBrandSchema.product_category_id, query.product_category_id))
-                    )
-                )
-            }
-
-            if (query.status) {
-                where.push(eq(productBrandSchema.status, Number(query.status)))
-            }
-
-            const [data, [aggregations]] = await Promise.all([
-                db.query.productBrandSchema.findMany({
-                    offset: query.page,
-                    limit: query.pageSize,
-                    orderBy: (productBrand, { desc }) => [desc(productBrand.created_at)],
-                    where: and(...where),
-                    columns: {
+            const [data, count] = await Promise.all([
+                prismaClient.productBrand.findMany({
+                    take,
+                    skip,
+                    orderBy: { created_at: 'desc' },
+                    where: search,
+                    select: {
                         id: true,
                         name: true,
                         slug: true,
                         status: true,
                         image_uri: true,
-                        created_at: true
-                    },
-                    with: {
+                        created_at: true,
                         product: {
-                            where: (product, { eq }) => eq(product.deleted_flg, false),
-                            columns: {
-                                id: true
+                            where: { deleted_flg: false },
+                            select: {
+                                _count: true
                             }
                         },
                         productCategoryBrand: {
-                            with: {
+                            where: {
+                                productCategory: { deleted_flg: false }
+                            },
+                            select: {
                                 productCategory: {
-                                    columns: {
+                                    select: {
                                         id: true,
                                         name: true
                                     }
@@ -73,20 +66,21 @@ export class ProductBrandService {
                         }
                     }
                 }),
-                db
-                    .select({
-                        value: count(productBrandSchema.id)
-                    })
-                    .from(productBrandSchema)
-                    .where(and(...where))
+                prismaClient.productBrand.count({
+                    where: search
+                })
             ])
 
             return {
-                data: data.map((_data) => ({
-                    ..._data,
-                    productCategoryBrand: _data.productCategoryBrand.map((_product) => _product.productCategory)
-                })),
-                aggregations: aggregations.value
+                data: data.map((item) => {
+                    return {
+                        ...item,
+                        productCategoryBrand: item.productCategoryBrand.map(
+                            (categoryItem) => categoryItem.productCategory
+                        )
+                    }
+                }),
+                aggregations: count
             }
         } catch (error) {
             handleDatabaseError(error)
@@ -95,20 +89,23 @@ export class ProductBrandService {
 
     async create(data: IProductBrandDTO) {
         try {
-            return await db.transaction(async (tx) => {
-                const [productBrand] = await tx
-                    .insert(productBrandSchema)
-                    .values(data)
-                    .returning({ id: productBrandSchema.id })
+            const { product_category_id, ...productBrandData } = data
 
-                const productCategoryBrands = data.product_category_id.map((product_category_id) => ({
-                    product_brand_id: productBrand.id,
-                    product_category_id
-                }))
-
-                await tx.insert(productCategoryBrandSchema).values(productCategoryBrands)
-
-                return productBrand
+            return await prismaClient.$transaction(async (prisma) => {
+                return await prisma.productBrand.create({
+                    data: {
+                        ...productBrandData,
+                        productCategoryBrand: {
+                            createMany: {
+                                data: product_category_id.map((categoryItem) => ({
+                                    product_category_id: categoryItem
+                                })),
+                                skipDuplicates: true
+                            }
+                        }
+                    },
+                    select: { id: true }
+                })
             })
         } catch (error) {
             handleDatabaseError(error)
@@ -117,23 +114,24 @@ export class ProductBrandService {
 
     async update(id: string, data: IProductBrandDTO) {
         try {
-            return await db.transaction(async (tx) => {
-                const [productBrand] = await tx
-                    .update(productBrandSchema)
-                    .set(data)
-                    .where(eq(productBrandSchema.id, id))
-                    .returning({ id: productBrandSchema.id })
+            const { product_category_id, ...productBrandData } = data
 
-                await tx.delete(productCategoryBrandSchema).where(eq(productCategoryBrandSchema.product_brand_id, id))
-
-                const productCategoryBrands = data.product_category_id.map((product_category_id) => ({
-                    product_brand_id: productBrand.id,
-                    product_category_id
-                }))
-
-                await tx.insert(productCategoryBrandSchema).values(productCategoryBrands)
-
-                return productBrand
+            return await prismaClient.$transaction(async (prisma) => {
+                return await prisma.productBrand.update({
+                    where: { id },
+                    data: {
+                        ...productBrandData,
+                        productCategoryBrand: {
+                            deleteMany: {},
+                            createMany: {
+                                data: product_category_id.map((categoryItem) => ({
+                                    product_category_id: categoryItem
+                                })),
+                                skipDuplicates: true
+                            }
+                        }
+                    }
+                })
             })
         } catch (error) {
             handleDatabaseError(error)
@@ -142,30 +140,30 @@ export class ProductBrandService {
 
     async retrieve(id: string) {
         try {
-            const productBrand = await db.query.productBrandSchema.findFirst({
-                where: and(eq(productBrandSchema.id, id), eq(productBrandSchema.deleted_flg, false)),
-                columns: {
+            const productBrand = await prismaClient.productBrand.findFirst({
+                where: {
+                    id,
+                    deleted_flg: false
+                },
+                select: {
                     id: true,
                     name: true,
                     slug: true,
                     status: true,
                     image_uri: true,
-                    description: true
-                },
-                with: {
+                    description: true,
                     productCategoryBrand: {
-                        columns: {
-                            product_category_id: true
-                        }
+                        select: { product_category_id: true }
                     }
                 }
             })
 
             return {
                 ...productBrand,
-                product_category_id: productBrand?.productCategoryBrand.map(
+                product_category_id: productBrand.productCategoryBrand.map(
                     ({ product_category_id }) => product_category_id
-                )
+                ),
+                productCategoryBrand: undefined
             }
         } catch (error) {
             handleDatabaseError(error)
@@ -175,19 +173,26 @@ export class ProductBrandService {
     async delete(id: string, query: IDeleteDTO) {
         try {
             if (query.force) {
-                return db.delete(productBrandSchema).where(eq(productBrandSchema.id, id))
+                await prismaClient.productBrand.delete({
+                    where: { id },
+                    select: {
+                        id: true
+                    }
+                })
             } else {
-                return await db
-                    .update(productBrandSchema)
-                    .set({
+                await prismaClient.productBrand.update({
+                    data: {
                         deleted_flg: true,
                         slug: slugTimestamp(query.slug!)
-                    })
-                    .where(eq(productBrandSchema.id, id))
-                    .returning({
-                        id: productBrandSchema.id
-                    })
+                    },
+                    where: { id },
+                    select: {
+                        id: true
+                    }
+                })
             }
+
+            return id
         } catch (error) {
             handleDatabaseError(error)
         }

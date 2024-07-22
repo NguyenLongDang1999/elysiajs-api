@@ -1,5 +1,5 @@
 // ** Elysia Imports
-import { t, Static } from 'elysia'
+import { Static, t } from 'elysia'
 
 // ** Types Definition
 export const signInType = t.Object({
