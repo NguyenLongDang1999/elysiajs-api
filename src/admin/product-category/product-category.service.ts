@@ -34,10 +34,10 @@ export class ProductCategoryService {
                 },
                 productCategoryBrand: query.product_brand_id
                     ? {
-                          some: {
-                              product_brand_id: { contains: query.product_brand_id }
-                          }
-                      }
+                        some: {
+                            product_brand_id: { contains: query.product_brand_id }
+                        }
+                    }
                     : undefined
             }
 
