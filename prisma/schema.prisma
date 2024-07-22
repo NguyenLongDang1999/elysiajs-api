@@ -1,0 +1,290 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_DRIZZLE")
+}
+
+model ProductCategory {
+  id                        String                      @id @default(uuid())
+  name                      String                      @db.VarChar
+  slug                      String                      @unique @db.VarChar
+  image_uri                 String?                     @db.VarChar
+  description               String?                     @db.VarChar
+  parent_id                 String?
+  status                    Int?                        @default(20) @db.SmallInt
+  meta_title                String?                     @db.VarChar
+  meta_description          String?                     @db.VarChar
+  created_at                DateTime                    @default(now())
+  updated_at                DateTime                    @updatedAt
+  deleted_flg               Boolean                     @default(false)
+  parentCategory            ProductCategory?            @relation("CategoryToCategory", fields: [parent_id], references: [id], onDelete: Cascade)
+  categoryChildren          ProductCategory[]           @relation("CategoryToCategory")
+  productCategoryBrand      ProductCategoryBrand[]
+  productCategoryAttributes ProductCategoryAttributes[]
+  product                   Product[]
+
+  @@index([status, parent_id])
+}
+
+model ProductBrand {
+  id                   String                 @id @default(uuid())
+  name                 String                 @db.VarChar
+  slug                 String                 @unique @db.VarChar
+  image_uri            String?                @db.VarChar
+  description          String?                @db.VarChar
+  status               Int?                   @default(20) @db.SmallInt
+  created_at           DateTime               @default(now())
+  updated_at           DateTime               @updatedAt
+  deleted_flg          Boolean                @default(false)
+  productCategoryBrand ProductCategoryBrand[]
+  product              Product[]
+
+  @@index([status])
+}
+
+model ProductCategoryBrand {
+  product_brand_id    String
+  product_category_id String
+  productBrand        ProductBrand    @relation(fields: [product_brand_id], references: [id], onDelete: Cascade)
+  productCategory     ProductCategory @relation(fields: [product_category_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_brand_id, product_category_id])
+}
+
+model ProductAttribute {
+  id                        String                      @id @default(uuid())
+  name                      String                      @db.VarChar
+  slug                      String                      @unique @db.VarChar
+  description               String?                     @db.VarChar
+  status                    Int?                        @default(20) @db.SmallInt
+  created_at                DateTime                    @default(now())
+  updated_at                DateTime                    @updatedAt
+  deleted_flg               Boolean                     @default(false)
+  productAttributeValues    ProductAttributeValues[]
+  productCategoryAttributes ProductCategoryAttributes[]
+
+  @@index([status])
+}
+
+model ProductAttributeValues {
+  id                            String                          @id @default(uuid())
+  value                         String                          @db.VarChar
+  product_attribute_id          String
+  created_at                    DateTime                        @default(now())
+  updated_at                    DateTime                        @updatedAt
+  deleted_flg                   Boolean                         @default(false)
+  productAttribute              ProductAttribute                @relation(fields: [product_attribute_id], references: [id], onDelete: Cascade)
+  productVariantAttributeValues ProductVariantAttributeValues[]
+}
+
+model ProductCategoryAttributes {
+  product_category_id  String
+  product_attribute_id String
+  productCategory      ProductCategory  @relation(fields: [product_category_id], references: [id], onDelete: Cascade)
+  productAttribute     ProductAttribute @relation(fields: [product_attribute_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_category_id, product_attribute_id])
+}
+
+model ProductCollection {
+  id                       String                     @id @default(uuid())
+  title                    String                     @db.VarChar
+  slug                     String                     @unique @db.VarChar
+  status                   Int?                       @default(20) @db.SmallInt
+  created_at               DateTime                   @default(now())
+  updated_at               DateTime                   @updatedAt
+  deleted_flg              Boolean                    @default(false)
+  productCollectionProduct ProductCollectionProduct[]
+
+  @@index([status])
+}
+
+model ProductCollectionProduct {
+  product_id            String
+  product_collection_id String
+  product               Product           @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  productCollection     ProductCollection @relation(fields: [product_collection_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_id, product_collection_id])
+}
+
+model Product {
+  id                       String                     @id @default(uuid())
+  name                     String                     @db.VarChar
+  slug                     String                     @unique @db.VarChar
+  image_uri                String?                    @db.VarChar
+  short_description        String?                    @db.VarChar
+  description              String?
+  technical_specifications Json?                      @db.JsonB
+  product_category_id      String
+  product_brand_id         String?
+  status                   Int?                       @default(20) @db.SmallInt
+  product_type             Int?                       @default(10) @db.SmallInt
+  price                    Decimal                    @default(0) @db.Decimal(18, 0)
+  special_price            Decimal?                   @default(0) @db.Decimal(18, 0)
+  special_price_type       Int?                       @db.SmallInt
+  meta_title               String?                    @db.VarChar
+  meta_description         String?                    @db.VarChar
+  total_rating             Float?
+  created_at               DateTime                   @default(now())
+  updated_at               DateTime                   @updatedAt
+  deleted_flg              Boolean                    @default(false)
+  productCategory          ProductCategory            @relation(fields: [product_category_id], references: [id], onDelete: Cascade)
+  productBrand             ProductBrand?              @relation(fields: [product_brand_id], references: [id], onDelete: Cascade)
+  productImages            ProductImages[]
+  productVariants          ProductVariants[]
+  productRelated           ProductRelations[]         @relation("Product")
+  productRelatedMain       ProductRelations[]         @relation("ProductRelated")
+  productCollectionProduct ProductCollectionProduct[]
+}
+
+model ProductVariants {
+  id                            String                          @id @default(uuid())
+  product_id                    String
+  is_default                    Boolean                         @default(false) @db.Boolean
+  label                         String?                         @db.VarChar
+  sku                           String                          @unique @db.VarChar
+  manage_inventory              Int?                            @default(20) @db.SmallInt
+  price                         Decimal                         @default(0) @db.Decimal(18, 0)
+  special_price                 Decimal?                        @default(0) @db.Decimal(18, 0)
+  special_price_type            Int?                            @db.SmallInt
+  created_at                    DateTime                        @default(now())
+  updated_at                    DateTime                        @updatedAt
+  deleted_flg                   Boolean                         @default(false)
+  product                       Product                         @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  productInventory              ProductInventory?
+  productVariantAttributeValues ProductVariantAttributeValues[]
+  flashDealProducts             FlashDealProducts[]
+  productInventoryTransactions  ProductInventoryTransactions[]
+}
+
+model ProductVariantAttributeValues {
+  product_variant_id         String
+  product_attribute_value_id String
+  productVariants            ProductVariants        @relation(fields: [product_variant_id], references: [id], onDelete: Cascade)
+  productAttributeValues     ProductAttributeValues @relation(fields: [product_attribute_value_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_variant_id, product_attribute_value_id])
+}
+
+model ProductImages {
+  id         String   @id @default(uuid())
+  product_id String
+  image_uri  String   @db.VarChar
+  index      Int      @db.SmallInt
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+}
+
+model ProductInventory {
+  id                           String                         @id @default(uuid())
+  product_variant_id           String                         @unique
+  quantity                     Int                            @db.Integer
+  productVariants              ProductVariants                @relation(fields: [product_variant_id], references: [id], onDelete: Cascade)
+  productInventoryTransactions ProductInventoryTransactions[]
+}
+
+model ProductInventoryTransactions {
+  id                   String           @id @default(uuid())
+  admin_id             String?
+  product_variant_id   String
+  product_inventory_id String
+  transaction_type     Int              @db.SmallInt
+  quantity             Int              @db.Integer
+  description          String
+  admins               Admins?          @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+  productVariants      ProductVariants  @relation(fields: [product_variant_id], references: [id], onDelete: Cascade)
+  productInventory     ProductInventory @relation(fields: [product_inventory_id], references: [id], onDelete: Cascade)
+}
+
+model ProductRelations {
+  id                 String  @id @default(uuid())
+  product_id         String
+  related_product_id String
+  relation_type      Int     @db.SmallInt
+  product            Product @relation("Product", fields: [product_id], references: [id], onDelete: Cascade)
+  relatedProductID   Product @relation("ProductRelated", fields: [related_product_id], references: [id], onDelete: Cascade)
+}
+
+model FlashDeals {
+  id                String              @id @default(uuid())
+  title             String              @db.VarChar
+  slug              String              @unique @db.VarChar
+  description       String?             @db.VarChar
+  status            Int?                @default(10) @db.SmallInt
+  start_time        DateTime
+  end_time          DateTime
+  created_at        DateTime            @default(now())
+  updated_at        DateTime            @updatedAt
+  deleted_flg       Boolean             @default(false)
+  flashDealProducts FlashDealProducts[]
+}
+
+model FlashDealProducts {
+  flash_deal_id       String
+  product_variants_id String
+  price               Decimal         @default(0) @db.Decimal(18, 0)
+  special_price       Decimal?        @default(0) @db.Decimal(18, 0)
+  special_price_type  Int?            @db.SmallInt
+  quantity_limit      Int?            @default(0) @db.Integer
+  flashDeal           FlashDeals      @relation(fields: [flash_deal_id], references: [id], onDelete: Cascade)
+  productVariants     ProductVariants @relation(fields: [product_variants_id], references: [id], onDelete: Cascade)
+
+  @@unique([flash_deal_id, product_variants_id])
+}
+
+model Admins {
+  id                           String                         @id @default(uuid())
+  name                         String                         @db.VarChar
+  email                        String                         @unique @db.VarChar
+  password                     String                         @db.VarChar
+  phone                        String                         @db.VarChar
+  job                          String?                        @db.VarChar
+  gender                       Int?                           @db.SmallInt
+  address                      String?                        @db.VarChar
+  refresh_token                String?                        @db.VarChar
+  role                         Int                            @db.SmallInt
+  image_uri                    String?                        @db.VarChar
+  status                       Int?                           @default(10) @db.SmallInt
+  created_at                   DateTime                       @default(now())
+  updated_at                   DateTime                       @updatedAt
+  deleted_flg                  Boolean                        @default(false)
+  productInventoryTransactions ProductInventoryTransactions[]
+
+  @@index([status, role, gender])
+}
+
+model SystemSettings {
+  id                   String                 @id @default(uuid())
+  label                String                 @db.VarChar
+  key                  String                 @unique @db.VarChar
+  value                String?
+  input_type           Int?                   @default(10) @db.SmallInt
+  system_type          Int?                   @db.SmallInt
+  description          String?                @db.VarChar
+  created_at           DateTime               @default(now())
+  updated_at           DateTime               @updatedAt
+  deleted_flg          Boolean                @default(false)
+  systemSettingOptions SystemSettingOptions[]
+}
+
+model SystemSettingOptions {
+  id                String         @id @default(uuid())
+  system_setting_id String
+  key               String         @db.VarChar
+  displayValue      String         @db.VarChar
+  sort_order        Int?
+  systemSettings    SystemSettings @relation(fields: [system_setting_id], references: [id], onDelete: Cascade)
+
+  @@unique([system_setting_id, key])
+}

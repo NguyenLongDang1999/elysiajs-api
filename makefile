@@ -1,5 +1,5 @@
 std:
-	bunx drizzle-kit studio
+	bunx prisma studio
 
 migrate:
 	bun run migrate
