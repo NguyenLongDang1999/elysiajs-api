@@ -1,4 +1,5 @@
 // ** Elysia Imports
+import { StaticDecode } from '@sinclair/typebox'
 import { Static, t } from 'elysia'
 
 // ** Types Imports
@@ -26,10 +27,13 @@ export const productAttributeSearchType = t.Object({
     ...paginationType,
     name: t.Optional(t.String()),
     product_category_id: t.Optional(t.String()),
-    status: t.Optional(t.String())
+    status: t
+        .Transform(t.Optional(t.String()))
+        .Decode((value) => parseInt(value))
+        .Encode((value) => value.toString())
 })
 
 // ** Types
 export type IProductAttributeDTO = Static<typeof productAttributeType>
 
-export type IProductAttributeSearchDTO = Static<typeof productAttributeSearchType>
+export type IProductAttributeSearchDTO = StaticDecode<typeof productAttributeSearchType>

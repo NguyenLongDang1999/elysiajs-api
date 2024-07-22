@@ -7,11 +7,11 @@ import { Elysia } from 'elysia'
 import { admin } from './admin'
 
 const app = new Elysia({ prefix: '/api', normalize: true })
-    .onTransform(({ query }) => {
-        if (query.page && query.pageSize) {
-            ;(query as any).page = parseInt(query.page)
-            ;(query as any).pageSize = parseInt(query.pageSize)
-            ;(query as any).page = (((query as any).page - 1) * (query as any).pageSize) as number
+    .onTransform((ctx) => {
+        if (ctx.query.page && ctx.query.pageSize) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            ctx.query.page = ((ctx.query.page - 1) * ctx.query.pageSize).toString()
         }
     })
     .onAfterHandle(({ request, set }) => {

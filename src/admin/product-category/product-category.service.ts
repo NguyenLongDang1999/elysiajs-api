@@ -31,7 +31,7 @@ export class ProductCategoryService {
             }
 
             if (query.status) {
-                where.push(eq(productCategorySchema.status, Number(query.status)))
+                where.push(eq(productCategorySchema.status, query.status))
             }
 
             const [data, [aggregations]] = await Promise.all([

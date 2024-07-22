@@ -1,11 +1,21 @@
 // ** Elysia Imports
-import { t, Static } from 'elysia'
+import { Static, t } from 'elysia'
 
 // ** Types Definition
 export const paginationType = {
-    page: t.Optional(t.Number()),
-    pageSize: t.Optional(t.Number())
+    page: t
+        .Transform(t.Optional(t.String()))
+        .Decode((value) => parseInt(value))
+        .Encode((value) => value.toString()),
+    pageSize: t
+        .Transform(t.Optional(t.String()))
+        .Decode((value) => parseInt(value))
+        .Encode((value) => value.toString())
 }
+
+export const paginationObjectType = t.Object({
+    ...paginationType
+})
 
 export const deleteType = t.Object({
     force: t.Optional(t.String()),

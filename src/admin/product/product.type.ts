@@ -1,4 +1,5 @@
 // ** Elysia Imports
+import { StaticDecode } from '@sinclair/typebox'
 import { Static, t } from 'elysia'
 
 // ** Types Imports
@@ -28,7 +29,10 @@ export const productSearchType = t.Object({
     name: t.Optional(t.String()),
     product_category_id: t.Optional(t.String()),
     product_brand_id: t.Optional(t.String()),
-    status: t.Optional(t.String()),
+    status: t
+        .Transform(t.Optional(t.String()))
+        .Decode((value) => parseInt(value))
+        .Encode((value) => value.toString()),
     product_type: t.Optional(t.String()),
     not_flash_deals: t.Optional(t.String()),
     product_id_flash_deals: t.Optional(t.String())
@@ -37,4 +41,4 @@ export const productSearchType = t.Object({
 // ** Types
 export type IProductDTO = Static<typeof productType>
 
-export type IProductSearchDTO = Static<typeof productSearchType>
+export type IProductSearchDTO = StaticDecode<typeof productSearchType>
