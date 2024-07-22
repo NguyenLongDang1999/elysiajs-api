@@ -1,8 +1,5 @@
 // ** Database Imports
-import {
-    productSchema,
-    productVariantsSchema,
-} from '@db/schema/product'
+import { productSchema, productVariantsSchema } from '@db/schema/product'
 import { db } from '@src/database/drizzle'
 
 // ** Types Imports
@@ -90,7 +87,7 @@ export class ProductService {
                                 sku: true,
                                 price: true,
                                 special_price: true,
-                                special_price_type: true,
+                                special_price_type: true
                             }
                         }
                     }
@@ -102,8 +99,6 @@ export class ProductService {
                     .from(productSchema)
                     .where(and(...where))
             ])
-
-
 
             return {
                 data: data,

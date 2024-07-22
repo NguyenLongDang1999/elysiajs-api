@@ -93,7 +93,6 @@ export class SystemSettingsService {
                 //     .returning({
                 //         id: systemSettingsSchema.id
                 //     })
-
                 // await db
                 //     .insert(systemSettingOptionsSchema)
                 //     .values({

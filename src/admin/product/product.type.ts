@@ -31,7 +31,7 @@ export const productSearchType = t.Object({
     status: t.Optional(t.String()),
     product_type: t.Optional(t.String()),
     not_flash_deals: t.Optional(t.String()),
-    product_id_flash_deals: t.Optional(t.String()),
+    product_id_flash_deals: t.Optional(t.String())
 })
 
 // ** Types

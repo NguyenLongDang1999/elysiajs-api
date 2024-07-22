@@ -126,9 +126,7 @@ export const productRelations = relations(productSchema, ({ one, many }) => ({
         references: [productBrandSchema.id]
     }),
     productImages: many(productImagesSchema),
-    productVariants: many(productVariantsSchema),
+    productVariants: many(productVariantsSchema)
 }))
 
-export const productVariantsRelations = relations(productVariantsSchema, ({ one, many }) => ({
-
-}))
+export const productVariantsRelations = relations(productVariantsSchema, ({ one, many }) => ({}))

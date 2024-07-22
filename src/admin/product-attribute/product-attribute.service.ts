@@ -139,7 +139,9 @@ export class ProductAttributeService {
                     .where(eq(productAttributeSchema.id, id))
                     .returning({ id: productAttributeSchema.id })
 
-                await tx.delete(productCategoryAttributeSchema).where(eq(productCategoryAttributeSchema.product_attribute_id, id))
+                await tx
+                    .delete(productCategoryAttributeSchema)
+                    .where(eq(productCategoryAttributeSchema.product_attribute_id, id))
 
                 const productCategoryAttributes = data.product_category_id.map((product_category_id) => ({
                     product_attribute_id: productAttribute.id,
@@ -149,7 +151,7 @@ export class ProductAttributeService {
                 await tx.insert(productCategoryAttributeSchema).values(productCategoryAttributes)
 
                 const existingOptions = await db.query.productAttributeValuesSchema.findMany({
-                    where: and(eq(productAttributeValuesSchema.product_attribute_id, id)),
+                    where: and(eq(productAttributeValuesSchema.product_attribute_id, id))
                 })
 
                 const existingOptionsMap = new Map(existingOptions.map((option) => [option.id, option]))
@@ -176,13 +178,9 @@ export class ProductAttributeService {
                 }
 
                 if (existingOptionsMap.size > 0) {
-                    await tx.delete(productAttributeValuesSchema)
-                        .where(
-                            inArray(
-                                productAttributeValuesSchema.id,
-                                Array.from(existingOptionsMap.keys())
-                            )
-                        )
+                    await tx
+                        .delete(productAttributeValuesSchema)
+                        .where(inArray(productAttributeValuesSchema.id, Array.from(existingOptionsMap.keys())))
                 }
 
                 return productAttribute
@@ -201,7 +199,7 @@ export class ProductAttributeService {
                     name: true,
                     slug: true,
                     status: true,
-                    description: true,
+                    description: true
                 },
                 with: {
                     productAttributeValues: {
@@ -221,9 +219,9 @@ export class ProductAttributeService {
             return {
                 ...productAttribute,
                 product_category_id: productAttribute?.productCategoryAttributes.map(
-                    ({ product_category_id }) => product_category_id,
+                    ({ product_category_id }) => product_category_id
                 ),
-                product_attribute_values: productAttribute?.productAttributeValues.map((valueItem) => valueItem),
+                product_attribute_values: productAttribute?.productAttributeValues.map((valueItem) => valueItem)
             }
         } catch (error) {
             handleDatabaseError(error)
