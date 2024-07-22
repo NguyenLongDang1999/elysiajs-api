@@ -6,10 +6,11 @@ import { boolean, decimal, integer, json, pgTable, smallint, text, timestamp } f
 import { createId } from '@paralleldrive/cuid2'
 
 // ** Utils Imports
-import { MANAGE_INVENTORY, PRODUCT_TYPE, STATUS } from '@src/utils/enums'
+import { MANAGE_INVENTORY, PRODUCT_TYPE, SPECIAL_PRICE_TYPE, STATUS } from '@src/utils/enums'
 
 // ** Schema Imports
 import { adminsSchema } from '../admins'
+import { flashDealProductsSchema } from '../flash-deals'
 import { productAttributeValuesSchema } from '../product-attributes'
 import { productBrandSchema } from '../product-brands'
 import { productCategorySchema } from '../product-category'
@@ -31,7 +32,7 @@ export const productSchema = pgTable('product', {
     product_type: smallint('product_type').default(PRODUCT_TYPE.SINGLE),
     price: decimal('price', { precision: 18, scale: 0 }),
     special_price: decimal('special_price', { precision: 18, scale: 0 }),
-    special_price_type: smallint('special_price_type'),
+    special_price_type: smallint('special_price_type').default(SPECIAL_PRICE_TYPE.PRICE),
     meta_title: text('meta_title'),
     meta_description: text('meta_description'),
     created_at: timestamp('created_at').notNull().defaultNow(),
@@ -52,7 +53,7 @@ export const productVariantsSchema = pgTable('product-variants', {
     manage_inventory: smallint('manage_inventory').default(MANAGE_INVENTORY.NO),
     price: decimal('price', { precision: 18, scale: 0 }),
     special_price: decimal('special_price', { precision: 18, scale: 0 }),
-    special_price_type: smallint('special_price_type'),
+    special_price_type: smallint('special_price_type').default(SPECIAL_PRICE_TYPE.PRICE),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at')
         .notNull()
@@ -129,4 +130,6 @@ export const productRelations = relations(productSchema, ({ one, many }) => ({
     productVariants: many(productVariantsSchema)
 }))
 
-export const productVariantsRelations = relations(productVariantsSchema, ({ one, many }) => ({}))
+export const productVariantsRelations = relations(productVariantsSchema, ({ one, many }) => ({
+    flashDealProducts: many(flashDealProductsSchema)
+}))

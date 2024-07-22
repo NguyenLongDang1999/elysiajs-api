@@ -15,10 +15,10 @@ export const productController = new Elysia({ prefix: '/product' })
     .get('/', ({ ProductService, query }) => ProductService.getTableList(query), {
         query: 'productSearch'
     })
-// .get('/:id', ({ ProductService, params }) => ProductService.retrieve(params.id))
-// .post('/', ({ ProductService, body }) => ProductService.create(body), {
-//     body: 'product'
-// })
+    // .get('/:id', ({ ProductService, params }) => ProductService.retrieve(params.id))
+    .post('/', ({ ProductService, body }) => ProductService.create(body), {
+        body: 'product'
+    })
 // .patch('/:id', ({ ProductService, body, params }) => ProductService.update(params.id, body), {
 //     body: 'product'
 // })

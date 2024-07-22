@@ -1,14 +1,16 @@
 // ** Database Imports
+import { flashDealsSchema } from '@db/schema/flash-deals'
 import { productSchema, productVariantsSchema } from '@db/schema/product'
 import { db } from '@src/database/drizzle'
 
 // ** Types Imports
-import { IProductSearchDTO } from './product.type'
+import { IProductDTO, IProductSearchDTO } from './product.type'
 
 // ** Drizzle Imports
-import { and, count, eq, ilike, inArray, SQL } from 'drizzle-orm'
+import { and, count, eq, gte, ilike, inArray, lte, SQL } from 'drizzle-orm'
 
 // ** Utils Imports
+import { STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 // ** Types Imports
@@ -88,6 +90,23 @@ export class ProductService {
                                 price: true,
                                 special_price: true,
                                 special_price_type: true
+                            },
+                            with: {
+                                flashDealProducts: {
+                                    where: and(
+                                        eq(flashDealsSchema.deleted_flg, false),
+                                        eq(flashDealsSchema.status, STATUS.ACTIVE),
+                                        lte(flashDealsSchema.start_time, new Date()),
+                                        gte(flashDealsSchema.end_time, new Date()),
+                                        eq(productVariantsSchema.deleted_flg, false),
+                                        eq(productVariantsSchema.is_default, true)
+                                    ),
+                                    columns: {
+                                        price: true,
+                                        special_price: true,
+                                        special_price_type: true
+                                    }
+                                }
                             }
                         }
                     }
@@ -101,7 +120,18 @@ export class ProductService {
             ])
 
             return {
-                data: data,
+                data: data.map((_data) => {
+                    const productVariant = _data.productVariants[0]
+                    const flashDeal = productVariant.flashDealProducts[0] || {}
+                    const hasFlashDeals = !!productVariant.flashDealProducts.length
+
+                    return {
+                        ..._data,
+                        ...flashDeal,
+                        ...(!hasFlashDeals && productVariant),
+                        hasFlashDeals
+                    }
+                }),
                 aggregations: aggregations.value
             }
         } catch (error) {
@@ -109,38 +139,25 @@ export class ProductService {
         }
     }
 
-    // async create(data: IProductDTO) {
-    //     try {
-    //         return await db.transaction(async (tx) => {
-    //             const [product] = await tx
-    //                 .insert(productSchema)
-    //                 .values(data)
-    //                 .returning({ id: productSchema.id })
+    async create(data: IProductDTO) {
+        try {
+            return await db.transaction(async (tx) => {
+                const [product] = await tx.insert(productSchema).values(data).returning({ id: productSchema.id })
 
-    //             if (data.product_category_id.length) {
-    //                 await tx.insert(productCategoryAttributeSchema).values(
-    //                     data.product_category_id.map((product_category_id) => ({
-    //                         product_attribute_id: product.id,
-    //                         product_category_id
-    //                     }))
-    //                 )
-    //             }
-
-    //             if (data.product_attribute_values.length) {
-    //                 await tx.insert(productValuesSchema).values(
-    //                     data.product_attribute_values.map((value) => ({
-    //                         product_attribute_id: product.id,
-    //                         value: value.value
-    //                     }))
-    //                 )
-    //             }
-
-    //             return product
-    //         })
-    //     } catch (error) {
-    //         handleDatabaseError(error)
-    //     }
-    // }
+                // if (data.product_attribute_values.length) {
+                //     await tx.insert(productValuesSchema).values(
+                //         data.product_attribute_values.map((value) => ({
+                //             product_attribute_id: product.id,
+                //             value: value.value
+                //         }))
+                //     )
+                // }
+                // return product
+            })
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
 
     // async update(id: string, data: IProductDTO) {
     //     try {
