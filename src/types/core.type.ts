@@ -4,11 +4,25 @@ import { Static, t } from 'elysia'
 // ** Types Definition
 export const paginationType = {
     page: t
-        .Transform(t.Optional(t.String()))
+        .Transform(
+            t.Optional(
+                t.Exclude(
+                    t.Union([t.String(), t.Number()]),
+                    t.Number()
+                )
+            )
+        )
         .Decode((value) => parseInt(value))
         .Encode((value) => value.toString()),
     pageSize: t
-        .Transform(t.Optional(t.String()))
+        .Transform(
+            t.Optional(
+                t.Exclude(
+                    t.Union([t.String(), t.Number()]),
+                    t.Number()
+                )
+            )
+        )
         .Decode((value) => parseInt(value))
         .Encode((value) => value.toString())
 }

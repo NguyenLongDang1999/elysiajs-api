@@ -23,9 +23,16 @@ export const productCategorySearchType = t.Object({
     parent_id: t.Optional(t.String()),
     product_brand_id: t.Optional(t.String()),
     status: t
-        .Transform(t.Optional(t.String()))
-        .Decode((value) => parseInt(value))
-        .Encode((value) => value.toString())
+        .Transform(
+            t.Optional(
+                t.Exclude(
+                    t.Union([t.String(), t.Number()]),
+                    t.String()
+                )
+            )
+        )
+        .Decode((value) => typeof value === 'string' ? parseInt(value) : undefined)
+        .Encode((value) => typeof value === 'number' ? value.toString() : undefined)
 })
 
 // ** Types
