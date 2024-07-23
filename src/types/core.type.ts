@@ -4,13 +4,13 @@ import { Static, t } from 'elysia'
 // ** Types Definition
 export const paginationType = {
     page: t
-        .Transform(t.Optional(t.Exclude(t.Union([t.String(), t.Number()]), t.String())))
+        .Transform(t.Optional(t.Exclude(t.Union([t.String(), t.Number()]), t.Number())))
         .Decode((value) => (typeof value === 'string' ? parseInt(value) : value))
-        .Encode((value) => value),
+        .Encode((value) => value.toString()),
     pageSize: t
-        .Transform(t.Optional(t.Exclude(t.Union([t.String(), t.Number()]), t.String())))
+        .Transform(t.Optional(t.Exclude(t.Union([t.String(), t.Number()]), t.Number())))
         .Decode((value) => (typeof value === 'string' ? parseInt(value) : value))
-        .Encode((value) => value)
+        .Encode((value) => value.toString())
 }
 
 export const paginationObjectType = t.Object({

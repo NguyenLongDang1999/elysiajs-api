@@ -28,9 +28,9 @@ export const productAttributeSearchType = t.Object({
     name: t.Optional(t.String()),
     product_category_id: t.Optional(t.String()),
     status: t
-        .Transform(t.Optional(t.Exclude(t.Union([t.String(), t.Number()]), t.String())))
+        .Transform(t.Optional(t.Exclude(t.Union([t.String(), t.Number()]), t.Number())))
         .Decode((value) => (typeof value === 'string' ? parseInt(value) : value))
-        .Encode((value) => value)
+        .Encode((value) => value.toString())
 })
 
 // ** Types

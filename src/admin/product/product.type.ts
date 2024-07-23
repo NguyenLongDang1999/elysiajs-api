@@ -60,9 +60,9 @@ export const productSearchType = t.Object({
     product_category_id: t.Optional(t.String()),
     product_brand_id: t.Optional(t.String()),
     status: t
-        .Transform(t.Optional(t.Exclude(t.Union([t.String(), t.Number()]), t.String())))
+        .Transform(t.Optional(t.Exclude(t.Union([t.String(), t.Number()]), t.Number())))
         .Decode((value) => (typeof value === 'string' ? parseInt(value) : value))
-        .Encode((value) => value),
+        .Encode((value) => value.toString()),
     product_type: t.Optional(t.String()),
     not_flash_deals: t.Optional(t.String()),
     product_id_flash_deals: t.Optional(t.String())
