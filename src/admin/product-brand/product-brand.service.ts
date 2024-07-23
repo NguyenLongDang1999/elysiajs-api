@@ -160,7 +160,7 @@ export class ProductBrandService {
 
             return {
                 ...productBrand,
-                product_category_id: productBrand.productCategoryBrand.map(
+                product_category_id: productBrand?.productCategoryBrand.map(
                     ({ product_category_id }) => product_category_id
                 ),
                 productCategoryBrand: undefined

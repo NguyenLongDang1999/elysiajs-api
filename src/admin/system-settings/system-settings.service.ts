@@ -50,7 +50,7 @@ export class SystemSettingsService {
         try {
             const systemSettings = await this.getDataList({ key: 'system_' }, redis)
 
-            const theme_colour = systemSettings.find((_s) => _s.key === 'system_theme_colour')
+            const theme_colour = systemSettings.find((_s: { key: string }) => _s.key === 'system_theme_colour')
 
             if (!theme_colour) {
                 await prismaClient.systemSettings.create({

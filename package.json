@@ -5,7 +5,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
     "format": "prettier --write \"src/**/*.ts\"",
-    "lint": "eslint \"{src}/**/*.ts\" --fix"
+    "lint": "eslint \"src/**/*.ts\" --fix"
   },
   "dependencies": {
     "@atakan75/elysia-redis": "^0.1.8",

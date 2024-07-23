@@ -70,12 +70,14 @@ export const authController = new Elysia({ prefix: '/auth' })
 
         const jwtPayload = await jwt.verify(cookie.refreshTokenAdmin.value)
 
-        if (!jwtPayload) throw error('Unauthorized')
+        if (!jwtPayload || typeof jwtPayload.sub !== 'string') throw error('Unauthorized')
 
-        const response = await AuthService.refreshTokens(jwtPayload.sub!, cookie.refreshTokenAdmin.value)
+        const response = await AuthService.refreshTokens(jwtPayload.sub, cookie.refreshTokenAdmin.value)
+
+        if (!response || !response.id) throw error('Not Found')
 
         const accessTokenJWT = await jwt.sign({
-            sub: response?.id!,
+            sub: response.id,
             exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP)
         })
 
@@ -88,7 +90,7 @@ export const authController = new Elysia({ prefix: '/auth' })
         })
 
         const refreshTokenJWT = await jwt.sign({
-            sub: response?.id!,
+            sub: response.id,
             exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP)
         })
 
@@ -100,16 +102,22 @@ export const authController = new Elysia({ prefix: '/auth' })
             sameSite: Bun.env.NODE_ENV === 'production'
         })
 
-        await AuthService.updateRefreshToken(response?.id!, refreshTokenJWT)
+        await AuthService.updateRefreshToken(response.id, refreshTokenJWT)
 
         return new Response('Successfully!')
     })
     .use(authPlugin)
-    .get('sign-out', async ({ AuthService, user, cookie }) => {
+    .get('sign-out', async ({ AuthService, user, cookie, error }) => {
         cookie.accessTokenAdmin.remove()
         cookie.refreshTokenAdmin.remove()
 
-        await AuthService.signOut(user?.id!)
+        if (!user || !user.id) throw error('Not Found')
+
+        await AuthService.signOut(user.id)
         return new Response('Successfully!')
     })
-    .get('profile', ({ AuthService, user }) => AuthService.profile(user?.id!))
+    .get('profile', ({ AuthService, user, error }) => {
+        if (!user || !user.id) throw error('Not Found')
+
+        return AuthService.profile(user.id)
+    })

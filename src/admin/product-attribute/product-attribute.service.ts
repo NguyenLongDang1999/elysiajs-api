@@ -27,10 +27,10 @@ export class ProductAttributeService {
                 },
                 productCategoryAttributes: query.product_category_id
                     ? {
-                          some: {
-                              product_category_id: { equals: query.product_category_id }
-                          }
-                      }
+                        some: {
+                            product_category_id: { equals: query.product_category_id }
+                        }
+                    }
                     : undefined
             }
 
@@ -151,7 +151,7 @@ export class ProductAttributeService {
                 const existingOptionsMap = new Map(existingOptions.map((option) => [option.id, option]))
 
                 for (const option of product_attribute_values) {
-                    const existingOption = existingOptionsMap.get(option.id)
+                    const existingOption = existingOptionsMap.get(option.id as string)
 
                     if (existingOption) {
                         await prisma.productAttributeValues.update({
@@ -159,7 +159,7 @@ export class ProductAttributeService {
                             data: { value: option.value }
                         })
 
-                        existingOptionsMap.delete(option.id)
+                        existingOptionsMap.delete(option.id as string)
                     } else {
                         await prisma.productAttributeValues.create({
                             data: {
