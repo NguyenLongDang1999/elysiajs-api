@@ -338,7 +338,11 @@ export class ProductService {
                 }
             })
 
-            const product_attributes = []
+            const product_attributes: {
+                id: string
+                name: string
+                values: string[]
+            }[] = []
 
             product?.productVariants.forEach((variant) => {
                 variant.productVariantAttributeValues.forEach((variantAttrValue) => {
