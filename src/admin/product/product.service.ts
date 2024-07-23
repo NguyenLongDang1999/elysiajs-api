@@ -6,7 +6,7 @@ import prismaClient from '@src/database/prisma'
 import { IProductDTO, IProductSearchDTO, IProductVariantDTO } from './product.type'
 
 // ** Utils Imports
-import { MANAGE_INVENTORY, PRODUCT_TYPE, STATUS } from '@src/utils/enums'
+import { MANAGE_INVENTORY, PRODUCT_TYPE, RELATIONS_TYPE, STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class ProductService {
@@ -140,7 +140,7 @@ export class ProductService {
                 return {
                     is_default: productVariantItem.is_default,
                     label: productVariantItem.label,
-                    sku: productVariantItem.sku,
+                    sku: productVariantItem.sku as string,
                     manage_inventory: productVariantItem.manage_inventory,
                     price: productVariantItem.price,
                     special_price: productVariantItem.special_price,
@@ -153,7 +153,7 @@ export class ProductService {
                     productInventory: {
                         create:
                             productVariantItem.manage_inventory === MANAGE_INVENTORY.YES
-                                ? { quantity: productVariantItem.quantity }
+                                ? { quantity: productVariantItem.quantity as number }
                                 : undefined
                     }
                 }
@@ -164,7 +164,7 @@ export class ProductService {
                 : [
                     {
                         is_default: true,
-                        sku,
+                        sku: sku as string,
                         manage_inventory,
                         price: data.price,
                         special_price: data.special_price,
@@ -172,7 +172,7 @@ export class ProductService {
                         productInventory:
                             manage_inventory === MANAGE_INVENTORY.YES
                                 ? {
-                                    create: { quantity }
+                                    create: { quantity: quantity as number }
                                 }
                                 : undefined
                     }
@@ -259,43 +259,136 @@ export class ProductService {
     //     }
     // }
 
-    // async retrieve(id: string) {
-    //     try {
-    //         const product = await db.query.productSchema.findFirst({
-    //             where: and(eq(productSchema.id, id), eq(productSchema.deleted_flg, false)),
-    //             columns: {
-    //                 id: true,
-    //                 name: true,
-    //                 slug: true,
-    //                 status: true,
-    //                 description: true,
-    //             },
-    //             with: {
-    //                 productValues: {
-    //                     columns: {
-    //                         id: true,
-    //                         value: true
-    //                     }
-    //                 },
-    //                 productCategoryAttributes: {
-    //                     columns: {
-    //                         product_category_id: true
-    //                     }
-    //                 }
-    //             }
-    //         })
+    async retrieve(id: string) {
+        try {
+            const product = await prismaClient.product.findFirst({
+                where: {
+                    id,
+                    deleted_flg: false
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    status: true,
+                    image_uri: true,
+                    description: true,
+                    short_description: true,
+                    product_type: true,
+                    meta_title: true,
+                    meta_description: true,
+                    technical_specifications: true,
+                    total_rating: true,
+                    product_brand_id: true,
+                    product_category_id: true,
+                    productImages: {
+                        orderBy: { index: 'asc' },
+                        select: {
+                            id: true,
+                            image_uri: true
+                        }
+                    },
+                    productRelated: {
+                        where: {
+                            product: {
+                                deleted_flg: false
+                            }
+                        },
+                        select: {
+                            related_product_id: true,
+                            relation_type: true
+                        }
+                    },
+                    productVariants: {
+                        orderBy: { created_at: 'desc' },
+                        select: {
+                            is_default: true,
+                            label: true,
+                            sku: true,
+                            manage_inventory: true,
+                            price: true,
+                            special_price: true,
+                            special_price_type: true,
+                            productVariantAttributeValues: {
+                                where: {
+                                    productAttributeValues: {
+                                        deleted_flg: false,
+                                        productAttribute: {
+                                            deleted_flg: false
+                                        }
+                                    }
+                                },
+                                select: {
+                                    productAttributeValues: {
+                                        select: {
+                                            id: true,
+                                            value: true,
+                                            productAttribute: {
+                                                select: {
+                                                    id: true,
+                                                    name: true
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            })
 
-    //         return {
-    //             ...product,
-    //             product_category_id: product?.productCategoryAttributes.map(
-    //                 ({ product_category_id }) => product_category_id,
-    //             ),
-    //             product_attribute_values: product?.productValues.map((valueItem) => valueItem),
-    //         }
-    //     } catch (error) {
-    //         handleDatabaseError(error)
-    //     }
-    // }
+            const product_attributes = []
+
+            product?.productVariants.forEach((variant) => {
+                variant.productVariantAttributeValues.forEach((variantAttrValue) => {
+                    const attribute = variantAttrValue.productAttributeValues.productAttribute
+                    const attributeValueId = variantAttrValue.productAttributeValues.id
+
+                    const attrObj = product_attributes.find((attr) => attr.id === attribute.id)
+
+                    if (attrObj) {
+                        attrObj.values.push(attributeValueId)
+                    } else {
+                        product_attributes.push({
+                            id: attribute.id,
+                            name: attribute.name,
+                            values: [attributeValueId]
+                        })
+                    }
+                })
+            })
+
+            const productPrice = product?.productVariants.filter((variantItem) => variantItem.is_default)
+
+            return {
+                ...product,
+                ...(productPrice ? productPrice[0] : undefined),
+                product_attributes,
+                product_images: product?.productImages,
+                product_variants: product?.productVariants,
+                product_upsell: product?.productRelated
+                    .filter((relatedItem) => relatedItem.relation_type === RELATIONS_TYPE.UPSELL)
+                    .map((relatedItem) => relatedItem.related_product_id),
+                product_cross_sell: product?.productRelated
+                    .filter((relatedItem) => relatedItem.relation_type === RELATIONS_TYPE.CROSS_SELL)
+                    .map((relatedItem) => relatedItem.related_product_id),
+                product_related: product?.productRelated
+                    .filter((relatedItem) => relatedItem.relation_type === RELATIONS_TYPE.RELATED)
+                    .map((relatedItem) => relatedItem.related_product_id),
+                productImages: undefined,
+                productRelated: undefined,
+                productVariants: undefined,
+                productVariantAttributeValues: undefined,
+                technical_specifications:
+                    typeof product?.technical_specifications === 'string'
+                        ? JSON.parse(product.technical_specifications)
+                        : []
+            }
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
 
     // async delete(id: string, query: IDeleteDTO) {
     //     try {

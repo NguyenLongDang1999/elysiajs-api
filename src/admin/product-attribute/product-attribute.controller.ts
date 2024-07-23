@@ -16,6 +16,12 @@ export const productAttributeController = new Elysia({ prefix: '/product-attribu
         query: 'productAttributeSearch'
     })
     .get('/:id', ({ ProductAttributeService, params }) => ProductAttributeService.retrieve(params.id))
+    .get('data-list-category/:id', ({ ProductAttributeService, params }) =>
+        ProductAttributeService.getDataListCategory(params.id)
+    )
+    .get('attribute-value-data-list/:id', ({ ProductAttributeService, params }) =>
+        ProductAttributeService.getValueDataList(params.id)
+    )
     .post('/', ({ ProductAttributeService, body }) => ProductAttributeService.create(body), {
         body: 'productAttribute'
     })

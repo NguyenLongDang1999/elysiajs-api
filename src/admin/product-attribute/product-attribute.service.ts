@@ -254,4 +254,55 @@ export class ProductAttributeService {
             handleDatabaseError(error)
         }
     }
+
+    async getDataListCategory(id: string) {
+        try {
+            const data = await prismaClient.productCategoryAttributes.findMany({
+                orderBy: {
+                    productAttribute: { created_at: 'desc' }
+                },
+                where: {
+                    productCategory: { deleted_flg: false },
+                    productAttribute: { deleted_flg: false },
+                    product_category_id: id
+                },
+                select: {
+                    productAttribute: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
+            })
+
+            return data.map((_v) => _v.productAttribute)
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    async getValueDataList(id: string) {
+        try {
+            const productAttribute = await prismaClient.productAttribute.findFirstOrThrow({
+                orderBy: { created_at: 'desc' },
+                where: { id, deleted_flg: false },
+                select: {
+                    productAttributeValues: {
+                        select: {
+                            id: true,
+                            value: true
+                        }
+                    }
+                }
+            })
+
+            return productAttribute.productAttributeValues.map((_v) => ({
+                id: _v.id,
+                name: _v.value
+            }))
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
 }

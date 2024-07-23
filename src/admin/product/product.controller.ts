@@ -15,7 +15,7 @@ export const productController = new Elysia({ prefix: '/product' })
     .get('/', ({ ProductService, query }) => ProductService.getTableList(query), {
         query: 'productSearch'
     })
-    // .get('/:id', ({ ProductService, params }) => ProductService.retrieve(params.id))
+    .get('/:id', ({ ProductService, params }) => ProductService.retrieve(params.id))
     .post('/', ({ ProductService, body }) => ProductService.create(body), {
         body: 'product'
     })

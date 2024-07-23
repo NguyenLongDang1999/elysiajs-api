@@ -43,3 +43,9 @@ export enum MANAGE_INVENTORY {
 export enum HASH_PASSWORD {
     ALGORITHM = 'argon2id'
 }
+
+export enum RELATIONS_TYPE {
+    UPSELL = 10,
+    CROSS_SELL = 20,
+    RELATED = 30
+}

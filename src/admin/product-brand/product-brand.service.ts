@@ -197,4 +197,31 @@ export class ProductBrandService {
             handleDatabaseError(error)
         }
     }
+
+    async getDataListCategory(product_category_id: string) {
+        try {
+            const data = await prismaClient.productCategoryBrand.findMany({
+                orderBy: {
+                    productBrand: { created_at: 'desc' }
+                },
+                where: {
+                    productBrand: { deleted_flg: false },
+                    productCategory: { deleted_flg: false },
+                    product_category_id
+                },
+                select: {
+                    productBrand: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
+            })
+
+            return data.map((_v) => _v.productBrand)
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
 }
