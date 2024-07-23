@@ -1,107 +1,109 @@
-// ** Database Imports
-import { flashDealsSchema } from '@db/schema/flash-deals'
-import { productSchema, productVariantsSchema } from '@db/schema/product'
-import { db } from '@src/database/drizzle'
+// ** Prisma Imports
+import { Prisma } from '@prisma/client'
+import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
-import { IProductDTO, IProductSearchDTO } from './product.type'
-
-// ** Drizzle Imports
-import { and, count, eq, gte, ilike, inArray, lte, SQL } from 'drizzle-orm'
+import { IProductDTO, IProductSearchDTO, IProductVariantDTO } from './product.type'
 
 // ** Utils Imports
-import { STATUS } from '@src/utils/enums'
+import { MANAGE_INVENTORY, PRODUCT_TYPE, STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
-
-// ** Types Imports
 
 export class ProductService {
     async getTableList(query: IProductSearchDTO) {
         try {
-            const where: SQL[] = [eq(productSchema.deleted_flg, false)]
+            const take = Number(query.pageSize) || undefined
+            const skip = Number(query.page) || undefined
 
-            if (query.sku) {
-                where.push(
-                    inArray(
-                        productVariantsSchema.sku,
-                        db
-                            .select({ sku: productVariantsSchema.sku })
-                            .from(productVariantsSchema)
-                            .where(eq(productVariantsSchema.sku, query.sku))
-                    )
-                )
+            const search: Prisma.ProductWhereInput = {
+                deleted_flg: false,
+                name: { contains: query.name || undefined, mode: 'insensitive' },
+                status: { equals: Number(query.status) || undefined },
+                product_type: { equals: Number(query.product_type) || undefined },
+                product_brand_id: { equals: query.product_brand_id || undefined },
+                product_category_id: { equals: query.product_category_id || undefined },
+                productVariants: query.sku
+                    ? {
+                        every: {
+                            sku: { contains: query.sku, mode: 'insensitive' }
+                        }
+                    }
+                    : undefined
             }
 
-            if (query.name) {
-                where.push(ilike(productSchema.name, `%${query.name}%`))
+            if (query.not_flash_deals && this.stringToBoolean(query.not_flash_deals)) {
+                search.productVariants = {
+                    ...search.productVariants,
+                    none: {
+                        AND: [
+                            {
+                                flashDealProducts: {
+                                    some: {}
+                                }
+                            },
+                            {
+                                product_id: {
+                                    notIn: query.product_id_flash_deals ? query.product_id_flash_deals.split(',') : []
+                                }
+                            }
+                        ]
+                    }
+                }
             }
 
-            if (query.product_category_id) {
-                where.push(eq(productSchema.product_category_id, query.product_category_id))
-            }
-
-            if (query.product_brand_id) {
-                where.push(eq(productSchema.product_brand_id, query.product_brand_id))
-            }
-
-            if (query.status) {
-                where.push(eq(productSchema.status, Number(query.status)))
-            }
-
-            if (query.product_type) {
-                where.push(eq(productSchema.product_type, Number(query.product_type)))
-            }
-
-            const [data, [aggregations]] = await Promise.all([
-                db.query.productSchema.findMany({
-                    offset: query.page,
-                    limit: query.pageSize,
-                    orderBy: (product, { desc }) => [desc(product.created_at)],
-                    where: and(...where),
-                    columns: {
+            const [data, count] = await Promise.all([
+                prismaClient.product.findMany({
+                    take,
+                    skip,
+                    orderBy: { created_at: 'desc' },
+                    where: search,
+                    select: {
                         id: true,
-                        name: true,
                         slug: true,
+                        name: true,
                         status: true,
-                        created_at: true,
                         image_uri: true,
-                        product_type: true
-                    },
-                    with: {
+                        product_type: true,
                         productCategory: {
-                            columns: {
+                            select: {
                                 id: true,
                                 name: true,
                                 image_uri: true
                             }
                         },
                         productBrand: {
-                            columns: {
+                            select: {
                                 id: true,
                                 name: true,
                                 image_uri: true
                             }
                         },
                         productVariants: {
-                            orderBy: (productVariants, { desc }) => [desc(productVariants.created_at)],
-                            where: eq(productVariantsSchema.is_default, true),
-                            columns: {
+                            orderBy: { created_at: 'desc' },
+                            where: { is_default: true },
+                            select: {
                                 sku: true,
                                 price: true,
                                 special_price: true,
-                                special_price_type: true
-                            },
-                            with: {
+                                special_price_type: true,
                                 flashDealProducts: {
-                                    where: and(
-                                        eq(flashDealsSchema.deleted_flg, false),
-                                        eq(flashDealsSchema.status, STATUS.ACTIVE),
-                                        lte(flashDealsSchema.start_time, new Date()),
-                                        gte(flashDealsSchema.end_time, new Date()),
-                                        eq(productVariantsSchema.deleted_flg, false),
-                                        eq(productVariantsSchema.is_default, true)
-                                    ),
-                                    columns: {
+                                    where: {
+                                        flashDeal: {
+                                            deleted_flg: false,
+                                            status: STATUS.ACTIVE,
+                                            start_time: {
+                                                lte: new Date()
+                                            },
+                                            end_time: {
+                                                gte: new Date()
+                                            }
+                                        },
+                                        productVariants: {
+                                            deleted_flg: false,
+                                            is_default: true
+                                        }
+                                    },
+                                    select: {
                                         price: true,
                                         special_price: true,
                                         special_price_type: true
@@ -111,28 +113,19 @@ export class ProductService {
                         }
                     }
                 }),
-                db
-                    .select({
-                        value: count(productSchema.id)
-                    })
-                    .from(productSchema)
-                    .where(and(...where))
+                prismaClient.product.count({ where: search })
             ])
 
             return {
-                data: data.map((_data) => {
-                    const productVariant = _data.productVariants[0]
-                    const flashDeal = productVariant.flashDealProducts[0] || {}
-                    const hasFlashDeals = !!productVariant.flashDealProducts.length
-
-                    return {
-                        ..._data,
-                        ...flashDeal,
-                        ...(!hasFlashDeals && productVariant),
-                        hasFlashDeals
-                    }
-                }),
-                aggregations: aggregations.value
+                data: data.map((productItem) => ({
+                    ...productItem,
+                    ...(productItem.productVariants[0].flashDealProducts.length
+                        ? productItem.productVariants[0].flashDealProducts[0]
+                        : productItem.productVariants.map(({ flashDealProducts: _, ..._p }) => _p)[0]),
+                    hasFlashDeals: !!productItem.productVariants[0].flashDealProducts.length,
+                    productVariants: undefined
+                })),
+                aggregations: count
             }
         } catch (error) {
             handleDatabaseError(error)
@@ -141,18 +134,63 @@ export class ProductService {
 
     async create(data: IProductDTO) {
         try {
-            return await db.transaction(async (tx) => {
-                const [product] = await tx.insert(productSchema).values(data).returning({ id: productSchema.id })
+            const { sku, quantity, manage_inventory, product_variants, ...productData } = data
 
-                // if (data.product_attribute_values.length) {
-                //     await tx.insert(productValuesSchema).values(
-                //         data.product_attribute_values.map((value) => ({
-                //             product_attribute_id: product.id,
-                //             value: value.value
-                //         }))
-                //     )
-                // }
-                // return product
+            function createProductVariant(productVariantItem: IProductVariantDTO) {
+                return {
+                    is_default: productVariantItem.is_default,
+                    label: productVariantItem.label,
+                    sku: productVariantItem.sku,
+                    manage_inventory: productVariantItem.manage_inventory,
+                    price: productVariantItem.price,
+                    special_price: productVariantItem.special_price,
+                    special_price_type: productVariantItem.special_price_type,
+                    productVariantAttributeValues: {
+                        create: productVariantItem.product_attribute_value_id.map((attributeValueItem: string) => ({
+                            product_attribute_value_id: attributeValueItem
+                        }))
+                    },
+                    productInventory: {
+                        create:
+                            productVariantItem.manage_inventory === MANAGE_INVENTORY.YES
+                                ? { quantity: productVariantItem.quantity }
+                                : undefined
+                    }
+                }
+            }
+
+            const productVariants = product_variants
+                ? product_variants.map(createProductVariant)
+                : [
+                    {
+                        is_default: true,
+                        sku,
+                        manage_inventory,
+                        price: data.price,
+                        special_price: data.special_price,
+                        special_price_type: data.special_price_type,
+                        productInventory:
+                            manage_inventory === MANAGE_INVENTORY.YES
+                                ? {
+                                    create: { quantity }
+                                }
+                                : undefined
+                    }
+                ]
+
+            const product_type = product_variants ? PRODUCT_TYPE.VARIANT : PRODUCT_TYPE.SINGLE
+
+            return await prismaClient.$transaction(async (prisma) => {
+                return await prisma.product.create({
+                    data: {
+                        ...productData,
+                        product_type,
+                        productVariants: {
+                            create: productVariants
+                        }
+                    },
+                    select: { id: true }
+                })
             })
         } catch (error) {
             handleDatabaseError(error)
@@ -279,4 +317,6 @@ export class ProductService {
     //         handleDatabaseError(error)
     //     }
     // }
+
+    stringToBoolean = (str: string) => JSON.parse(str)
 }
