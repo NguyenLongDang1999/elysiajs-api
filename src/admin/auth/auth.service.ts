@@ -33,7 +33,7 @@ export class AuthService {
                     password: hashPassword
                 }
             })
-        } catch (error) {}
+        } catch (error) { }
     }
 
     async signIn(data: IAuthSignInDTO) {

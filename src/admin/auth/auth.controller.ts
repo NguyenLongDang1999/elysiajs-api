@@ -21,11 +21,6 @@ export const authController = new Elysia({ prefix: '/auth' })
     })
     .use(AuthModels)
     .use(jwtPlugin)
-    .post('seed', async ({ AuthService }) => {
-        await AuthService.seed()
-
-        return { message: 'Successfully!' }
-    })
     .post(
         'sign-in',
         async ({ AuthService, body, jwt, cookie }) => {

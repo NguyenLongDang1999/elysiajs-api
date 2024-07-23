@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL_DRIZZLE")
+  url      = env("DATABASE_URL")
 }
 
 model ProductCategory {

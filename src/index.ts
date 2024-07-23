@@ -33,6 +33,11 @@ const app = new Elysia({ prefix: '/api', normalize: true })
     )
     .use(admin)
     .get('/', () => 'Hello Elysia')
+    .post('seed', async ({ AuthService }) => {
+        await AuthService.seed()
+
+        return { message: 'Successfully!' }
+    })
     .listen(Bun.env.PORT || 3333)
 
 console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`)
