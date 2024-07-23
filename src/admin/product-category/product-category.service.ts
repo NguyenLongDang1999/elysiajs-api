@@ -178,7 +178,7 @@ export class ProductCategoryService {
                 await prismaClient.productCategory.update({
                     data: {
                         deleted_flg: true,
-                        slug: slugTimestamp(query.slug!)
+                        slug: slugTimestamp(query.slug as string)
                     },
                     where: { id },
                     select: {

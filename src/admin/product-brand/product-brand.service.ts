@@ -183,7 +183,7 @@ export class ProductBrandService {
                 await prismaClient.productBrand.update({
                     data: {
                         deleted_flg: true,
-                        slug: slugTimestamp(query.slug!)
+                        slug: slugTimestamp(query.slug as string)
                     },
                     where: { id },
                     select: {

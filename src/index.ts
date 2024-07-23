@@ -27,7 +27,7 @@ const app = new Elysia({ prefix: '/api', normalize: true })
     .use(
         cors({
             credentials: true,
-            origin: [Bun.env.CMS_URL!, Bun.env.USER_URL!],
+            origin: [Bun.env.CMS_URL as string, Bun.env.USER_URL as string],
             allowedHeaders: ['Content-Type', 'Authorization']
         })
     )

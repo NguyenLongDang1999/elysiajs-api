@@ -268,7 +268,7 @@ export class ProductService {
     //                 .update(productSchema)
     //                 .set({
     //                     deleted_flg: true,
-    //                     slug: slugTimestamp(query.slug!)
+    //                     slug: slugTimestamp(query.slug as string)
     //                 })
     //                 .where(eq(productSchema.id, id))
     //                 .returning({
