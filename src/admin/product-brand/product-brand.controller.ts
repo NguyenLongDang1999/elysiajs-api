@@ -1,4 +1,5 @@
 // ** Elysia Imports
+import { redis } from '@atakan75/elysia-redis'
 import { Elysia } from 'elysia'
 
 // ** Models Imports
@@ -11,18 +12,19 @@ export const productBrandController = new Elysia({ prefix: '/product-brands' })
     .decorate({
         ProductBrandService: new ProductBrandService()
     })
+    .use(redis())
     .use(productBrandModels)
     .get('/', ({ ProductBrandService, query }) => ProductBrandService.getTableList(query), {
         query: 'productBrandSearch'
     })
-    .get('/:id', ({ ProductBrandService, params }) => ProductBrandService.retrieve(params.id))
-    .get('data-list-category/:id', ({ ProductBrandService, params }) =>
-        ProductBrandService.getDataListCategory(params.id)
+    .get('/:id', ({ ProductBrandService, params, redis }) => ProductBrandService.retrieve(params.id, redis))
+    .get('data-list-category/:id', ({ ProductBrandService, params, redis }) =>
+        ProductBrandService.getDataListCategory(params.id, redis)
     )
-    .post('/', ({ ProductBrandService, body }) => ProductBrandService.create(body), { body: 'productBrand' })
-    .patch('/:id', ({ ProductBrandService, body, params }) => ProductBrandService.update(params.id, body), {
+    .post('/', ({ ProductBrandService, body, redis }) => ProductBrandService.create(body, redis), { body: 'productBrand' })
+    .patch('/:id', ({ ProductBrandService, body, params, redis }) => ProductBrandService.update(params.id, body, redis), {
         body: 'productBrand'
     })
-    .delete('/:id', ({ ProductBrandService, query, params }) => ProductBrandService.delete(params.id, query), {
+    .delete('/:id', ({ ProductBrandService, query, params, redis }) => ProductBrandService.delete(params.id, query, redis), {
         query: 'productBrandDelete'
     })

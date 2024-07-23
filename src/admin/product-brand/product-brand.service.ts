@@ -1,3 +1,6 @@
+// ** Elysia Imports
+import { RedisClientType } from '@atakan75/elysia-redis'
+
 // ** Prisma Imports
 import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
@@ -7,7 +10,8 @@ import { IDeleteDTO } from '@src/types/core.type'
 import { IProductBrandDTO, IProductBrandSearchDTO } from './product-brand.type'
 
 // ** Utils Imports
-import { slugTimestamp } from '@src/utils'
+import { createRedisKey, slugTimestamp } from '@src/utils'
+import { EXPIRES_AT, REDIS_KEY } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class ProductBrandService {
@@ -87,12 +91,12 @@ export class ProductBrandService {
         }
     }
 
-    async create(data: IProductBrandDTO) {
+    async create(data: IProductBrandDTO, redis: RedisClientType) {
         try {
             const { product_category_id, ...productBrandData } = data
 
             return await prismaClient.$transaction(async (prisma) => {
-                return await prisma.productBrand.create({
+                const productBrand = await prisma.productBrand.create({
                     data: {
                         ...productBrandData,
                         productCategoryBrand: {
@@ -106,18 +110,26 @@ export class ProductBrandService {
                     },
                     select: { id: true }
                 })
+
+                const deleteRedisKeys = product_category_id.map((category_id) =>
+                    redis.del(createRedisKey(REDIS_KEY.PRODUCT_BRAND, category_id))
+                );
+
+                await Promise.all(deleteRedisKeys);
+
+                return productBrand
             })
         } catch (error) {
             handleDatabaseError(error)
         }
     }
 
-    async update(id: string, data: IProductBrandDTO) {
+    async update(id: string, data: IProductBrandDTO, redis: RedisClientType) {
         try {
             const { product_category_id, ...productBrandData } = data
 
             return await prismaClient.$transaction(async (prisma) => {
-                return await prisma.productBrand.update({
+                const productBrand = await prisma.productBrand.update({
                     where: { id },
                     data: {
                         ...productBrandData,
@@ -132,15 +144,30 @@ export class ProductBrandService {
                         }
                     }
                 })
+
+                const deleteRedisKeys = product_category_id.map((category_id) =>
+                    redis.del(createRedisKey(REDIS_KEY.PRODUCT_BRAND, category_id))
+                );
+
+                await Promise.all(deleteRedisKeys);
+                await redis.del(createRedisKey(REDIS_KEY.PRODUCT_BRAND, id))
+
+                return productBrand
             })
         } catch (error) {
             handleDatabaseError(error)
         }
     }
 
-    async retrieve(id: string) {
+    async retrieve(id: string, redis: RedisClientType) {
         try {
-            const productBrand = await prismaClient.productBrand.findFirst({
+            const productBrandCached = await redis.get(createRedisKey(REDIS_KEY.PRODUCT_BRAND, id))
+
+            if (productBrandCached) {
+                return JSON.parse(productBrandCached)
+            }
+
+            const productBrandData = await prismaClient.productBrand.findFirst({
                 where: {
                     id,
                     deleted_flg: false
@@ -158,19 +185,27 @@ export class ProductBrandService {
                 }
             })
 
-            return {
-                ...productBrand,
-                product_category_id: productBrand?.productCategoryBrand.map(
+            const productBrand = {
+                ...productBrandData,
+                product_category_id: productBrandData?.productCategoryBrand.map(
                     ({ product_category_id }) => product_category_id
                 ),
                 productCategoryBrand: undefined
             }
+
+            await redis.set(
+                createRedisKey(REDIS_KEY.PRODUCT_BRAND, id),
+                JSON.stringify(productBrand),
+                EXPIRES_AT.REDIS_EXPIRES_AT
+            )
+
+            return productBrand
         } catch (error) {
             handleDatabaseError(error)
         }
     }
 
-    async delete(id: string, query: IDeleteDTO) {
+    async delete(id: string, query: IDeleteDTO, redis: RedisClientType) {
         try {
             if (query.force) {
                 await prismaClient.productBrand.delete({
@@ -192,14 +227,22 @@ export class ProductBrandService {
                 })
             }
 
+            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_BRAND, id))
+
             return id
         } catch (error) {
             handleDatabaseError(error)
         }
     }
 
-    async getDataListCategory(product_category_id: string) {
+    async getDataListCategory(product_category_id: string, redis: RedisClientType) {
         try {
+            const productBrandCached = await redis.get(createRedisKey(REDIS_KEY.PRODUCT_BRAND, product_category_id))
+
+            if (productBrandCached) {
+                return JSON.parse(productBrandCached)
+            }
+
             const data = await prismaClient.productCategoryBrand.findMany({
                 orderBy: {
                     productBrand: { created_at: 'desc' }
@@ -219,7 +262,15 @@ export class ProductBrandService {
                 }
             })
 
-            return data.map((_v) => _v.productBrand)
+            const productBrand = data.map((_v) => _v.productBrand)
+
+            await redis.set(
+                createRedisKey(REDIS_KEY.PRODUCT_BRAND, product_category_id),
+                JSON.stringify(productBrand),
+                EXPIRES_AT.REDIS_EXPIRES_AT
+            )
+
+            return productBrand
         } catch (error) {
             handleDatabaseError(error)
         }

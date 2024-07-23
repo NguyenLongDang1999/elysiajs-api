@@ -93,7 +93,7 @@ export class ProductCategoryService {
 
     async create(data: IProductCategoryDTO, redis: RedisClientType) {
         try {
-            const createdCategory = await prismaClient.productCategory.create({
+            const productCategory = await prismaClient.productCategory.create({
                 data,
                 select: {
                     id: true
@@ -102,7 +102,7 @@ export class ProductCategoryService {
 
             await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
 
-            return createdCategory
+            return productCategory
         } catch (error) {
             handleDatabaseError(error)
         }
