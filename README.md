@@ -1,15 +1,25 @@
-# Elysia with Bun runtime
+# ElysiaJS
 
-## Getting Started
-To get started with this template, simply paste this command into your terminal:
-```bash
-bun create elysia ./elysia-example
-```
+ElysiaJS API + Prisma
 
-## Development
+<a name="Install"></a>
+
+## Install Development
+
 To start the development server run:
+
 ```bash
-bun run dev
+$ make dd
 ```
 
-Open http://localhost:3000/ with your browser to see the result.
+or
+
+```bash
+$ make ddb
+```
+
+## Format Code
+
+```bash
+$ make format
+```
