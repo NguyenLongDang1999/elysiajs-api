@@ -309,6 +309,11 @@ export class ProductService {
                             price: true,
                             special_price: true,
                             special_price_type: true,
+                            productInventory: {
+                                select: {
+                                    quantity: true
+                                }
+                            },
                             productVariantAttributeValues: {
                                 where: {
                                     productAttributeValues: {
@@ -368,9 +373,13 @@ export class ProductService {
             return {
                 ...product,
                 ...(productPrice ? productPrice[0] : undefined),
+                ...(productPrice ? productPrice[0].productInventory : undefined),
                 product_attributes,
                 product_images: product?.productImages,
-                product_variants: product?.productVariants,
+                product_variants: product?.productVariants.map((variantItem) => ({
+                    ...variantItem,
+                    quantity: variantItem.productInventory?.quantity || 0
+                })),
                 product_upsell: product?.productRelated
                     .filter((relatedItem) => relatedItem.relation_type === RELATIONS_TYPE.UPSELL)
                     .map((relatedItem) => relatedItem.related_product_id),
