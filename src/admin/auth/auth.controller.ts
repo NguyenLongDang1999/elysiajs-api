@@ -8,7 +8,6 @@ import { AuthModels } from './auth.model'
 import { AuthService } from './auth.service'
 
 // ** Utils Imports
-import { getExpTimestamp } from '@src/utils'
 import { JWT } from '@src/utils/enums'
 
 // ** Plugins Imports
@@ -27,8 +26,7 @@ export const authController = new Elysia({ prefix: '/auth' })
             const { id } = await AuthService.signIn(body)
 
             const accessTokenJWT = await jwtAccessToken.sign({
-                sub: id,
-                exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP)
+                sub: id
             })
 
             cookie.accessTokenAdmin.set({
@@ -40,8 +38,7 @@ export const authController = new Elysia({ prefix: '/auth' })
             })
 
             const refreshTokenJWT = await jwtRefreshToken.sign({
-                sub: id,
-                exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP)
+                sub: id
             })
 
             cookie.refreshTokenAdmin.set({
@@ -72,8 +69,7 @@ export const authController = new Elysia({ prefix: '/auth' })
         if (!response || !response.id) throw error('Not Found')
 
         const accessTokenJWT = await jwtAccessToken.sign({
-            sub: response.id,
-            exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP)
+            sub: response.id
         })
 
         cookie.accessTokenAdmin.set({
@@ -85,8 +81,7 @@ export const authController = new Elysia({ prefix: '/auth' })
         })
 
         const refreshTokenJWT = await jwtRefreshToken.sign({
-            sub: response.id,
-            exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP)
+            sub: response.id
         })
 
         cookie.refreshTokenAdmin.set({
