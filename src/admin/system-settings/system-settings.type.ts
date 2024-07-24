@@ -11,7 +11,8 @@ export const systemSettingsType = t.Object({
     setting_system_options: t.Optional(
         t.Array(
             t.Object({
-                value: t.String()
+                id: t.String(),
+                name: t.String()
             })
         )
     ),

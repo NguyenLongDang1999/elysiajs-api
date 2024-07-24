@@ -18,3 +18,13 @@ export const systemSettingsController = new Elysia({ prefix: '/system-settings' 
         query: 'systemSettingsSearch'
     })
     .get('metadata', ({ SystemSettingsService, redis }) => SystemSettingsService.metadata(redis))
+    .post('/', ({ SystemSettingsService, body, redis }) => SystemSettingsService.create(body, redis), {
+        body: 'systemSettings'
+    })
+    .patch(
+        '/:id',
+        ({ SystemSettingsService, body, params, redis }) => SystemSettingsService.update(params.id, body, redis),
+        {
+            body: 'systemSettings'
+        }
+    )
