@@ -13,6 +13,7 @@ export enum JWT {
 export enum REDIS_KEY {
     PRODUCT_CATEGORY = 'product_category',
     PRODUCT_BRAND = 'product_brand',
+    PRODUCT_COLLECTION = 'product_collection',
     SYSTEM_SETTINGS = 'system_settings'
 }
 
