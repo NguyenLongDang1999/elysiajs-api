@@ -23,10 +23,10 @@ export const authController = new Elysia({ prefix: '/auth' })
     .use(jwtPlugin)
     .post(
         'sign-in',
-        async ({ AuthService, body, jwt, cookie }) => {
+        async ({ AuthService, body, jwtAccessToken, jwtRefreshToken, cookie }) => {
             const { id } = await AuthService.signIn(body)
 
-            const accessTokenJWT = await jwt.sign({
+            const accessTokenJWT = await jwtAccessToken.sign({
                 sub: id,
                 exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP)
             })
@@ -39,7 +39,7 @@ export const authController = new Elysia({ prefix: '/auth' })
                 sameSite: Bun.env.NODE_ENV === 'production'
             })
 
-            const refreshTokenJWT = await jwt.sign({
+            const refreshTokenJWT = await jwtRefreshToken.sign({
                 sub: id,
                 exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP)
             })
@@ -60,10 +60,10 @@ export const authController = new Elysia({ prefix: '/auth' })
             body: 'signIn'
         }
     )
-    .get('refresh', async ({ AuthService, jwt, error, cookie }) => {
+    .get('refresh', async ({ AuthService, jwtAccessToken, jwtRefreshToken, error, cookie }) => {
         if (!cookie.refreshTokenAdmin.value) throw error('Forbidden')
 
-        const jwtPayload = await jwt.verify(cookie.refreshTokenAdmin.value)
+        const jwtPayload = await jwtRefreshToken.verify(cookie.refreshTokenAdmin.value)
 
         if (!jwtPayload || typeof jwtPayload.sub !== 'string') throw error('Unauthorized')
 
@@ -71,7 +71,7 @@ export const authController = new Elysia({ prefix: '/auth' })
 
         if (!response || !response.id) throw error('Not Found')
 
-        const accessTokenJWT = await jwt.sign({
+        const accessTokenJWT = await jwtAccessToken.sign({
             sub: response.id,
             exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP)
         })
@@ -84,7 +84,7 @@ export const authController = new Elysia({ prefix: '/auth' })
             sameSite: Bun.env.NODE_ENV === 'production'
         })
 
-        const refreshTokenJWT = await jwt.sign({
+        const refreshTokenJWT = await jwtRefreshToken.sign({
             sub: response.id,
             exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP)
         })

@@ -8,12 +8,12 @@ import prismaClient from '@src/database/prisma'
 import { jwtPlugin } from './jwt'
 
 const authPlugin = (app: Elysia) =>
-    app.use(jwtPlugin).derive(async ({ jwt, cookie, error, path }) => {
+    app.use(jwtPlugin).derive(async ({ jwtAccessToken, cookie, error, path }) => {
         if (path === '/api/admin/auth/sign-in' || path === '/api/admin/auth/refresh') return
 
         if (!cookie.accessTokenAdmin.value) throw error('Unauthorized')
 
-        const jwtPayload = await jwt.verify(cookie.accessTokenAdmin.value)
+        const jwtPayload = await jwtAccessToken.verify(cookie.accessTokenAdmin.value)
 
         if (!jwtPayload) throw error('Unauthorized')
 

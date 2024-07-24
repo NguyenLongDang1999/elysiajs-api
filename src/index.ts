@@ -7,7 +7,7 @@ import { Elysia } from 'elysia'
 import { admin } from './admin'
 
 const app = new Elysia({ prefix: '/api', normalize: true })
-    .onTransform((ctx) => {
+    .derive((ctx) => {
         if (ctx.query.page && ctx.query.pageSize) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
