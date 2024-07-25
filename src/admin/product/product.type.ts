@@ -68,9 +68,15 @@ export const productSearchType = t.Object({
     product_id_flash_deals: t.Optional(t.String())
 })
 
+export const generateVariantType = t.Object({
+    product_id: t.Array(t.String())
+})
+
 // ** Types
 export type IProductDTO = Static<typeof productType>
 
 export type IProductSearchDTO = StaticDecode<typeof productSearchType>
 
 export type IProductVariantDTO = Static<typeof productVariantType>
+
+export type IGenerateVariantDTO = Static<typeof generateVariantType>

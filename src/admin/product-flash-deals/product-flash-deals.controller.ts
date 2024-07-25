@@ -29,6 +29,13 @@ export const productFlashDealsController = new Elysia({ prefix: '/product-flash-
             body: 'productFlashDeals'
         }
     )
+    .post(
+        'update-price',
+        ({ ProductFlashDealsService, body, redis }) => ProductFlashDealsService.updateProductPrice(body, redis),
+        {
+            body: 'productFlashDealsUpdatePrice'
+        }
+    )
     .delete(
         '/:id',
         ({ ProductFlashDealsService, query, params, redis }) =>

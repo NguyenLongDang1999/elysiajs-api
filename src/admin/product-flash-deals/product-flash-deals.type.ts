@@ -35,7 +35,17 @@ export const productFlashDealsSearchType = t.Object({
         .Encode((value) => value.toString())
 })
 
+export const productFlashDealsUpdatePriceType = t.Object({
+    flash_deal_id: t.String(),
+    product_variants_id: t.String(),
+    price: t.Number({ default: 0 }),
+    special_price: t.Optional(t.Number({ default: 0 })),
+    special_price_type: t.Optional(t.Number())
+})
+
 // ** Types
 export type IProductFlashDealsDTO = Static<typeof productFlashDealsType>
 
 export type IProductFlashDealsSearchDTO = StaticDecode<typeof productFlashDealsSearchType>
+
+export type IProductFlashDealsUpdatePriceDTO = Static<typeof productFlashDealsUpdatePriceType>

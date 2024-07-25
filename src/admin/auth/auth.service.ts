@@ -7,8 +7,6 @@ import prismaClient from '@src/database/prisma'
 // ** Types Imports
 import { IAuthSignInDTO } from './auth.type'
 
-// ** Drizzle Imports
-
 // ** Utils Imports
 import { HASH_PASSWORD } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'

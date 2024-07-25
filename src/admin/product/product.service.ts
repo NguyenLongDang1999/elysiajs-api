@@ -3,10 +3,10 @@ import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
-import { IProductDTO, IProductSearchDTO, IProductVariantDTO } from './product.type'
+import { IGenerateVariantDTO, IProductDTO, IProductSearchDTO, IProductVariantDTO } from './product.type'
 
 // ** Utils Imports
-import { MANAGE_INVENTORY, PRODUCT_TYPE, RELATIONS_TYPE, STATUS } from '@src/utils/enums'
+import { MANAGE_INVENTORY, PRODUCT_TYPE, RELATIONS_TYPE, SPECIAL_PRICE_TYPE, STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class ProductService {
@@ -423,6 +423,45 @@ export class ProductService {
     //         handleDatabaseError(error)
     //     }
     // }
+
+    async generateVariant(generateProductDto: IGenerateVariantDTO) {
+        try {
+            const { product_id } = generateProductDto
+
+            const product = await prismaClient.product.findMany({
+                where: {
+                    deleted_flg: false,
+                    id: { in: product_id }
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    image_uri: true,
+                    product_type: true,
+                    productVariants: {
+                        where: { deleted_flg: false },
+                        select: {
+                            id: true,
+                            sku: true,
+                            label: true
+                        }
+                    }
+                }
+            })
+
+            return product.map((_p) => ({
+                ..._p,
+                productVariants: _p.productVariants.map((_pv) => ({
+                    ..._pv,
+                    price: 0,
+                    special_price: 0,
+                    special_price_type: SPECIAL_PRICE_TYPE.PRICE
+                }))
+            }))
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
 
     stringToBoolean = (str: string) => JSON.parse(str)
 }

@@ -7,7 +7,7 @@ import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
 import { IDeleteDTO } from '@src/types/core.type'
-import { IProductFlashDealsDTO, IProductFlashDealsSearchDTO } from './product-flash-deals.type'
+import { IProductFlashDealsDTO, IProductFlashDealsSearchDTO, IProductFlashDealsUpdatePriceDTO } from './product-flash-deals.type'
 
 // ** Utils Imports
 import { createRedisKey, slugTimestamp } from '@src/utils'
@@ -106,30 +106,34 @@ export class ProductFlashDealsService {
 
     async update(id: string, data: IProductFlashDealsDTO, redis: RedisClientType) {
         try {
-            const { product_id, ...productCollectionData } = data
+            const { product_variants, ...productFlashDealData } = data
 
-            return await prismaClient.$transaction(async (prisma) => {
-                const productCollection = await prisma.productCollection.update({
-                    data: {
-                        ...productCollectionData,
-                        productCollectionProduct: {
-                            deleteMany: {},
-                            createMany: {
-                                data: product_id.map((productItem) => ({
-                                    product_id: productItem
-                                })),
-                                skipDuplicates: true
-                            }
-                        }
-                    },
-                    where: { id },
-                    select: { id: true }
-                })
+            return await prismaClient.flashDeals.update({
+                where: { id },
+                data: productFlashDealData,
+                select: {
+                    id: true
+                }
+            })
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
 
-                await redis.del(createRedisKey(REDIS_KEY.PRODUCT_COLLECTION, 'list'))
-                await redis.del(createRedisKey(REDIS_KEY.PRODUCT_COLLECTION, id))
-
-                return productCollection
+    async updateProductPrice(data: IProductFlashDealsUpdatePriceDTO, redis: RedisClientType) {
+        try {
+            return await prismaClient.flashDealProducts.update({
+                where: {
+                    flash_deal_id_product_variants_id: {
+                        flash_deal_id: data.flash_deal_id,
+                        product_variants_id: data.product_variants_id
+                    }
+                },
+                data: {
+                    price: data.price,
+                    special_price: data.special_price,
+                    special_price_type: data.special_price_type
+                }
             })
         } catch (error) {
             handleDatabaseError(error)
