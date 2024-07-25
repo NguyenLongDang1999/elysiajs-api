@@ -10,6 +10,7 @@
   "dependencies": {
     "@atakan75/elysia-redis": "^0.1.8",
     "@elysiajs/cors": "^1.0.4",
+    "@elysiajs/eden": "^1.1.2",
     "@elysiajs/jwt": "^1.0.2",
     "@elysiajs/swagger": "^1.0.5",
     "@paralleldrive/cuid2": "^2.2.2",
