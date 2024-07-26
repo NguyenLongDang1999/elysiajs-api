@@ -7,7 +7,11 @@ import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
 import { IDeleteDTO } from '@src/types/core.type'
-import { IProductFlashDealsDTO, IProductFlashDealsSearchDTO, IProductFlashDealsUpdatePriceDTO } from './product-flash-deals.type'
+import {
+    IProductFlashDealsDTO,
+    IProductFlashDealsSearchDTO,
+    IProductFlashDealsUpdatePriceDTO
+} from './product-flash-deals.type'
 
 // ** Utils Imports
 import { createRedisKey, slugTimestamp } from '@src/utils'
@@ -106,7 +110,7 @@ export class ProductFlashDealsService {
 
     async update(id: string, data: IProductFlashDealsDTO, redis: RedisClientType) {
         try {
-            const { product_variants, ...productFlashDealData } = data
+            const { product_variants: _, ...productFlashDealData } = data
 
             return await prismaClient.flashDeals.update({
                 where: { id },
@@ -189,45 +193,20 @@ export class ProductFlashDealsService {
             })
 
             const product_id: string[] = []
-            const productMap: {
-                id: string
-                sku: string
-                label: string
-                price: number
-                special_price: number
-                special_price_type: number
-                quantity_limit: number
-            }[] = {}
             const productVariants = new Map()
 
             productFlashDeals.flashDealProducts.forEach((fp) => {
                 const variant = fp.productVariants
                 const product = variant.product
 
-                if (!productMap[product.id]) {
-                    productMap[product.id] = {
-                        productVariants: []
-                    }
-
-                    product_id.push(product.id)
-                }
-
                 if (!productVariants.has(product.id)) {
                     productVariants.set(product.id, {
                         ...product,
                         productVariants: []
                     })
-                }
 
-                productMap[product.id].productVariants.push({
-                    id: variant.id,
-                    sku: variant.sku,
-                    label: variant.label,
-                    price: fp.price,
-                    special_price: fp.special_price,
-                    special_price_type: fp.special_price_type,
-                    quantity_limit: fp.quantity_limit
-                })
+                    product_id.push(product.id)
+                }
 
                 const productEntry = productVariants.get(product.id)
 
@@ -245,7 +224,6 @@ export class ProductFlashDealsService {
             return {
                 ...productFlashDeals,
                 product_id,
-                product: productMap,
                 productVariants: Array.from(productVariants.values()),
                 flashDealProducts: undefined
             }
