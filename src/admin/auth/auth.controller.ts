@@ -57,6 +57,7 @@ export const authController = new Elysia({ prefix: '/auth' })
             body: 'signIn'
         }
     )
+    .use(authPlugin)
     .get('refresh', async ({ AuthService, jwtAccessToken, jwtRefreshToken, error, cookie }) => {
         if (!cookie.refreshTokenAdmin.value) throw error('Forbidden')
 
@@ -96,7 +97,6 @@ export const authController = new Elysia({ prefix: '/auth' })
 
         return new Response('Successfully!')
     })
-    .use(authPlugin)
     .get('sign-out', async ({ AuthService, user, cookie, error }) => {
         cookie.accessTokenAdmin.remove()
         cookie.refreshTokenAdmin.remove()

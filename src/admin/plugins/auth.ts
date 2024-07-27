@@ -1,19 +1,25 @@
 // ** Elysia Imports
-import { Elysia } from 'elysia'
+import { Elysia } from 'elysia';
 
 // ** Prisma Imports
-import prismaClient from '@src/database/prisma'
+import prismaClient from '@src/database/prisma';
 
 // ** Plugins Imports
-import { jwtPlugin } from './jwt'
+import { jwtPlugin } from './jwt';
 
 const authPlugin = (app: Elysia) =>
-    app.use(jwtPlugin).derive(async ({ jwtAccessToken, cookie, error, path }) => {
+    app.use(jwtPlugin).derive(async ({ jwtAccessToken, error, path, headers }) => {
         if (path === '/api/admin/auth/sign-in' || path === '/api/admin/auth/refresh') return
 
-        if (!cookie.accessTokenAdmin.value) throw error('Unauthorized')
+        const authorization = headers['authorization']
 
-        const jwtPayload = await jwtAccessToken.verify(cookie.accessTokenAdmin.value)
+        if (!authorization) throw error('Unauthorized')
+
+        const token = authorization?.startsWith('Bearer ') ? authorization.slice(7) : null
+
+        if (!token) throw error('Unauthorized')
+
+        const jwtPayload = await jwtAccessToken.verify(token)
 
         if (!jwtPayload) throw error('Unauthorized')
 
@@ -29,4 +35,5 @@ const authPlugin = (app: Elysia) =>
         return { user }
     })
 
-export { authPlugin }
+export { authPlugin };
+
