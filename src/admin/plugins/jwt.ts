@@ -3,7 +3,6 @@ import { jwt } from '@elysiajs/jwt'
 import { Elysia, t } from 'elysia'
 
 // ** Utils Imports
-import { getExpTimestamp } from '@src/utils'
 import { JWT } from '@src/utils/enums'
 
 const jwtPlugin = (app: Elysia) =>
@@ -14,7 +13,7 @@ const jwtPlugin = (app: Elysia) =>
                 schema: t.Object({
                     sub: t.String()
                 }),
-                exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP) + Date.now(),
+                exp: JWT.ACCESS_TOKEN_EXP + Date.now(),
                 secret: Bun.env.JWT_ACCESS_SECRET as string
             })
         )
@@ -24,7 +23,7 @@ const jwtPlugin = (app: Elysia) =>
                 schema: t.Object({
                     sub: t.String()
                 }),
-                exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP) + Date.now(),
+                exp: JWT.REFRESH_TOKEN_EXP + Date.now(),
                 secret: Bun.env.JWT_REFRESH_SECRET as string
             })
         )
