@@ -29,14 +29,6 @@ export const authController = new Elysia({ prefix: '/auth' })
                 sub: id
             })
 
-            cookie.accessTokenAdmin.set({
-                value: accessTokenJWT,
-                maxAge: Number(JWT.ACCESS_TOKEN_EXP),
-                secure: Bun.env.NODE_ENV === 'production',
-                httpOnly: Bun.env.NODE_ENV === 'production',
-                sameSite: Bun.env.NODE_ENV === 'production'
-            })
-
             const refreshTokenJWT = await jwtRefreshToken.sign({
                 sub: id
             })
@@ -51,13 +43,12 @@ export const authController = new Elysia({ prefix: '/auth' })
 
             await AuthService.updateRefreshToken(id, refreshTokenJWT)
 
-            return { message: 'Successfully!' }
+            return { accessToken: accessTokenJWT }
         },
         {
             body: 'signIn'
         }
     )
-    .use(authPlugin)
     .get('refresh', async ({ AuthService, jwtAccessToken, jwtRefreshToken, error, cookie }) => {
         if (!cookie.refreshTokenAdmin.value) throw error('Forbidden')
 
@@ -71,14 +62,6 @@ export const authController = new Elysia({ prefix: '/auth' })
 
         const accessTokenJWT = await jwtAccessToken.sign({
             sub: response.id
-        })
-
-        cookie.accessTokenAdmin.set({
-            value: accessTokenJWT,
-            maxAge: Number(JWT.ACCESS_TOKEN_EXP),
-            secure: Bun.env.NODE_ENV === 'production',
-            httpOnly: Bun.env.NODE_ENV === 'production',
-            sameSite: Bun.env.NODE_ENV === 'production'
         })
 
         const refreshTokenJWT = await jwtRefreshToken.sign({
@@ -95,10 +78,10 @@ export const authController = new Elysia({ prefix: '/auth' })
 
         await AuthService.updateRefreshToken(response.id, refreshTokenJWT)
 
-        return new Response('Successfully!')
+        return { accessToken: accessTokenJWT }
     })
+    .use(authPlugin)
     .get('sign-out', async ({ AuthService, user, cookie, error }) => {
-        cookie.accessTokenAdmin.remove()
         cookie.refreshTokenAdmin.remove()
 
         if (!user || !user.id) throw error('Not Found')
