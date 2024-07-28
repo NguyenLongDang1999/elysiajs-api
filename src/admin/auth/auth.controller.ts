@@ -29,6 +29,14 @@ export const authController = new Elysia({ prefix: '/auth' })
                 sub: id
             })
 
+            cookie.accessTokenAdmin.set({
+                value: accessTokenJWT,
+                maxAge: Number(JWT.ACCESS_TOKEN_EXP),
+                secure: Bun.env.NODE_ENV === 'production',
+                httpOnly: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production'
+            })
+
             const refreshTokenJWT = await jwtRefreshToken.sign({
                 sub: id
             })
@@ -64,6 +72,14 @@ export const authController = new Elysia({ prefix: '/auth' })
             sub: response.id
         })
 
+        cookie.accessTokenAdmin.set({
+            value: accessTokenJWT,
+            maxAge: Number(JWT.ACCESS_TOKEN_EXP),
+            secure: Bun.env.NODE_ENV === 'production',
+            httpOnly: Bun.env.NODE_ENV === 'production',
+            sameSite: Bun.env.NODE_ENV === 'production'
+        })
+
         const refreshTokenJWT = await jwtRefreshToken.sign({
             sub: response.id
         })
@@ -82,6 +98,7 @@ export const authController = new Elysia({ prefix: '/auth' })
     })
     .use(authPlugin)
     .get('sign-out', async ({ AuthService, user, cookie, error }) => {
+        cookie.accessTokenAdmin.remove()
         cookie.refreshTokenAdmin.remove()
 
         if (!user || !user.id) throw error('Not Found')
