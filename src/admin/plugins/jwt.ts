@@ -13,7 +13,7 @@ const jwtPlugin = (app: Elysia) =>
                 schema: t.Object({
                     sub: t.String()
                 }),
-                exp: JWT.ACCESS_TOKEN_EXP + Date.now(),
+                exp: '1h',
                 secret: Bun.env.JWT_ACCESS_SECRET as string
             })
         )
@@ -23,7 +23,7 @@ const jwtPlugin = (app: Elysia) =>
                 schema: t.Object({
                     sub: t.String()
                 }),
-                exp: JWT.REFRESH_TOKEN_EXP + Date.now(),
+                exp: '7 days',
                 secret: Bun.env.JWT_REFRESH_SECRET as string
             })
         )
