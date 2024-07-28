@@ -9,7 +9,7 @@ import { ISystemSettingsDTO, ISystemSettingsSearchDTO } from './system-settings.
 
 // ** Utils Imports
 import { createRedisKey } from '@src/utils'
-import { EXPIRES_AT, INPUT_TYPE, REDIS_KEY } from '@src/utils/enums'
+import { EXPIRES_AT, REDIS_KEY } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class SystemSettingsService {
@@ -62,23 +62,23 @@ export class SystemSettingsService {
             const theme_colour = systemSettings.find((_s: { key: string }) => _s.key === 'system_theme_colour')
 
             if (!theme_colour) {
-                await prismaClient.systemSettings.create({
-                    data: {
-                        key: 'system_theme_colour',
-                        value: 'blue',
-                        label: 'Màu chủ đạo của Website',
-                        input_type: INPUT_TYPE.SELECT,
-                        systemSettingOptions: {
-                            create: {
-                                key: 'blue',
-                                displayValue: 'Blue'
-                            }
-                        }
-                    },
-                    select: {
-                        id: true
-                    }
-                })
+                // await prismaClient.systemSettings.create({
+                //     data: {
+                //         key: 'system_theme_colour',
+                //         value: 'blue',
+                //         label: 'Màu chủ đạo của Website',
+                //         input_type: INPUT_TYPE.SELECT,
+                //         systemSettingOptions: {
+                //             create: {
+                //                 key: 'blue',
+                //                 displayValue: 'Blue'
+                //             }
+                //         }
+                //     },
+                //     select: {
+                //         id: true
+                //     }
+                // })
             }
 
             return {

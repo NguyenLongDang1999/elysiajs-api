@@ -14,7 +14,7 @@ const jwtPlugin = (app: Elysia) =>
                 schema: t.Object({
                     sub: t.String()
                 }),
-                exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP),
+                exp: getExpTimestamp(JWT.ACCESS_TOKEN_EXP) + Date.now(),
                 secret: Bun.env.JWT_ACCESS_SECRET as string
             })
         )
@@ -24,7 +24,7 @@ const jwtPlugin = (app: Elysia) =>
                 schema: t.Object({
                     sub: t.String()
                 }),
-                exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP),
+                exp: getExpTimestamp(JWT.REFRESH_TOKEN_EXP) + Date.now(),
                 secret: Bun.env.JWT_REFRESH_SECRET as string
             })
         )

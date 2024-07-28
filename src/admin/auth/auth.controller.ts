@@ -86,8 +86,7 @@ export const authController = new Elysia({ prefix: '/auth' })
 
         if (!user || !user.id) throw error('Not Found')
 
-        await AuthService.signOut(user.id)
-        return new Response('Successfully!')
+        return AuthService.signOut(user.id)
     })
     .get('profile', ({ AuthService, user, error }) => {
         if (!user || !user.id) throw error('Not Found')
