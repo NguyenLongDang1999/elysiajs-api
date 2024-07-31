@@ -25,9 +25,14 @@ const productImageType = t.Object({
     image_uri: t.Optional(t.String())
 })
 
-const productRelationsType = t.Object({
-    related_product_id: t.Optional(t.String()),
-    relation_type: t.Optional(t.Number())
+export const productRelationsFormType = t.Object({
+    id: t.String(),
+    product_relations: t.Array(
+        t.Object({
+            related_product_id: t.String(),
+            relation_type: t.Number()
+        })
+    )
 })
 
 export const productType = t.Object({
@@ -37,7 +42,6 @@ export const productType = t.Object({
     product_category_id: t.String(),
     product_brand_id: t.Optional(t.String()),
     product_variants: t.Optional(t.Array(productVariantType)),
-    product_relations: t.Optional(t.Array(productRelationsType)),
     product_images: t.Optional(t.Array(productImageType)),
     price: t.Optional(t.Number({ default: 0 })),
     special_price: t.Optional(t.Number({ default: 0 })),
@@ -80,3 +84,5 @@ export type IProductSearchDTO = StaticDecode<typeof productSearchType>
 export type IProductVariantDTO = Static<typeof productVariantType>
 
 export type IGenerateVariantDTO = Static<typeof generateVariantType>
+
+export type IProductRelationDTO = Static<typeof productRelationsFormType>

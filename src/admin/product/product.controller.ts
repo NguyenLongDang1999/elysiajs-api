@@ -22,6 +22,9 @@ export const productController = new Elysia({ prefix: '/product' })
     .post('generate-variant', ({ ProductService, body }) => ProductService.generateVariant(body), {
         body: 'generateVariant'
     })
+    .patch('/:id/relations', ({ ProductService, body, params }) => ProductService.updateRelations(params.id, body), {
+        body: 'productRelations'
+    })
 // .patch('/:id', ({ ProductService, body, params }) => ProductService.update(params.id, body), {
 //     body: 'product'
 // })
