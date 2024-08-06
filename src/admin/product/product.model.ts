@@ -3,11 +3,12 @@ import { Elysia } from 'elysia'
 
 // ** Types Imports
 import { deleteType } from '@src/types/core.type'
-import { generateVariantType, productSearchType, productType } from './product.type'
+import { generateVariantType, productRelationsFormType, productSearchType, productType } from './product.type'
 
 export const productModels = new Elysia().model({
     product: productType,
     productSearch: productSearchType,
     productDelete: deleteType,
-    generateVariant: generateVariantType
+    generateVariant: generateVariantType,
+    productRelationsForm: productRelationsFormType
 })

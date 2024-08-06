@@ -72,11 +72,19 @@ export const generateVariantType = t.Object({
     product_id: t.Array(t.String())
 })
 
+export const productRelationsFormType = t.Object({
+    id: t.String(),
+    product_id: t.Array(t.String()),
+    product_relation_type: t.Number()
+})
+
 // ** Types
 export type IProductDTO = Static<typeof productType>
 
 export type IProductSearchDTO = StaticDecode<typeof productSearchType>
 
 export type IProductVariantDTO = Static<typeof productVariantType>
+
+export type IProductRelationsFormTypeDTO = Static<typeof productRelationsFormType>
 
 export type IGenerateVariantDTO = Static<typeof generateVariantType>

@@ -3,7 +3,13 @@ import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
-import { IGenerateVariantDTO, IProductDTO, IProductSearchDTO, IProductVariantDTO } from './product.type'
+import {
+    IGenerateVariantDTO,
+    IProductDTO,
+    IProductRelationsFormTypeDTO,
+    IProductSearchDTO,
+    IProductVariantDTO
+} from './product.type'
 
 // ** Utils Imports
 import { MANAGE_INVENTORY, PRODUCT_TYPE, RELATIONS_TYPE, SPECIAL_PRICE_TYPE, STATUS } from '@src/utils/enums'
@@ -458,6 +464,23 @@ export class ProductService {
                     special_price_type: SPECIAL_PRICE_TYPE.PRICE
                 }))
             }))
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    async updateRelations(id: string, data: IProductRelationsFormTypeDTO) {
+        try {
+            const productData = data.product_id.map((_d) => ({
+                product_id: id,
+                related_product_id: _d,
+                relation_type: data.product_relation_type
+            }))
+
+            return await prismaClient.productRelations.createMany({
+                data: productData,
+                skipDuplicates: true
+            })
         } catch (error) {
             handleDatabaseError(error)
         }
