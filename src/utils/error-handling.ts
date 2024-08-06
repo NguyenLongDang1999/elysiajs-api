@@ -1,16 +1,24 @@
-export function handleDatabaseError(error: any) {
-    console.log(error)
-    // if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    //     if (error.code === 'P2002') {
-    //         throw new ConflictException('A record with the provided details already exists.')
-    //     }
+// ** Elysia Imports
+import { error } from 'elysia'
 
-    //     throw new BadRequestException(`Database request failed: ${error.message}`)
-    // }
+// ** Prisma Imports
+import { Prisma } from '@prisma/client'
 
-    // if (error instanceof Prisma.PrismaClientInitializationError || error instanceof Prisma.PrismaClientRustPanicError) {
-    //     throw new ServiceUnavailableException(`Database connection error: ${error.message}`)
-    // }
+export function handleDatabaseError(errors: unknown) {
+    if (errors instanceof Prisma.PrismaClientKnownRequestError) {
+        if (errors.code === 'P2002') {
+            throw error('Conflict')
+        }
 
-    // throw new InternalServerErrorException(`An unexpected error occurred: ${error.message}`)
+        throw error('Bad Request')
+    }
+
+    if (
+        errors instanceof Prisma.PrismaClientInitializationError ||
+        errors instanceof Prisma.PrismaClientRustPanicError
+    ) {
+        throw error('Service Unavailable')
+    }
+
+    throw error('Internal Server Error')
 }
