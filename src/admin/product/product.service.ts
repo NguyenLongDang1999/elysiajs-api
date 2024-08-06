@@ -6,7 +6,7 @@ import prismaClient from '@src/database/prisma'
 import {
     IGenerateVariantDTO,
     IProductDTO,
-    IProductRelationsFormTypeDTO,
+    IProductRelationsDTO,
     IProductSearchDTO,
     IProductVariantDTO
 } from './product.type'
@@ -469,13 +469,20 @@ export class ProductService {
         }
     }
 
-    async updateRelations(id: string, data: IProductRelationsFormTypeDTO) {
+    async updateRelations(id: string, data: IProductRelationsDTO) {
         try {
             const productData = data.product_id.map((_d) => ({
                 product_id: id,
                 related_product_id: _d,
                 relation_type: data.product_relation_type
             }))
+
+            await prismaClient.productRelations.deleteMany({
+                where: {
+                    product_id: id,
+                    relation_type: data.product_relation_type
+                }
+            })
 
             return await prismaClient.productRelations.createMany({
                 data: productData,
