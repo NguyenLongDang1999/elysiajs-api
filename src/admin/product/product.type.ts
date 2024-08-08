@@ -82,6 +82,12 @@ export const productRelationsType = t.Object({
     product_relation_type: t.Number()
 })
 
+export const productImagesType = t.Object({
+    id: t.String(),
+    image_uri: t.String(),
+    product_images: t.Array(productImageType)
+})
+
 // ** Types
 export type IProductDTO = Static<typeof productType>
 
@@ -94,3 +100,5 @@ export type IProductRelationsFormTypeDTO = Static<typeof productRelationsFormTyp
 export type IGenerateVariantDTO = Static<typeof generateVariantType>
 
 export type IProductRelationsDTO = Static<typeof productRelationsType>
+
+export type IProductImagesDTO = Static<typeof productImagesType>

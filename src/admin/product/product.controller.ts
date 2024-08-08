@@ -25,9 +25,9 @@ export const productController = new Elysia({ prefix: '/product' })
     .patch('/:id/relations', ({ ProductService, params, body }) => ProductService.updateRelations(params.id, body), {
         body: 'productRelations'
     })
-// .patch('/:id', ({ ProductService, body, params }) => ProductService.update(params.id, body), {
-//     body: 'product'
-// })
+    .patch('/:id/images', ({ ProductService, body, params }) => ProductService.updateImages(params.id, body), {
+        body: 'productImages'
+    })
 // .delete('/:id', ({ ProductService, query, params }) => ProductService.delete(params.id, query), {
 //     query: 'productDelete'
 // })

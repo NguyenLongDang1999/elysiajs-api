@@ -6,6 +6,7 @@ import prismaClient from '@src/database/prisma'
 import {
     IGenerateVariantDTO,
     IProductDTO,
+    IProductImagesDTO,
     IProductRelationsDTO,
     IProductSearchDTO,
     IProductVariantDTO
@@ -488,6 +489,52 @@ export class ProductService {
                 data: productData,
                 skipDuplicates: true
             })
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    async updateImages(id: string, data: IProductImagesDTO) {
+        try {
+            await prismaClient.$transaction(async (prisma) => {
+                const filteredProductImages = data.product_images.filter((img) => Object.keys(img).length > 0)
+                const productImagesToUpdate = filteredProductImages.filter((imageItem) => imageItem.id)
+                const productImagesToCreate = filteredProductImages.filter((imageItem) => !imageItem.id)
+
+                const updateOperations = productImagesToUpdate.map((productImage, index) => ({
+                    where: { id: productImage.id },
+                    data: {
+                        index,
+                        image_uri: productImage.image_uri || ''
+                    }
+                }))
+
+                const createOperation = {
+                    data: productImagesToCreate.map((imageItem, index) => ({
+                        product_id: id,
+                        index,
+                        image_uri: imageItem.image_uri || ''
+                    })),
+                    skipDuplicates: true
+                }
+
+                await prisma.product.update({
+                    where: { id },
+                    data: {
+                        image_uri: data.image_uri
+                    }
+                })
+
+                for (const operation of updateOperations) {
+                    await prisma.productImages.update(operation)
+                }
+
+                if (createOperation.data.length > 0) {
+                    await prisma.productImages.createMany(createOperation)
+                }
+            })
+
+            return { id }
         } catch (error) {
             handleDatabaseError(error)
         }
