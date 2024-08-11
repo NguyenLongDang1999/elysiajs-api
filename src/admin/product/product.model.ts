@@ -8,14 +8,16 @@ import {
     productImagesType,
     productRelationsType,
     productSearchType,
-    productType
+    productSingleType,
+    productVariantsType
 } from './product.type'
 
 export const productModels = new Elysia().model({
-    product: productType,
     productSearch: productSearchType,
     productDelete: deleteType,
     generateVariant: generateVariantType,
     productRelations: productRelationsType,
-    productImages: productImagesType
+    productImages: productImagesType,
+    productSingle: productSingleType,
+    productVariants: productVariantsType
 })

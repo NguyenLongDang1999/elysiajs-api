@@ -16,8 +16,11 @@ export const productController = new Elysia({ prefix: '/product' })
         query: 'productSearch'
     })
     .get('/:id', ({ ProductService, params }) => ProductService.retrieve(params.id))
-    .post('/', ({ ProductService, body }) => ProductService.create(body), {
-        body: 'product'
+    .post('create-single', ({ ProductService, body }) => ProductService.createSingle(body), {
+        body: 'productSingle'
+    })
+    .post('create-variants', ({ ProductService, body }) => ProductService.createVariants(body), {
+        body: 'productVariants'
     })
     .post('generate-variant', ({ ProductService, body }) => ProductService.generateVariant(body), {
         body: 'generateVariant'

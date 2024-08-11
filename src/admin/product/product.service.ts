@@ -5,11 +5,11 @@ import prismaClient from '@src/database/prisma'
 // ** Types Imports
 import {
     IGenerateVariantDTO,
-    IProductDTO,
     IProductImagesDTO,
     IProductRelationsDTO,
     IProductSearchDTO,
-    IProductVariantDTO
+    IProductSingleDTO,
+    IProductVariantsDTO
 } from './product.type'
 
 // ** Utils Imports
@@ -139,61 +139,72 @@ export class ProductService {
         }
     }
 
-    async create(data: IProductDTO) {
+    async createSingle(data: IProductSingleDTO) {
         try {
-            const { sku, quantity, manage_inventory, product_variants, ...productData } = data
-
-            function createProductVariant(productVariantItem: IProductVariantDTO) {
-                return {
-                    is_default: productVariantItem.is_default,
-                    label: productVariantItem.label,
-                    sku: productVariantItem.sku as string,
-                    manage_inventory: productVariantItem.manage_inventory,
-                    price: productVariantItem.price,
-                    special_price: productVariantItem.special_price,
-                    special_price_type: productVariantItem.special_price_type,
-                    productVariantAttributeValues: {
-                        create: productVariantItem.product_attribute_value_id.map((attributeValueItem: string) => ({
-                            product_attribute_value_id: attributeValueItem
-                        }))
-                    },
-                    productInventory: {
-                        create:
-                            productVariantItem.manage_inventory === MANAGE_INVENTORY.YES
-                                ? { quantity: productVariantItem.quantity as number }
-                                : undefined
-                    }
-                }
-            }
-
-            const productVariants = product_variants
-                ? product_variants.map(createProductVariant)
-                : [
-                    {
-                        is_default: true,
-                        sku: sku as string,
-                        manage_inventory,
-                        price: data.price,
-                        special_price: data.special_price,
-                        special_price_type: data.special_price_type,
-                        productInventory:
-                            manage_inventory === MANAGE_INVENTORY.YES
-                                ? {
-                                    create: { quantity: quantity as number }
-                                }
-                                : undefined
-                    }
-                ]
-
-            const product_type = product_variants ? PRODUCT_TYPE.VARIANT : PRODUCT_TYPE.SINGLE
+            const { sku, quantity, manage_inventory, ...productData } = data
+            const hasProductInventory = manage_inventory === MANAGE_INVENTORY.YES && quantity
 
             return await prismaClient.$transaction(async (prisma) => {
                 return await prisma.product.create({
                     data: {
                         ...productData,
-                        product_type,
+                        product_type: PRODUCT_TYPE.SINGLE,
                         productVariants: {
-                            create: productVariants
+                            create: [
+                                {
+                                    is_default: true,
+                                    sku: sku,
+                                    manage_inventory,
+                                    price: data.price,
+                                    special_price: data.special_price,
+                                    special_price_type: data.special_price_type,
+                                    productInventory: hasProductInventory
+                                        ? { create: { quantity: quantity } }
+                                        : undefined
+                                }
+                            ]
+                        }
+                    },
+                    select: { id: true }
+                })
+            })
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    async createVariants(data: IProductVariantsDTO) {
+        try {
+            const { product_variants, ...productData } = data
+
+            return await prismaClient.$transaction(async (prisma) => {
+                return await prisma.product.create({
+                    data: {
+                        ...productData,
+                        product_type: PRODUCT_TYPE.VARIANT,
+                        productVariants: {
+                            create: product_variants.map((productVariantItem) => ({
+                                is_default: productVariantItem.is_default,
+                                label: productVariantItem.label,
+                                sku: productVariantItem.sku as string,
+                                manage_inventory: productVariantItem.manage_inventory,
+                                price: productVariantItem.price,
+                                special_price: productVariantItem.special_price,
+                                special_price_type: productVariantItem.special_price_type,
+                                productVariantAttributeValues: {
+                                    create: productVariantItem.product_attribute_value_id.map(
+                                        (attributeValueItem: string) => ({
+                                            product_attribute_value_id: attributeValueItem
+                                        })
+                                    )
+                                },
+                                productInventory: {
+                                    create:
+                                        productVariantItem.manage_inventory === MANAGE_INVENTORY.YES
+                                            ? { quantity: productVariantItem.quantity as number }
+                                            : undefined
+                                }
+                            }))
                         }
                     },
                     select: { id: true }

@@ -6,20 +6,6 @@ import { Static, t } from 'elysia'
 import { paginationType } from '@src/types/core.type'
 
 // ** Types Definition
-const productVariantType = t.Object({
-    label: t.String({ minLength: 1 }),
-    is_default: t.Boolean({ default: false }),
-    sku: t.String({ minLength: 1 }),
-    price: t.Optional(t.Number({ default: 0 })),
-    special_price: t.Optional(t.Number({ default: 0 })),
-    special_price_type: t.Optional(t.Number()),
-    quantity: t.Optional(t.Number({ default: 0 })),
-    manage_inventory: t.Optional(t.Number()),
-    product_attribute_value_id: t.Array(t.String(), {
-        minItems: 1
-    })
-})
-
 const productImageType = t.Object({
     id: t.Optional(t.String()),
     image_uri: t.Optional(t.String())
@@ -35,26 +21,71 @@ export const productRelationsFormType = t.Object({
     )
 })
 
-export const productType = t.Object({
-    sku: t.Optional(t.String()),
+export const productSingleType = t.Object({
+    sku: t.String({ minLength: 1 }),
     name: t.String({ minLength: 1 }),
     slug: t.String({ minLength: 1 }),
+    image_uri: t.Optional(t.String()),
     product_category_id: t.String(),
     product_brand_id: t.Optional(t.String()),
-    product_variants: t.Optional(t.Array(productVariantType)),
     product_images: t.Optional(t.Array(productImageType)),
     price: t.Optional(t.Number({ default: 0 })),
     special_price: t.Optional(t.Number({ default: 0 })),
     special_price_type: t.Optional(t.Number()),
     quantity: t.Optional(t.Number({ default: 0 })),
-    technical_specifications: t.Optional(t.String()),
+    technical_specifications: t.Optional(
+        t.Array(
+            t.Object({
+                title: t.String({ minLength: 1 }),
+                content: t.String({ minLength: 1 })
+            })
+        )
+    ),
     short_description: t.Optional(t.String()),
-    description: t.Optional(t.String()),
-    image_uri: t.Optional(t.String()),
+    description: t.String({ minLength: 1 }),
     status: t.Optional(t.Number()),
     manage_inventory: t.Optional(t.Number()),
     meta_title: t.Optional(t.String()),
     meta_description: t.Optional(t.String())
+})
+
+export const productVariantsType = t.Object({
+    name: t.String({ minLength: 1 }),
+    slug: t.String({ minLength: 1 }),
+    image_uri: t.Optional(t.String()),
+    product_category_id: t.String(),
+    product_brand_id: t.Optional(t.String()),
+    technical_specifications: t.Optional(
+        t.Array(
+            t.Object({
+                title: t.String({ minLength: 1 }),
+                content: t.String({ minLength: 1 })
+            })
+        )
+    ),
+    short_description: t.Optional(t.String()),
+    description: t.String({ minLength: 1 }),
+    status: t.Optional(t.Number()),
+    meta_title: t.Optional(t.String()),
+    meta_description: t.Optional(t.String()),
+    price: t.Optional(t.Number({ default: 0 })),
+    special_price: t.Optional(t.Number({ default: 0 })),
+    special_price_type: t.Optional(t.Number()),
+    product_variants: t.Array(
+        t.Object({
+            label: t.String({ minLength: 1 }),
+            is_default: t.Boolean({ default: false }),
+            sku: t.String({ minLength: 1 }),
+            price: t.Number({ default: 0 }),
+            special_price: t.Number({ default: 0 }),
+            special_price_type: t.Optional(t.Number()),
+            quantity: t.Optional(t.Number({ default: 0 })),
+            manage_inventory: t.Optional(t.Number()),
+            product_attribute_value_id: t.Array(t.String(), {
+                minItems: 1
+            })
+        })
+    )
 })
 
 export const productSearchType = t.Object({
@@ -89,11 +120,7 @@ export const productImagesType = t.Object({
 })
 
 // ** Types
-export type IProductDTO = Static<typeof productType>
-
 export type IProductSearchDTO = StaticDecode<typeof productSearchType>
-
-export type IProductVariantDTO = Static<typeof productVariantType>
 
 export type IProductRelationsFormTypeDTO = Static<typeof productRelationsFormType>
 
@@ -102,3 +129,7 @@ export type IGenerateVariantDTO = Static<typeof generateVariantType>
 export type IProductRelationsDTO = Static<typeof productRelationsType>
 
 export type IProductImagesDTO = Static<typeof productImagesType>
+
+export type IProductSingleDTO = Static<typeof productSingleType>
+
+export type IProductVariantsDTO = Static<typeof productVariantsType>
