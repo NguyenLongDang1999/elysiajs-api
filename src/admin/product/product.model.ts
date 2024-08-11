@@ -9,6 +9,7 @@ import {
     productRelationsType,
     productSearchType,
     productSingleType,
+    productUpdateGeneralVariantsType,
     productVariantsType
 } from './product.type'
 
@@ -19,5 +20,6 @@ export const productModels = new Elysia().model({
     productRelations: productRelationsType,
     productImages: productImagesType,
     productSingle: productSingleType,
-    productVariants: productVariantsType
+    productVariants: productVariantsType,
+    productUpdateGeneralVariants: productUpdateGeneralVariantsType
 })

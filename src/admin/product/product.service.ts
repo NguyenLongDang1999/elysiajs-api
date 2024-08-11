@@ -9,6 +9,7 @@ import {
     IProductRelationsDTO,
     IProductSearchDTO,
     IProductSingleDTO,
+    IProductUpdateGeneralVariantDTO,
     IProductVariantsDTO
 } from './product.type'
 
@@ -292,11 +293,9 @@ export class ProductService {
                     image_uri: true,
                     description: true,
                     short_description: true,
-                    product_type: true,
                     meta_title: true,
                     meta_description: true,
                     technical_specifications: true,
-                    total_rating: true,
                     product_brand_id: true,
                     product_category_id: true,
                     productImages: {
@@ -410,11 +409,7 @@ export class ProductService {
                 productImages: undefined,
                 productRelated: undefined,
                 productVariants: undefined,
-                productVariantAttributeValues: undefined,
-                technical_specifications:
-                    typeof product?.technical_specifications === 'string'
-                        ? JSON.parse(product.technical_specifications)
-                        : []
+                productVariantAttributeValues: undefined
             }
         } catch (error) {
             handleDatabaseError(error)
@@ -476,6 +471,59 @@ export class ProductService {
                     special_price_type: SPECIAL_PRICE_TYPE.PRICE
                 }))
             }))
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    async updateSingle(id: string, data: IProductSingleDTO) {
+        try {
+            const { sku, quantity: _quantity, manage_inventory: _manage_inventory, ...productData } = data
+
+            const product = await prismaClient.product.update({
+                where: { id },
+                data: {
+                    ...productData
+                },
+                select: {
+                    productVariants: {
+                        where: {
+                            deleted_flg: false
+                        },
+                        select: {
+                            id: true
+                        }
+                    }
+                }
+            })
+
+            await prismaClient.productVariants.update({
+                where: {
+                    id: product.productVariants[0].id
+                },
+                data: {
+                    sku: sku,
+                    price: data.price,
+                    special_price: data.special_price,
+                    special_price_type: data.special_price_type
+                }
+            })
+
+            return { id }
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    async updateVariants(id: string, data: IProductUpdateGeneralVariantDTO) {
+        try {
+            return await prismaClient.product.update({
+                where: { id },
+                data,
+                select: {
+                    id: true
+                }
+            })
         } catch (error) {
             handleDatabaseError(error)
         }
