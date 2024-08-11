@@ -216,68 +216,6 @@ export class ProductService {
         }
     }
 
-    // async update(id: string, data: IProductDTO) {
-    //     try {
-    //         return await db.transaction(async (tx) => {
-    //             const [product] = await tx
-    //                 .update(productSchema)
-    //                 .set(data)
-    //                 .where(eq(productSchema.id, id))
-    //                 .returning({ id: productSchema.id })
-
-    //             await tx.delete(productCategoryAttributeSchema).where(eq(productCategoryAttributeSchema.product_attribute_id, id))
-
-    //             const productCategoryAttributes = data.product_category_id.map((product_category_id) => ({
-    //                 product_attribute_id: product.id,
-    //                 product_category_id
-    //             }))
-
-    //             await tx.insert(productCategoryAttributeSchema).values(productCategoryAttributes)
-
-    //             const existingOptions = await db.query.productValuesSchema.findMany({
-    //                 where: and(eq(productValuesSchema.product_attribute_id, id)),
-    //             })
-
-    //             const existingOptionsMap = new Map(existingOptions.map((option) => [option.id, option]))
-
-    //             for (const option of data.product_attribute_values) {
-    //                 const existingOption = existingOptionsMap.get(option.id)
-
-    //                 if (existingOption) {
-    //                     await tx
-    //                         .update(productValuesSchema)
-    //                         .set({
-    //                             value: option.value
-    //                         })
-    //                         .where(eq(productValuesSchema.id, existingOption.id))
-    //                         .returning({ id: productValuesSchema.id })
-
-    //                     existingOptionsMap.delete(option.id)
-    //                 } else {
-    //                     await tx.insert(productValuesSchema).values({
-    //                         value: option.value,
-    //                         product_attribute_id: id
-    //                     })
-    //                 }
-    //             }
-
-    //             if (existingOptionsMap.size > 0) {
-    //                 await tx.delete(productValuesSchema)
-    //                     .where(
-    //                         inArray(
-    //                             productValuesSchema.id,
-    //                             Array.from(existingOptionsMap.keys())
-    //                         )
-    //                     )
-    //             }
-
-    //             return product
-    //         })
-    //     } catch (error) {
-    //         handleDatabaseError(error)
-    //     }
-    // }
-
     async retrieve(id: string) {
         try {
             const product = await prismaClient.product.findFirst({
@@ -391,6 +329,7 @@ export class ProductService {
                 ...product,
                 ...(productPrice ? productPrice[0] : undefined),
                 ...(productPrice ? productPrice[0].productInventory : undefined),
+                product_attribute_id: product_attributes.map((_product) => _product.id),
                 product_attributes,
                 product_images: product?.productImages,
                 product_variants: product?.productVariants.map((variantItem) => ({
