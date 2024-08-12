@@ -25,7 +25,7 @@ export class ProductInventoryService {
                     product_category_id: { equals: query.product_category_id || undefined },
                     productVariants: query.sku
                         ? {
-                            every: {
+                            some: {
                                 sku: { contains: query.sku, mode: 'insensitive' }
                             }
                         }
