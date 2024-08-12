@@ -23,11 +23,13 @@ export class ProductInventoryService {
                     product_type: { equals: Number(query.product_type) || undefined },
                     product_brand_id: { equals: query.product_brand_id || undefined },
                     product_category_id: { equals: query.product_category_id || undefined },
-                    productVariants: {
-                        every: {
-                            sku: { contains: query.sku || undefined, mode: 'insensitive' }
+                    productVariants: query.sku
+                        ? {
+                            every: {
+                                sku: { contains: query.sku, mode: 'insensitive' }
+                            }
                         }
-                    }
+                        : undefined
                 }
             }
 

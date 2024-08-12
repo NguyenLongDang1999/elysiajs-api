@@ -7,7 +7,7 @@ import { productInventoryModels } from './product-inventory.model'
 // ** Service Imports
 import { ProductInventoryService } from './product-inventory.service'
 
-export const productInventoryController = new Elysia({ prefix: '/product-collections' })
+export const productInventoryController = new Elysia({ prefix: '/product-inventory' })
     .decorate({
         ProductInventoryService: new ProductInventoryService()
     })
