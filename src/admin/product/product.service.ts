@@ -25,18 +25,12 @@ export class ProductService {
 
             const search: Prisma.ProductWhereInput = {
                 deleted_flg: false,
+                sku: { contains: query.sku || undefined, mode: 'insensitive' },
                 name: { contains: query.name || undefined, mode: 'insensitive' },
                 status: { equals: Number(query.status) || undefined },
                 product_type: { equals: Number(query.product_type) || undefined },
                 product_brand_id: { equals: query.product_brand_id || undefined },
-                product_category_id: { equals: query.product_category_id || undefined },
-                productVariants: query.sku
-                    ? {
-                        every: {
-                            sku: { contains: query.sku, mode: 'insensitive' }
-                        }
-                    }
-                    : undefined
+                product_category_id: { equals: query.product_category_id || undefined }
             }
 
             if (query.not_flash_deals && this.stringToBoolean(query.not_flash_deals)) {
@@ -67,11 +61,15 @@ export class ProductService {
                     where: search,
                     select: {
                         id: true,
-                        slug: true,
+                        sku: true,
                         name: true,
+                        slug: true,
                         status: true,
                         image_uri: true,
                         product_type: true,
+                        price: true,
+                        special_price: true,
+                        special_price_type: true,
                         productCategory: {
                             select: {
                                 id: true,
@@ -88,12 +86,7 @@ export class ProductService {
                         },
                         productVariants: {
                             orderBy: { created_at: 'desc' },
-                            where: { is_default: true },
                             select: {
-                                sku: true,
-                                price: true,
-                                special_price: true,
-                                special_price_type: true,
                                 flashDealProducts: {
                                     where: {
                                         flashDeal: {
@@ -105,16 +98,23 @@ export class ProductService {
                                             end_time: {
                                                 gte: new Date()
                                             }
-                                        },
-                                        productVariants: {
-                                            deleted_flg: false,
-                                            is_default: true
                                         }
                                     },
                                     select: {
-                                        price: true,
-                                        special_price: true,
-                                        special_price_type: true
+                                        productVariants: {
+                                            select: {
+                                                productPrices: {
+                                                    where: {
+                                                        is_default: true
+                                                    },
+                                                    select: {
+                                                        price: true,
+                                                        special_price: true,
+                                                        special_price_type: true
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -181,11 +181,15 @@ export class ProductService {
     async createVariants(data: IProductVariantsDTO) {
         try {
             const { product_variants, ...productData } = data
+            const variantDefault = product_variants.find((productVariantItem) => productVariantItem.is_default)
 
             return await prismaClient.$transaction(async (prisma) => {
                 return await prisma.product.create({
                     data: {
                         ...productData,
+                        price: variantDefault?.price,
+                        special_price: variantDefault?.special_price,
+                        special_price_type: variantDefault?.special_price_type,
                         product_type: PRODUCT_TYPE.VARIANT,
                         productVariants: {
                             create: product_variants.map((productVariantItem) => ({
