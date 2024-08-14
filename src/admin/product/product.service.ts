@@ -142,7 +142,7 @@ export class ProductService {
 
     async createSingle(data: IProductSingleDTO) {
         try {
-            const { sku, quantity, manage_inventory, ...productData } = data
+            const { quantity, manage_inventory, ...productData } = data
             const hasProductInventory = manage_inventory === MANAGE_INVENTORY.YES && quantity
 
             return await prismaClient.$transaction(async (prisma) => {
@@ -153,12 +153,16 @@ export class ProductService {
                         productVariants: {
                             create: [
                                 {
-                                    is_default: true,
-                                    sku: sku,
                                     manage_inventory,
-                                    price: data.price,
-                                    special_price: data.special_price,
-                                    special_price_type: data.special_price_type,
+                                    productPrices: {
+                                        create: {
+                                            start_date: new Date(),
+                                            is_default: true,
+                                            price: data.price,
+                                            special_price: data.special_price,
+                                            special_price_type: data.special_price_type
+                                        }
+                                    },
                                     productInventory: hasProductInventory
                                         ? { create: { quantity: quantity } }
                                         : undefined
@@ -185,19 +189,23 @@ export class ProductService {
                         product_type: PRODUCT_TYPE.VARIANT,
                         productVariants: {
                             create: product_variants.map((productVariantItem) => ({
-                                is_default: productVariantItem.is_default,
                                 label: productVariantItem.label,
-                                sku: productVariantItem.sku as string,
                                 manage_inventory: productVariantItem.manage_inventory,
-                                price: productVariantItem.price,
-                                special_price: productVariantItem.special_price,
-                                special_price_type: productVariantItem.special_price_type,
                                 productVariantAttributeValues: {
                                     create: productVariantItem.product_attribute_value_id.map(
                                         (attributeValueItem: string) => ({
                                             product_attribute_value_id: attributeValueItem
                                         })
                                     )
+                                },
+                                productPrices: {
+                                    create: {
+                                        is_default: productVariantItem.is_default,
+                                        price: productVariantItem.price,
+                                        special_price: productVariantItem.special_price,
+                                        special_price_type: productVariantItem.special_price_type,
+                                        start_date: new Date()
+                                    }
                                 },
                                 productInventory: {
                                     create:

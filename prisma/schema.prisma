@@ -119,6 +119,7 @@ model ProductCollectionProduct {
 
 model Product {
   id                       String                     @id @default(cuid())
+  sku                      String                     @unique @db.VarChar
   name                     String                     @db.VarChar
   slug                     String                     @unique @db.VarChar
   image_uri                String?                    @db.VarChar
@@ -150,13 +151,8 @@ model Product {
 model ProductVariants {
   id                            String                          @id @default(cuid())
   product_id                    String
-  is_default                    Boolean                         @default(false) @db.Boolean
   label                         String?                         @db.VarChar
-  sku                           String                          @unique @db.VarChar
   manage_inventory              Int?                            @default(20) @db.SmallInt
-  price                         Decimal                         @default(0) @db.Decimal(18, 0)
-  special_price                 Decimal?                        @default(0) @db.Decimal(18, 0)
-  special_price_type            Int?                            @db.SmallInt
   created_at                    DateTime                        @default(now())
   updated_at                    DateTime                        @updatedAt
   deleted_flg                   Boolean                         @default(false)
@@ -165,6 +161,7 @@ model ProductVariants {
   productVariantAttributeValues ProductVariantAttributeValues[]
   flashDealProducts             FlashDealProducts[]
   productInventoryTransactions  ProductInventoryTransactions[]
+  productPrices                 ProductPrices[]
 }
 
 model ProductVariantAttributeValues {
@@ -174,6 +171,20 @@ model ProductVariantAttributeValues {
   productAttributeValues     ProductAttributeValues @relation(fields: [product_attribute_value_id], references: [id], onDelete: Cascade)
 
   @@unique([product_variant_id, product_attribute_value_id])
+}
+
+model ProductPrices {
+  id                 String          @id @default(cuid())
+  product_variant_id String
+  is_default         Boolean         @default(false) @db.Boolean
+  price              Decimal         @default(0) @db.Decimal(18, 0)
+  special_price      Decimal?        @default(0) @db.Decimal(18, 0)
+  special_price_type Int?            @db.SmallInt
+  start_date         DateTime
+  end_date           DateTime?
+  created_at         DateTime        @default(now())
+  updated_at         DateTime        @updatedAt
+  productVariants    ProductVariants @relation(fields: [product_variant_id], references: [id], onDelete: Cascade)
 }
 
 model ProductImages {
@@ -233,9 +244,6 @@ model FlashDeals {
 model FlashDealProducts {
   flash_deal_id       String
   product_variants_id String
-  price               Decimal         @default(0) @db.Decimal(18, 0)
-  special_price       Decimal?        @default(0) @db.Decimal(18, 0)
-  special_price_type  Int?            @db.SmallInt
   quantity_limit      Int?            @default(0) @db.Integer
   flashDeal           FlashDeals      @relation(fields: [flash_deal_id], references: [id], onDelete: Cascade)
   productVariants     ProductVariants @relation(fields: [product_variants_id], references: [id], onDelete: Cascade)

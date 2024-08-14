@@ -40,6 +40,7 @@ export const productSingleType = t.Object({
 })
 
 export const productVariantsType = t.Object({
+    sku: t.String({ minLength: 1 }),
     name: t.String({ minLength: 1 }),
     slug: t.String({ minLength: 1 }),
     image_uri: t.Optional(t.String()),
@@ -65,7 +66,6 @@ export const productVariantsType = t.Object({
         t.Object({
             label: t.String({ minLength: 1 }),
             is_default: t.Boolean({ default: false }),
-            sku: t.String({ minLength: 1 }),
             price: t.Number({ default: 0 }),
             special_price: t.Number({ default: 0 }),
             special_price_type: t.Optional(t.Number()),

@@ -6,7 +6,6 @@ import { HASH_PASSWORD } from '@src/utils/enums'
 
 async function main() {
     console.log('Start seeding ...')
-
     // ------------------------------- BEGIN ADMINISTRATOR -------------------------------
     await prismaClient.admins.deleteMany({
         where: { email: 'longdang0412@gmail.com' }
