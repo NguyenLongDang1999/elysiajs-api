@@ -4,6 +4,9 @@ dd:
 ddb:
 	docker-compose -f ./docker-compose.dev.yml up --build
 
+build:
+	bun bun build
+
 format:
 	bun format && bun lint
 

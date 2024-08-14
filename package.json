@@ -1,9 +1,14 @@
 {
   "name": "elysia-api",
   "version": "1.0.50",
+  "prisma": {
+    "seed": "bun run prisma/seed.ts"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
+    "build": "bun build src/index.ts --target bun --outdir ./build",
+    "start": "NODE_ENV=production bun src/index.ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" --fix"
   },
