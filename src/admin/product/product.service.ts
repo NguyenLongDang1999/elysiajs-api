@@ -237,6 +237,7 @@ export class ProductService {
                 },
                 select: {
                     id: true,
+                    sku: true,
                     name: true,
                     slug: true,
                     status: true,
@@ -245,9 +246,13 @@ export class ProductService {
                     short_description: true,
                     meta_title: true,
                     meta_description: true,
+                    product_type: true,
                     technical_specifications: true,
                     product_brand_id: true,
                     product_category_id: true,
+                    price: true,
+                    special_price: true,
+                    special_price_type: true,
                     productImages: {
                         orderBy: { index: 'asc' },
                         select: {
@@ -269,16 +274,23 @@ export class ProductService {
                     productVariants: {
                         orderBy: { created_at: 'desc' },
                         select: {
-                            is_default: true,
+                            // is_default: true,
                             label: true,
-                            sku: true,
                             manage_inventory: true,
-                            price: true,
-                            special_price: true,
-                            special_price_type: true,
+                            // price: true,
+                            // special_price: true,
+                            // special_price_type: true,
                             productInventory: {
                                 select: {
                                     quantity: true
+                                }
+                            },
+                            productPrices: {
+                                select: {
+                                    is_default: true,
+                                    price: true,
+                                    special_price: true,
+                                    special_price_type: true
                                 }
                             },
                             productVariantAttributeValues: {
@@ -335,19 +347,24 @@ export class ProductService {
                 })
             })
 
-            const productPrice = product?.productVariants.filter((variantItem) => variantItem.is_default)
+            const productPrice = product?.productVariants.filter(
+                (variantItem) => variantItem.productPrices[0].is_default
+            )
+
+            const isProductSingle = product?.product_type === PRODUCT_TYPE.SINGLE
 
             return {
                 ...product,
-                ...(productPrice ? productPrice[0] : undefined),
                 ...(productPrice ? productPrice[0].productInventory : undefined),
-                product_attribute_id: product_attributes.map((_product) => _product.id),
-                product_attributes,
+                product_attribute_id: !isProductSingle ? product_attributes.map((_product) => _product.id) : undefined,
+                product_attributes: !isProductSingle ? product_attributes : undefined,
                 product_images: product?.productImages,
-                product_variants: product?.productVariants.map((variantItem) => ({
-                    ...variantItem,
-                    quantity: variantItem.productInventory?.quantity || 0
-                })),
+                product_variants: !isProductSingle
+                    ? product?.productVariants.map((variantItem) => ({
+                        ...variantItem,
+                        quantity: variantItem.productInventory?.quantity || 0
+                    }))
+                    : undefined,
                 product_upsell: product?.productRelated
                     .filter((relatedItem) => relatedItem.relation_type === RELATIONS_TYPE.UPSELL)
                     .map((relatedItem) => relatedItem.related_product_id),
@@ -399,6 +416,7 @@ export class ProductService {
                 },
                 select: {
                     id: true,
+                    sku: true,
                     name: true,
                     image_uri: true,
                     product_type: true,
@@ -406,7 +424,6 @@ export class ProductService {
                         where: { deleted_flg: false },
                         select: {
                             id: true,
-                            sku: true,
                             label: true
                         }
                     }
@@ -429,7 +446,7 @@ export class ProductService {
 
     async updateSingle(id: string, data: IProductSingleDTO) {
         try {
-            const { sku, quantity: _quantity, manage_inventory: _manage_inventory, ...productData } = data
+            const { quantity: _quantity, manage_inventory: _manage_inventory, ...productData } = data
 
             const product = await prismaClient.product.update({
                 where: { id },
@@ -442,18 +459,21 @@ export class ProductService {
                             deleted_flg: false
                         },
                         select: {
-                            id: true
+                            productPrices: {
+                                select: {
+                                    id: true
+                                }
+                            }
                         }
                     }
                 }
             })
 
-            await prismaClient.productVariants.update({
+            await prismaClient.productPrices.update({
                 where: {
-                    id: product.productVariants[0].id
+                    id: product.productVariants[0].productPrices[0].id
                 },
                 data: {
-                    sku: sku,
                     price: data.price,
                     special_price: data.special_price,
                     special_price_type: data.special_price_type
