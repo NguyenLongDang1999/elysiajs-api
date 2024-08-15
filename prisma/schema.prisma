@@ -228,23 +228,24 @@ model ProductRelations {
 }
 
 model FlashDeals {
-  id                String              @id @default(cuid())
-  title             String              @db.VarChar
-  slug              String              @unique @db.VarChar
-  description       String?             @db.VarChar
-  status            Int?                @default(10) @db.SmallInt
-  start_time        DateTime
-  end_time          DateTime
-  created_at        DateTime            @default(now())
-  updated_at        DateTime            @updatedAt
-  deleted_flg       Boolean             @default(false)
-  flashDealProducts FlashDealProducts[]
+  id                    String              @id @default(uuid())
+  title                 String              @db.VarChar
+  slug                  String              @unique @db.VarChar
+  description           String?             @db.VarChar
+  status                Int?                @default(10) @db.SmallInt
+  discounted_price      Decimal             @default(0) @db.Decimal(18, 0)
+  discounted_price_type Int                 @db.SmallInt
+  start_time            DateTime
+  end_time              DateTime
+  created_at            DateTime            @default(now())
+  updated_at            DateTime            @updatedAt
+  deleted_flg           Boolean             @default(false)
+  flashDealProducts     FlashDealProducts[]
 }
 
 model FlashDealProducts {
   flash_deal_id       String
   product_variants_id String
-  quantity_limit      Int?            @default(0) @db.Integer
   flashDeal           FlashDeals      @relation(fields: [flash_deal_id], references: [id], onDelete: Cascade)
   productVariants     ProductVariants @relation(fields: [product_variants_id], references: [id], onDelete: Cascade)
 
