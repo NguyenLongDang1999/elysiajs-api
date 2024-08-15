@@ -79,11 +79,10 @@ export const productVariantsType = t.Object({
 })
 
 export const productUpdateGeneralVariantsType = t.Object({
+    sku: t.String({ minLength: 1 }),
     name: t.String({ minLength: 1 }),
     slug: t.String({ minLength: 1 }),
     image_uri: t.Optional(t.String()),
-    product_category_id: t.String(),
-    product_brand_id: t.Optional(t.String()),
     technical_specifications: t.Optional(
         t.Array(
             t.Object({
@@ -96,10 +95,7 @@ export const productUpdateGeneralVariantsType = t.Object({
     description: t.String({ minLength: 1 }),
     status: t.Optional(t.Number()),
     meta_title: t.Optional(t.String()),
-    meta_description: t.Optional(t.String()),
-    price: t.Optional(t.Number({ default: 0 })),
-    special_price: t.Optional(t.Number({ default: 0 })),
-    special_price_type: t.Optional(t.Number())
+    meta_description: t.Optional(t.String())
 })
 
 export const productSearchType = t.Object({

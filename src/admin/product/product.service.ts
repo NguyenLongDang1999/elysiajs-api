@@ -356,12 +356,14 @@ export class ProductService {
             return {
                 ...product,
                 ...(productPrice ? productPrice[0].productInventory : undefined),
+                manage_inventory: product?.productVariants[0].manage_inventory,
                 product_attribute_id: !isProductSingle ? product_attributes.map((_product) => _product.id) : undefined,
-                product_attributes: !isProductSingle ? product_attributes : undefined,
+                product_attributes,
                 product_images: product?.productImages,
                 product_variants: !isProductSingle
                     ? product?.productVariants.map((variantItem) => ({
                         ...variantItem,
+                        ...variantItem.productPrices[0],
                         quantity: variantItem.productInventory?.quantity || 0
                     }))
                     : undefined,
