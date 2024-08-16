@@ -67,8 +67,7 @@ ALTER TABLE public."Admins" OWNER TO postgres;
 
 CREATE TABLE public."FlashDealProducts" (
     flash_deal_id text NOT NULL,
-    product_variants_id text NOT NULL,
-    quantity_limit integer DEFAULT 0
+    product_variants_id text NOT NULL
 );
 
 
@@ -88,7 +87,9 @@ CREATE TABLE public."FlashDeals" (
     end_time timestamp(3) without time zone NOT NULL,
     created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp(3) without time zone NOT NULL,
-    deleted_flg boolean DEFAULT false NOT NULL
+    deleted_flg boolean DEFAULT false NOT NULL,
+    discounted_price numeric(18,0) DEFAULT 0 NOT NULL,
+    discounted_price_type smallint NOT NULL
 );
 
 
@@ -420,7 +421,7 @@ ALTER TABLE public._prisma_migrations OWNER TO postgres;
 --
 
 COPY public."Admins" (id, name, email, password, phone, job, gender, address, refresh_token, role, image_uri, status, created_at, updated_at, deleted_flg) FROM stdin;
-a3vn6amq3hjyoq6c7b94wmtb	Administrator	longdang0412@gmail.com	$argon2id$v=19$m=65536,t=2,p=1$wEYuCRVHXJ8873Vkb4PNiDfoASqkIaKcG28oJhnIARc$HlSoTsmJIdHYScPoTWRsFmcx67FXdFED0nIO2fVesmI	0389747179	\N	\N	\N	$argon2id$v=19$m=65536,t=2,p=1$6r3l0f9BNR7oN9PiPnGfU11HiCjhux7s5HXnb1nY2O0$X3h/MKA/LJIyAdGFOXtyOsyaTZYK4oRIwh75mlx+tLw	10	\N	10	2024-08-15 03:53:45.156	2024-08-15 03:53:49.661	f
+a3vn6amq3hjyoq6c7b94wmtb	Administrator	longdang0412@gmail.com	$argon2id$v=19$m=65536,t=2,p=1$wEYuCRVHXJ8873Vkb4PNiDfoASqkIaKcG28oJhnIARc$HlSoTsmJIdHYScPoTWRsFmcx67FXdFED0nIO2fVesmI	0389747179	\N	\N	\N	$argon2id$v=19$m=65536,t=2,p=1$mZcbovJvD7hVH1xSF89R/oVQL2ZnFhYYguKSqgO2FoA$tOiLUQbDkLdKtZNC5QG5clSo/PQ855WPDVcQ3zHS708	10	\N	10	2024-08-15 03:53:45.156	2024-08-15 10:05:01.647	f
 \.
 
 
@@ -428,7 +429,7 @@ a3vn6amq3hjyoq6c7b94wmtb	Administrator	longdang0412@gmail.com	$argon2id$v=19$m=6
 -- Data for Name: FlashDealProducts; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public."FlashDealProducts" (flash_deal_id, product_variants_id, quantity_limit) FROM stdin;
+COPY public."FlashDealProducts" (flash_deal_id, product_variants_id) FROM stdin;
 \.
 
 
@@ -436,7 +437,7 @@ COPY public."FlashDealProducts" (flash_deal_id, product_variants_id, quantity_li
 -- Data for Name: FlashDeals; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public."FlashDeals" (id, title, slug, description, status, start_time, end_time, created_at, updated_at, deleted_flg) FROM stdin;
+COPY public."FlashDeals" (id, title, slug, description, status, start_time, end_time, created_at, updated_at, deleted_flg, discounted_price, discounted_price_type) FROM stdin;
 \.
 
 
