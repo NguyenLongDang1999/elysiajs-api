@@ -1,21 +1,14 @@
-// ** Elysia Imports
-import { RedisClientType } from '@atakan75/elysia-redis'
-
 // ** Prisma Imports
 import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
 import { IDeleteDTO } from '@src/types/core.type'
-import {
-    IProductFlashDealsDTO,
-    IProductFlashDealsSearchDTO,
-    IProductFlashDealsUpdatePriceDTO
-} from './product-flash-deals.type'
+import { IProductFlashDealsDTO, IProductFlashDealsSearchDTO } from './product-flash-deals.type'
 
 // ** Utils Imports
-import { createRedisKey, slugTimestamp } from '@src/utils'
-import { EXPIRES_AT, REDIS_KEY, STATUS } from '@src/utils/enums'
+import { slugTimestamp } from '@src/utils'
+import { STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class ProductFlashDealsService {
@@ -82,21 +75,20 @@ export class ProductFlashDealsService {
         }
     }
 
-    async create(data: IProductFlashDealsDTO, redis: RedisClientType) {
+    async create(data: IProductFlashDealsDTO) {
         try {
-            const { product_variants, ...productFlashDealData } = data
+            const { product_variants_id, ...productFlashDealData } = data
 
             return await prismaClient.flashDeals.create({
                 data: {
                     ...productFlashDealData,
                     flashDealProducts: {
-                        create: product_variants?.map((productVariantItem) => ({
-                            product_variants_id: productVariantItem.id,
-                            price: productVariantItem.price,
-                            special_price: productVariantItem.special_price,
-                            special_price_type: Number(productVariantItem.special_price_type),
-                            quantity_limit: productVariantItem.quantity_limit
-                        }))
+                        createMany: {
+                            data: product_variants_id.map((productVariantItem) => ({
+                                product_variants_id: productVariantItem
+                            })),
+                            skipDuplicates: true
+                        }
                     }
                 },
                 select: {
@@ -108,13 +100,24 @@ export class ProductFlashDealsService {
         }
     }
 
-    async update(id: string, data: IProductFlashDealsDTO, redis: RedisClientType) {
+    async update(id: string, data: IProductFlashDealsDTO) {
         try {
-            const { product_variants: _, ...productFlashDealData } = data
+            const { product_variants_id, ...productFlashDealData } = data
 
             return await prismaClient.flashDeals.update({
                 where: { id },
-                data: productFlashDealData,
+                data: {
+                    ...productFlashDealData,
+                    flashDealProducts: {
+                        deleteMany: {},
+                        createMany: {
+                            data: product_variants_id.map((productVariantItem) => ({
+                                product_variants_id: productVariantItem
+                            })),
+                            skipDuplicates: true
+                        }
+                    }
+                },
                 select: {
                     id: true
                 }
@@ -124,27 +127,7 @@ export class ProductFlashDealsService {
         }
     }
 
-    async updateProductPrice(data: IProductFlashDealsUpdatePriceDTO, redis: RedisClientType) {
-        try {
-            return await prismaClient.flashDealProducts.update({
-                where: {
-                    flash_deal_id_product_variants_id: {
-                        flash_deal_id: data.flash_deal_id,
-                        product_variants_id: data.product_variants_id
-                    }
-                },
-                data: {
-                    price: data.price,
-                    special_price: data.special_price,
-                    special_price_type: data.special_price_type
-                }
-            })
-        } catch (error) {
-            handleDatabaseError(error)
-        }
-    }
-
-    async retrieve(id: string, redis: RedisClientType) {
+    async retrieve(id: string) {
         try {
             const productFlashDeals = await prismaClient.flashDeals.findFirstOrThrow({
                 where: {
@@ -232,7 +215,7 @@ export class ProductFlashDealsService {
         }
     }
 
-    async delete(id: string, query: IDeleteDTO, redis: RedisClientType) {
+    async delete(id: string, query: IDeleteDTO) {
         try {
             if (query.force) {
                 await prismaClient.productCollection.delete({
@@ -254,23 +237,14 @@ export class ProductFlashDealsService {
                 })
             }
 
-            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_COLLECTION, 'list'))
-            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_COLLECTION, id))
-
             return id
         } catch (error) {
             handleDatabaseError(error)
         }
     }
 
-    async getDataList(redis: RedisClientType) {
+    async getDataList() {
         try {
-            const productCollectionCached = await redis.get(createRedisKey(REDIS_KEY.PRODUCT_COLLECTION, 'list'))
-
-            if (productCollectionCached) {
-                return JSON.parse(productCollectionCached)
-            }
-
             const productCollectionData = await prismaClient.productCollection.findMany({
                 orderBy: { created_at: 'desc' },
                 where: {
@@ -287,12 +261,6 @@ export class ProductFlashDealsService {
                 id: _v.id,
                 name: _v.title
             }))
-
-            await redis.set(
-                createRedisKey(REDIS_KEY.PRODUCT_COLLECTION, 'list'),
-                JSON.stringify(productCollection),
-                EXPIRES_AT.REDIS_EXPIRES_AT
-            )
 
             return productCollection
         } catch (error) {

@@ -10,20 +10,14 @@ export const productFlashDealsType = t.Object({
     title: t.String({ minLength: 1 }),
     slug: t.String({ minLength: 1 }),
     status: t.Optional(t.Number()),
-    product_variants: t.Optional(
-        t.Array(
-            t.Object({
-                id: t.String(),
-                price: t.Number({ default: 0 }),
-                special_price: t.Optional(t.Number({ default: 0 })),
-                special_price_type: t.Optional(t.Number()),
-                quantity_limit: t.Optional(t.Number({ default: 0 }))
-            })
-        )
-    ),
+    product_variants_id: t.Array(t.String(), {
+        minItems: 1
+    }),
     description: t.Optional(t.String()),
     start_time: t.Date(),
-    end_time: t.Date()
+    end_time: t.Date(),
+    discounted_price: t.Number({ default: 0 }),
+    discounted_price_type: t.Number()
 })
 
 export const productFlashDealsSearchType = t.Object({
