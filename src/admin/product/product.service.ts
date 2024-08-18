@@ -57,6 +57,16 @@ export class ProductService {
                 }
             }
 
+            if (query.flash_deals_id) {
+                search.flashDealProducts = {
+                    some: {
+                        flash_deal_id: {
+                            equals: query.flash_deals_id
+                        }
+                    }
+                }
+            }
+
             const [data, count] = await Promise.all([
                 prismaClient.product.findMany({
                     take,

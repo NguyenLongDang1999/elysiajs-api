@@ -179,7 +179,7 @@ export class ProductFlashDealsService {
 
     async getDataList() {
         try {
-            const productCollectionData = await prismaClient.productCollection.findMany({
+            const productFlashDealsData = await prismaClient.flashDeals.findMany({
                 orderBy: { created_at: 'desc' },
                 where: {
                     deleted_flg: false,
@@ -191,7 +191,7 @@ export class ProductFlashDealsService {
                 }
             })
 
-            const productCollection = productCollectionData.map((_v) => ({
+            const productCollection = productFlashDealsData.map((_v) => ({
                 id: _v.id,
                 name: _v.title
             }))
