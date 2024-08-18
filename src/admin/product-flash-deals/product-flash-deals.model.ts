@@ -5,13 +5,11 @@ import { Elysia } from 'elysia'
 import { deleteType } from '@src/types/core.type'
 import {
     productFlashDealsSearchType,
-    productFlashDealsType,
-    productFlashDealsUpdatePriceType
+    productFlashDealsType
 } from './product-flash-deals.type'
 
 export const productFlashDealsModels = new Elysia().model({
     productFlashDeals: productFlashDealsType,
     productFlashDealsSearch: productFlashDealsSearchType,
-    productFlashDealsDelete: deleteType,
-    productFlashDealsUpdatePrice: productFlashDealsUpdatePriceType
+    productFlashDealsDelete: deleteType
 })

@@ -146,6 +146,7 @@ model Product {
   productRelated           ProductRelations[]         @relation("Product")
   productRelatedMain       ProductRelations[]         @relation("ProductRelated")
   productCollectionProduct ProductCollectionProduct[]
+  flashDealProducts        FlashDealProducts[]
 }
 
 model ProductVariants {
@@ -159,7 +160,6 @@ model ProductVariants {
   product                       Product                         @relation(fields: [product_id], references: [id], onDelete: Cascade)
   productInventory              ProductInventory?
   productVariantAttributeValues ProductVariantAttributeValues[]
-  flashDealProducts             FlashDealProducts[]
   productInventoryTransactions  ProductInventoryTransactions[]
   productPrices                 ProductPrices[]
 }
@@ -244,12 +244,12 @@ model FlashDeals {
 }
 
 model FlashDealProducts {
-  flash_deal_id       String
-  product_variants_id String
-  flashDeal           FlashDeals      @relation(fields: [flash_deal_id], references: [id], onDelete: Cascade)
-  productVariants     ProductVariants @relation(fields: [product_variants_id], references: [id], onDelete: Cascade)
+  product_id    String
+  flash_deal_id String
+  product       Product    @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  flashDeal     FlashDeals @relation(fields: [flash_deal_id], references: [id], onDelete: Cascade)
 
-  @@unique([flash_deal_id, product_variants_id])
+  @@unique([product_id, flash_deal_id])
 }
 
 model Admins {

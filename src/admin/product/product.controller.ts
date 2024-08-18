@@ -22,9 +22,6 @@ export const productController = new Elysia({ prefix: '/product' })
     .post('create-variants', ({ ProductService, body }) => ProductService.createVariants(body), {
         body: 'productVariants'
     })
-    .post('generate-variant', ({ ProductService, body }) => ProductService.generateVariant(body), {
-        body: 'generateVariant'
-    })
     .patch('/:id/update-single', ({ ProductService, params, body }) => ProductService.updateSingle(params.id, body), {
         body: 'productSingle'
     })

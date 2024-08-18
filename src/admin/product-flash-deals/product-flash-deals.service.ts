@@ -39,26 +39,13 @@ export class ProductFlashDealsService {
                     select: {
                         id: true,
                         title: true,
+                        slug: true,
                         status: true,
                         start_time: true,
                         end_time: true,
-                        flashDealProducts: {
-                            where: {
-                                productVariants: {
-                                    deleted_flg: false,
-                                    product: {
-                                        deleted_flg: false
-                                    }
-                                }
-                            },
-                            select: {
-                                productVariants: {
-                                    select: {
-                                        _count: true
-                                    }
-                                }
-                            }
-                        }
+                        created_at: true,
+                        discounted_price: true,
+                        discounted_price_type: true
                     }
                 }),
                 prismaClient.flashDeals.count({
@@ -77,15 +64,15 @@ export class ProductFlashDealsService {
 
     async create(data: IProductFlashDealsDTO) {
         try {
-            const { product_variants_id, ...productFlashDealData } = data
+            const { product_id, ...productFlashDealData } = data
 
             return await prismaClient.flashDeals.create({
                 data: {
                     ...productFlashDealData,
                     flashDealProducts: {
                         createMany: {
-                            data: product_variants_id.map((productVariantItem) => ({
-                                product_variants_id: productVariantItem
+                            data: product_id.map((productItem) => ({
+                                product_id: productItem
                             })),
                             skipDuplicates: true
                         }
@@ -102,7 +89,7 @@ export class ProductFlashDealsService {
 
     async update(id: string, data: IProductFlashDealsDTO) {
         try {
-            const { product_variants_id, ...productFlashDealData } = data
+            const { product_id, ...productFlashDealData } = data
 
             return await prismaClient.flashDeals.update({
                 where: { id },
@@ -111,8 +98,8 @@ export class ProductFlashDealsService {
                     flashDealProducts: {
                         deleteMany: {},
                         createMany: {
-                            data: product_variants_id.map((productVariantItem) => ({
-                                product_variants_id: productVariantItem
+                            data: product_id.map((productItem) => ({
+                                product_id: productItem
                             })),
                             skipDuplicates: true
                         }
@@ -139,75 +126,22 @@ export class ProductFlashDealsService {
                     title: true,
                     slug: true,
                     status: true,
+                    discounted_price: true,
+                    discounted_price_type: true,
                     start_time: true,
                     end_time: true,
                     description: true,
                     flashDealProducts: {
-                        where: {
-                            productVariants: {
-                                deleted_flg: false,
-                                product: {
-                                    deleted_flg: false
-                                }
-                            }
-                        },
                         select: {
-                            price: true,
-                            special_price: true,
-                            special_price_type: true,
-                            quantity_limit: true,
-                            productVariants: {
-                                select: {
-                                    id: true,
-                                    sku: true,
-                                    label: true,
-                                    product: {
-                                        select: {
-                                            id: true,
-                                            name: true,
-                                            image_uri: true
-                                        }
-                                    }
-                                }
-                            }
+                            product_id: true
                         }
                     }
                 }
             })
 
-            const product_id: string[] = []
-            const productVariants = new Map()
-
-            productFlashDeals.flashDealProducts.forEach((fp) => {
-                const variant = fp.productVariants
-                const product = variant.product
-
-                if (!productVariants.has(product.id)) {
-                    productVariants.set(product.id, {
-                        ...product,
-                        productVariants: []
-                    })
-
-                    product_id.push(product.id)
-                }
-
-                const productEntry = productVariants.get(product.id)
-
-                productEntry.productVariants.push({
-                    id: variant.id,
-                    sku: variant.sku,
-                    label: variant.label,
-                    price: fp.price,
-                    special_price: fp.special_price,
-                    special_price_type: fp.special_price_type,
-                    quantity_limit: fp.quantity_limit
-                })
-            })
-
             return {
                 ...productFlashDeals,
-                product_id,
-                productVariants: Array.from(productVariants.values()),
+                product_id: productFlashDeals.flashDealProducts.map(_f => _f.product_id),
                 flashDealProducts: undefined
             }
         } catch (error) {

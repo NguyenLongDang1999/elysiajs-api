@@ -4,7 +4,6 @@ import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
 import {
-    IGenerateVariantDTO,
     IProductImagesDTO,
     IProductRelationsDTO,
     IProductSearchDTO,
@@ -14,7 +13,7 @@ import {
 } from './product.type'
 
 // ** Utils Imports
-import { MANAGE_INVENTORY, PRODUCT_TYPE, RELATIONS_TYPE, SPECIAL_PRICE_TYPE, STATUS } from '@src/utils/enums'
+import { MANAGE_INVENTORY, PRODUCT_TYPE, RELATIONS_TYPE, STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class ProductService {
@@ -30,19 +29,17 @@ export class ProductService {
                 status: { equals: Number(query.status) || undefined },
                 product_type: { equals: Number(query.product_type) || undefined },
                 product_brand_id: { equals: query.product_brand_id || undefined },
-                product_category_id: { equals: query.product_category_id || undefined }
+                product_category_id: { equals: query.product_category_id || undefined },
+                flashDealProducts: query.not_flash_deals && this.stringToBoolean(query.not_flash_deals) ? {
+                    none: {}
+                } : undefined
             }
 
             if (query.not_flash_deals && this.stringToBoolean(query.not_flash_deals)) {
-                search.productVariants = {
-                    ...search.productVariants,
+                search.flashDealProducts = {
                     none: {
                         AND: [
-                            {
-                                flashDealProducts: {
-                                    some: {}
-                                }
-                            },
+                            {},
                             {
                                 product_id: {
                                     notIn: query.product_id_flash_deals ? query.product_id_flash_deals.split(',') : []
@@ -84,37 +81,25 @@ export class ProductService {
                                 image_uri: true
                             }
                         },
-                        productVariants: {
-                            orderBy: { created_at: 'desc' },
-                            select: {
-                                flashDealProducts: {
-                                    where: {
-                                        flashDeal: {
-                                            deleted_flg: false,
-                                            status: STATUS.ACTIVE,
-                                            start_time: {
-                                                lte: new Date()
-                                            },
-                                            end_time: {
-                                                gte: new Date()
-                                            }
-                                        }
+                        flashDealProducts: {
+                            where: {
+                                flashDeal: {
+                                    deleted_flg: false,
+                                    status: STATUS.ACTIVE,
+                                    start_time: {
+                                        lte: new Date()
                                     },
+                                    end_time: {
+                                        gte: new Date()
+                                    }
+                                }
+                            },
+                            select: {
+                                flashDeal: {
                                     select: {
-                                        productVariants: {
-                                            select: {
-                                                productPrices: {
-                                                    where: {
-                                                        is_default: true
-                                                    },
-                                                    select: {
-                                                        price: true,
-                                                        special_price: true,
-                                                        special_price_type: true
-                                                    }
-                                                }
-                                            }
-                                        }
+                                        title: true,
+                                        discounted_price: true,
+                                        discounted_price_type: true
                                     }
                                 }
                             }
@@ -125,14 +110,15 @@ export class ProductService {
             ])
 
             return {
-                data: data.map((productItem) => ({
-                    ...productItem,
-                    ...(productItem.productVariants[0].flashDealProducts.length
-                        ? productItem.productVariants[0].flashDealProducts[0]
-                        : productItem.productVariants.map(({ flashDealProducts: _, ..._p }) => _p)[0]),
-                    hasFlashDeals: !!productItem.productVariants[0].flashDealProducts.length,
-                    productVariants: undefined
-                })),
+                data: data.map((productItem) => {
+                    return {
+                        ...productItem,
+                        ...productItem.flashDealProducts[0]?.flashDeal,
+                        hasFlashDeals: !!productItem.flashDealProducts.length,
+                        flashDealProducts: undefined,
+                        productVariants: undefined
+                    }
+                }),
                 aggregations: count
             }
         } catch (error) {
@@ -328,10 +314,9 @@ export class ProductService {
                 values: string[]
             }[] = []
 
-            product?.productVariants.forEach((variant) => {
-                variant.productVariantAttributeValues.forEach((variantAttrValue) => {
-                    const attribute = variantAttrValue.productAttributeValues.productAttribute
-                    const attributeValueId = variantAttrValue.productAttributeValues.id
+            product?.productVariants.forEach(({ productVariantAttributeValues }) => {
+                productVariantAttributeValues.forEach(({ productAttributeValues }) => {
+                    const { productAttribute: attribute, id: attributeValueId } = productAttributeValues
 
                     const attrObj = product_attributes.find((attr) => attr.id === attribute.id)
 
@@ -347,15 +332,13 @@ export class ProductService {
                 })
             })
 
-            const productPrice = product?.productVariants.filter(
-                (variantItem) => variantItem.productPrices[0].is_default
-            )
+            const productPrice = product?.productVariants.find((variantItem) => variantItem.productPrices[0].is_default)
 
             const isProductSingle = product?.product_type === PRODUCT_TYPE.SINGLE
 
             return {
                 ...product,
-                ...(productPrice ? productPrice[0].productInventory : undefined),
+                ...(productPrice ? productPrice.productInventory : undefined),
                 manage_inventory: product?.productVariants[0].manage_inventory,
                 product_attribute_id: !isProductSingle ? product_attributes.map((_product) => _product.id) : undefined,
                 product_attributes,
@@ -364,6 +347,8 @@ export class ProductService {
                     ? product?.productVariants.map((variantItem) => ({
                         ...variantItem,
                         ...variantItem.productPrices[0],
+                        productPrices: undefined,
+                        productVariantAttributeValues: undefined,
                         quantity: variantItem.productInventory?.quantity || 0
                     }))
                     : undefined,
@@ -406,45 +391,6 @@ export class ProductService {
     //         handleDatabaseError(error)
     //     }
     // }
-
-    async generateVariant(generateProductDto: IGenerateVariantDTO) {
-        try {
-            const { product_id } = generateProductDto
-
-            const product = await prismaClient.product.findMany({
-                where: {
-                    deleted_flg: false,
-                    id: { in: product_id }
-                },
-                select: {
-                    id: true,
-                    sku: true,
-                    name: true,
-                    image_uri: true,
-                    product_type: true,
-                    productVariants: {
-                        where: { deleted_flg: false },
-                        select: {
-                            id: true,
-                            label: true
-                        }
-                    }
-                }
-            })
-
-            return product.map((_p) => ({
-                ..._p,
-                productVariants: _p.productVariants.map((_pv) => ({
-                    ..._pv,
-                    price: 0,
-                    special_price: 0,
-                    special_price_type: SPECIAL_PRICE_TYPE.PRICE
-                }))
-            }))
-        } catch (error) {
-            handleDatabaseError(error)
-        }
-    }
 
     async updateSingle(id: string, data: IProductSingleDTO) {
         try {

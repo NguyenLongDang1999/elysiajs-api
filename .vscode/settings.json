@@ -13,7 +13,8 @@
     "typescript.tsdk": "node_modules/typescript/lib",
     "cSpell.words": [
         "Elysia",
-        "ilike"
+        "ilike",
+        "upsell"
     ]
   }
   
