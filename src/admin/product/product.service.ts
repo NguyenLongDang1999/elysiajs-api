@@ -29,10 +29,7 @@ export class ProductService {
                 status: { equals: Number(query.status) || undefined },
                 product_type: { equals: Number(query.product_type) || undefined },
                 product_brand_id: { equals: query.product_brand_id || undefined },
-                product_category_id: { equals: query.product_category_id || undefined },
-                flashDealProducts: query.not_flash_deals && this.stringToBoolean(query.not_flash_deals) ? {
-                    none: {}
-                } : undefined
+                product_category_id: { equals: query.product_category_id || undefined }
             }
 
             if (query.not_flash_deals && this.stringToBoolean(query.not_flash_deals)) {
@@ -46,6 +43,16 @@ export class ProductService {
                                 }
                             }
                         ]
+                    }
+                }
+            }
+
+            if (query.product_id_collection) {
+                search.productCollectionProduct = {
+                    some: {
+                        product_id: {
+                            in: query.product_id_collection ? query.product_id_collection.split(',') : []
+                        }
                     }
                 }
             }

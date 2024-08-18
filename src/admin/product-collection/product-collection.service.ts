@@ -242,13 +242,25 @@ export class ProductCollectionService {
                 },
                 select: {
                     id: true,
-                    title: true
+                    title: true,
+                    productCollectionProduct: {
+                        where: {
+                            product: {
+                                deleted_flg: false,
+                                status: STATUS.ACTIVE
+                            }
+                        },
+                        select: {
+                            product_id: true
+                        }
+                    }
                 }
             })
 
             const productCollection = productCollectionData.map((_v) => ({
                 id: _v.id,
-                name: _v.title
+                name: _v.title,
+                product_id: _v.productCollectionProduct.map(_collection => _collection.product_id)
             }))
 
             await redis.set(

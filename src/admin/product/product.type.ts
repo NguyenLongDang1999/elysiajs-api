@@ -110,7 +110,8 @@ export const productSearchType = t.Object({
         .Encode((value) => value.toString()),
     product_type: t.Optional(t.String()),
     not_flash_deals: t.Optional(t.String()),
-    product_id_flash_deals: t.Optional(t.String())
+    product_id_flash_deals: t.Optional(t.String()),
+    product_id_collection: t.Optional(t.String())
 })
 
 export const productRelationsType = t.Object({

@@ -61,26 +61,6 @@ export class SystemSettingsService {
 
             const theme_colour = systemSettings.find((_s: { key: string }) => _s.key === 'system_theme_colour')
 
-            if (!theme_colour) {
-                // await prismaClient.systemSettings.create({
-                //     data: {
-                //         key: 'system_theme_colour',
-                //         value: 'blue',
-                //         label: 'Màu chủ đạo của Website',
-                //         input_type: INPUT_TYPE.SELECT,
-                //         systemSettingOptions: {
-                //             create: {
-                //                 key: 'blue',
-                //                 displayValue: 'Blue'
-                //             }
-                //         }
-                //     },
-                //     select: {
-                //         id: true
-                //     }
-                // })
-            }
-
             return {
                 theme_colour: theme_colour.value,
                 system: systemSettings
@@ -92,7 +72,7 @@ export class SystemSettingsService {
 
     async create(data: ISystemSettingsDTO, redis: RedisClientType) {
         try {
-            const { setting_system_options, ...systemSettingData } = data
+            const { setting_system_options, redis_key, ...systemSettingData } = data
 
             const systemSettings = await prismaClient.systemSettings.upsert({
                 where: {
@@ -114,7 +94,7 @@ export class SystemSettingsService {
                 }
             })
 
-            await redis.del(createRedisKey(REDIS_KEY.SYSTEM_SETTINGS, data.key))
+            await redis.del(createRedisKey(REDIS_KEY.SYSTEM_SETTINGS, redis_key))
 
             return systemSettings
         } catch (error) {

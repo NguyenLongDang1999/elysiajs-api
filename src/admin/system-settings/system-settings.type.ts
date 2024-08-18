@@ -16,6 +16,7 @@ export const systemSettingsType = t.Object({
             })
         )
     ),
+    redis_key: t.Optional(t.String()),
     description: t.Optional(t.String()),
     value: t.Optional(t.String()),
     input_type: t.Optional(t.Number({ default: INPUT_TYPE.TEXT }))
