@@ -5,6 +5,7 @@ import { Elysia } from 'elysia'
 
 // ** Router Imports
 import { admin } from './admin'
+import { user } from './user'
 
 const app = new Elysia({ prefix: '/api', normalize: true })
     .derive((ctx) => {
@@ -33,12 +34,13 @@ const app = new Elysia({ prefix: '/api', normalize: true })
         })
     )
     .use(admin)
+    .use(user)
     .get('/', () => 'Hello Elysia')
-    .post('seed', async ({ AuthService }) => {
-        await AuthService.seed()
+    // .post('seed', async ({ AuthService }) => {
+    //     await AuthService.seed()
 
-        return { message: 'Successfully!' }
-    })
+    //     return { message: 'Successfully!' }
+    // })
     .listen(Bun.env.PORT || 3333)
 
 console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`)

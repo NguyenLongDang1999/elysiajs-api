@@ -14,7 +14,11 @@ export enum REDIS_KEY {
     PRODUCT_CATEGORY = 'product_category',
     PRODUCT_BRAND = 'product_brand',
     PRODUCT_COLLECTION = 'product_collection',
-    SYSTEM_SETTINGS = 'system_settings'
+    SYSTEM_SETTINGS = 'system_settings',
+
+    // ** USER
+    USER_SYSTEM_SETTINGS = 'user_system_settings',
+    USER_HOME_PRODUCT_CATEGORY_POPULAR = 'user_home_product_category_popular',
 }
 
 export enum EXPIRES_AT {
