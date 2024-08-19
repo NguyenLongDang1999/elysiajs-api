@@ -43,11 +43,11 @@ export class ProductInventoryService {
                     where: search,
                     select: {
                         id: true,
-                        sku: true,
                         label: true,
                         product: {
                             select: {
                                 id: true,
+                                sku: true,
                                 slug: true,
                                 name: true,
                                 status: true,
