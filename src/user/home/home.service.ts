@@ -12,6 +12,9 @@ import { createRedisKey } from '@utils/index'
 // ** Service Imports
 import { SystemSettingsService } from '../system-settings/system-settings.service'
 
+// ** Types Imports
+import { IHomeProductCollectionDTO, IHomeProductFlashDealsDTO } from './home.type'
+
 export class HomeService {
     async data(SystemSettingsService: SystemSettingsService, redis: RedisClientType) {
         try {
@@ -27,15 +30,128 @@ export class HomeService {
 
             const slider = getParseValueWithKey('home_slider')
             const product_category_popular = getParseValueWithKey('home_product_categories_popular')
+            const product_collection = getParseValueWithKey('home_product_collection')
+            const product_flash_deals = getParseValueWithKey('home_product_flash_deals')
 
+            const flashDealData = await this.getProductFlashDeals(product_flash_deals, redis)
             const productCategoryData = await this.getProductCategoryPopular(product_category_popular, redis)
+            const productCollectionData = await this.getProductCollection(product_collection, redis)
 
             return {
                 slider,
-                // product_flash_deals: flashDealData,
-                // product_collection: productCollectionData,
+                product_flash_deals: flashDealData,
+                product_collection: productCollectionData,
                 product_categories_popular: productCategoryData
             }
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    async getProductFlashDeals(product_flash_deals: IHomeProductFlashDealsDTO, redis: RedisClientType) {
+        try {
+            const cachedKey = createRedisKey(REDIS_KEY.USER_HOME_FLASH_DEALS, product_flash_deals.flash_deals_id)
+            const cachedData = await redis.get(cachedKey)
+
+            if (cachedData) {
+                return JSON.parse(cachedData)
+            }
+
+            const flashDeals = await prismaClient.flashDeals.findFirst({
+                where: {
+                    id: product_flash_deals.flash_deals_id,
+                    deleted_flg: false,
+                    status: STATUS.ACTIVE,
+                    start_time: {
+                        lte: new Date()
+                    },
+                    end_time: {
+                        gte: new Date()
+                    }
+                },
+                select: {
+                    title: true,
+                    flashDealProducts: {
+                        where: {
+                            product: {
+                                deleted_flg: false,
+                                status: STATUS.ACTIVE,
+                                productCategory: {
+                                    deleted_flg: false,
+                                    status: STATUS.ACTIVE
+                                }
+                            }
+                        },
+                        select: {
+                            product: {
+                                select: {
+                                    id: true,
+                                    slug: true,
+                                    name: true,
+                                    image_uri: true,
+                                    short_description: true,
+                                    total_rating: true,
+                                    productImages: {
+                                        orderBy: { index: 'asc' },
+                                        select: { image_uri: true }
+                                    },
+                                    productBrand: {
+                                        select: {
+                                            id: true,
+                                            name: true
+                                        }
+                                    },
+                                    productCategory: {
+                                        select: {
+                                            id: true,
+                                            slug: true,
+                                            name: true
+                                        }
+                                    },
+                                    productVariants: {
+                                        select: {
+                                            id: true,
+                                            productPrices: {
+                                                select: {
+                                                    price: true,
+                                                    special_price: true,
+                                                    special_price_type: true
+                                                }
+                                            },
+                                            productVariantAttributeValues: {
+                                                where: {
+                                                    productAttributeValues: {
+                                                        deleted_flg: false,
+                                                        productAttribute: {
+                                                            deleted_flg: false
+                                                        }
+                                                    }
+                                                },
+                                                select: {
+                                                    productAttributeValues: {
+                                                        select: {
+                                                            id: true,
+                                                            value: true,
+                                                            productAttribute: {
+                                                                select: {
+                                                                    id: true,
+                                                                    name: true
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+
+            return flashDeals
         } catch (error) {
             handleDatabaseError(error)
         }
@@ -71,6 +187,125 @@ export class HomeService {
             )
 
             return productCategory
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    async getProductCollection(product_collection: IHomeProductCollectionDTO, redis: RedisClientType) {
+        try {
+            const productCollectionData = await Promise.all(
+                product_collection.product_collection.map(async (_pc) => {
+                    const cachedKey = createRedisKey(REDIS_KEY.USER_HOME_PRODUCT_COLLECTION, _pc.product_collection_id)
+                    const cachedData = await redis.get(cachedKey)
+
+                    if (cachedData) {
+                        return JSON.parse(cachedData)
+                    }
+
+                    const result = await prismaClient.productCollection.findUnique({
+                        where: {
+                            id: _pc.product_collection_id,
+                            deleted_flg: false,
+                            status: STATUS.ACTIVE
+                        },
+                        select: {
+                            id: true,
+                            title: true,
+                            productCollectionProduct: {
+                                where: {
+                                    product: {
+                                        id: {
+                                            in: _pc.product_id
+                                        },
+                                        deleted_flg: false,
+                                        status: STATUS.ACTIVE,
+                                        productCategory: {
+                                            deleted_flg: false,
+                                            status: STATUS.ACTIVE
+                                        }
+                                    }
+                                },
+                                select: {
+                                    product: {
+                                        select: {
+                                            id: true,
+                                            slug: true,
+                                            name: true,
+                                            image_uri: true,
+                                            price: true,
+                                            special_price: true,
+                                            special_price_type: true,
+                                            total_rating: true,
+                                            product_type: true,
+                                            productCategory: {
+                                                select: {
+                                                    id: true,
+                                                    slug: true,
+                                                    name: true
+                                                }
+                                            },
+                                            flashDealProducts: {
+                                                where: {
+                                                    flashDeal: {
+                                                        status: STATUS.ACTIVE,
+                                                        start_time: {
+                                                            lte: new Date()
+                                                        },
+                                                        end_time: {
+                                                            gte: new Date()
+                                                        }
+                                                    }
+                                                },
+                                                select: {
+                                                    flashDeal: {
+                                                        select: {
+                                                            id: true,
+                                                            title: true,
+                                                            discounted_price: true,
+                                                            discounted_price_type: true
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    })
+
+                    await redis.set(
+                        cachedKey,
+                        JSON.stringify(result),
+                        EXPIRES_AT.REDIS_EXPIRES_AT
+                    )
+
+                    return result
+                })
+            )
+
+            return await Promise.all(
+                productCollectionData.map(async (_pcd) => {
+                    return {
+                        ..._pcd,
+                        product: await Promise.all(
+                            _pcd.productCollectionProduct.map(async (_p: any) => ({
+                                ..._p.product,
+                                flashDeal: _p.product.flashDealProducts[0] ? {
+                                    ..._p.product.flashDealProducts[0].flashDeal
+                                } : undefined,
+                                productPrice: {
+                                    price: _p.product.price,
+                                    special_price: _p.product.special_price,
+                                    special_price_type: _p.product.special_price_type
+                                },
+                                flashDealProducts: undefined
+                            }))
+                        )
+                    }
+                })
+            )
         } catch (error) {
             handleDatabaseError(error)
         }

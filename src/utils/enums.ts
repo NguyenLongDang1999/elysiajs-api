@@ -18,6 +18,8 @@ export enum REDIS_KEY {
 
     // ** USER
     USER_SYSTEM_SETTINGS = 'user_system_settings',
+    USER_HOME_FLASH_DEALS = 'user_home_flash_deals',
+    USER_HOME_PRODUCT_COLLECTION = 'user_home_product_collection',
     USER_HOME_PRODUCT_CATEGORY_POPULAR = 'user_home_product_category_popular',
 }
 
