@@ -13,7 +13,7 @@ import { createRedisKey } from '@utils/index'
 import { SystemSettingsService } from '../system-settings/system-settings.service'
 
 // ** Types Imports
-import { IHomeProductCollectionDTO, IHomeProductFlashDealsDTO } from './home.type'
+import { IHomeProductCollectionDTO, IHomeProductFlashDealsDTO, IProductAttribute } from './home.type'
 
 export class HomeService {
     async data(SystemSettingsService: SystemSettingsService, redis: RedisClientType) {
@@ -57,7 +57,7 @@ export class HomeService {
                 return JSON.parse(cachedData)
             }
 
-            const flashDeals = await prismaClient.flashDeals.findFirst({
+            const productFlashDeals = await prismaClient.flashDeals.findFirst({
                 where: {
                     id: product_flash_deals.flash_deals_id,
                     deleted_flg: false,
@@ -86,6 +86,7 @@ export class HomeService {
                             product: {
                                 select: {
                                     id: true,
+                                    sku: true,
                                     slug: true,
                                     name: true,
                                     image_uri: true,
@@ -151,7 +152,49 @@ export class HomeService {
                 }
             })
 
-            return flashDeals
+            const productAttributes: Record<string, IProductAttribute> = {}
+
+            productFlashDeals?.flashDealProducts.forEach(_product => {
+                _product.product.productVariants.forEach(_variant => {
+                    _variant.productVariantAttributeValues.forEach(variant => {
+                        const attribute = variant.productAttributeValues.productAttribute
+                        const attributeId = attribute.id
+                        const attributeValue = {
+                            id: variant.productAttributeValues.id,
+                            value: variant.productAttributeValues.value
+                        }
+
+                        if (!productAttributes[attributeId]) {
+                            productAttributes[attributeId] = {
+                                id: attributeId,
+                                name: attribute.name,
+                                product_attribute_values: []
+                            }
+                        }
+
+                        const exists = productAttributes[attributeId].product_attribute_values.some(
+                            (value) => value.id === attributeValue.id
+                        )
+
+                        if (!exists) {
+                            productAttributes[attributeId].product_attribute_values.push(attributeValue)
+                        }
+                    })
+                })
+            })
+
+            return {
+                ...productFlashDeals,
+                flashDealProducts: productFlashDeals?.flashDealProducts.map(_flashDeal => ({
+                    ..._flashDeal.product,
+                    productAttributes: Object.values(productAttributes),
+                    productVariants: _flashDeal.product.productVariants.map(_productVariant => ({
+                        ..._productVariant,
+                        ..._productVariant.productPrices[0],
+                        productPrices: undefined
+                    }))
+                }))
+            }
         } catch (error) {
             handleDatabaseError(error)
         }
