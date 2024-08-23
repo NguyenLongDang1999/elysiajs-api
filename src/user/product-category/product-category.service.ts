@@ -8,6 +8,8 @@ import prismaClient from '@src/database/prisma'
 import { createRedisKey } from '@src/utils'
 import { EXPIRES_AT, REDIS_KEY, STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
+
+// ** Types Imports
 import { IProductCategoryNestedListDTO } from './product-category.type'
 
 export class ProductCategoryService {
