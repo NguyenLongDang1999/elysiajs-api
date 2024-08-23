@@ -12,8 +12,8 @@ import { HomeService } from './home.service'
 export const homeController = new Elysia({ prefix: '/home' })
     .decorate({
         HomeService: new HomeService(),
-        SystemSettingsService: new SystemSettingsService()
+        UserSystemSettingsService: new SystemSettingsService()
     })
     .use(redis())
     // .use(homeModels)
-    .get('data', async ({ HomeService, SystemSettingsService, redis }) => HomeService.data(SystemSettingsService, redis))
+    .get('data', async ({ HomeService, UserSystemSettingsService, redis }) => HomeService.data(UserSystemSettingsService, redis))

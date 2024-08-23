@@ -7,7 +7,7 @@ import { SystemSettingsService } from './system-settings.service'
 
 export const systemSettingsController = new Elysia({ prefix: '/system-settings' })
     .decorate({
-        SystemSettingsService: new SystemSettingsService()
+        UserSystemSettingsService: new SystemSettingsService()
     })
     .use(redis())
-    .get('metadata', ({ SystemSettingsService, redis }) => SystemSettingsService.metadata(redis))
+    .get('metadata', ({ UserSystemSettingsService, redis }) => UserSystemSettingsService.metadata(redis))
