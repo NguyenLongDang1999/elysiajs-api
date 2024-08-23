@@ -8,9 +8,7 @@ import prismaClient from '@src/database/prisma'
 import { createRedisKey } from '@src/utils'
 import { EXPIRES_AT, REDIS_KEY, STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
-
-// ** Types Imports
-// import { } from './product.type'
+import { IProductAttribute } from '../home/home.type'
 
 export class ProductService {
     async retrieve(slug: string, redis: RedisClientType) {
@@ -131,13 +129,49 @@ export class ProductService {
                 }
             })
 
+            const productAttributes: Record<string, IProductAttribute> = {}
+
+            product.productVariants.forEach(({ productVariantAttributeValues }) => {
+                productVariantAttributeValues.forEach(({ productAttributeValues }) => {
+                    const { id: attributeId, name } = productAttributeValues.productAttribute
+                    const attributeValue = {
+                        id: productAttributeValues.id,
+                        value: productAttributeValues.value
+                    }
+
+                    if (!productAttributes[attributeId]) {
+                        productAttributes[attributeId] = {
+                            id: attributeId,
+                            name,
+                            product_attribute_values: []
+                        }
+                    }
+
+                    const attributeValuesSet = new Set(productAttributes[attributeId].product_attribute_values.map(val => val.id))
+
+                    if (!attributeValuesSet.has(attributeValue.id)) {
+                        productAttributes[attributeId].product_attribute_values.push(attributeValue)
+                    }
+                })
+            })
+
+            const formattedProduct = {
+                ...product,
+                productAttributes: Object.values(productAttributes),
+                productVariants: product.productVariants.map(({ productPrices, ..._productVariant }) => ({
+                    ..._productVariant,
+                    ...productPrices[0],
+                    productPrices: undefined
+                }))
+            }
+
             await redis.set(
                 cachedKey,
-                JSON.stringify(product),
+                JSON.stringify(formattedProduct),
                 EXPIRES_AT.REDIS_EXPIRES_AT
             )
 
-            return product
+            return formattedProduct
         } catch (error) {
             handleDatabaseError(error)
         }
