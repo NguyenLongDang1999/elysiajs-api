@@ -50,12 +50,12 @@ export class HomeService {
 
     async getProductFlashDeals(product_flash_deals: IHomeProductFlashDealsDTO, redis: RedisClientType) {
         try {
-            const cachedKey = createRedisKey(REDIS_KEY.USER_HOME_FLASH_DEALS, product_flash_deals.flash_deals_id)
-            const cachedData = await redis.get(cachedKey)
+            // const cachedKey = createRedisKey(REDIS_KEY.USER_HOME_FLASH_DEALS, product_flash_deals.flash_deals_id)
+            // const cachedData = await redis.get(cachedKey)
 
-            if (cachedData) {
-                return JSON.parse(cachedData)
-            }
+            // if (cachedData) {
+            //     return JSON.parse(cachedData)
+            // }
 
             const productFlashDeals = await prismaClient.flashDeals.findFirst({
                 where: {
@@ -152,48 +152,45 @@ export class HomeService {
                 }
             })
 
-            const productAttributes: Record<string, IProductAttribute> = {}
-
-            productFlashDeals?.flashDealProducts.forEach(_product => {
-                _product.product.productVariants.forEach(_variant => {
-                    _variant.productVariantAttributeValues.forEach(variant => {
-                        const attribute = variant.productAttributeValues.productAttribute
-                        const attributeId = attribute.id
-                        const attributeValue = {
-                            id: variant.productAttributeValues.id,
-                            value: variant.productAttributeValues.value
-                        }
-
-                        if (!productAttributes[attributeId]) {
-                            productAttributes[attributeId] = {
-                                id: attributeId,
-                                name: attribute.name,
-                                product_attribute_values: []
-                            }
-                        }
-
-                        const exists = productAttributes[attributeId].product_attribute_values.some(
-                            (value) => value.id === attributeValue.id
-                        )
-
-                        if (!exists) {
-                            productAttributes[attributeId].product_attribute_values.push(attributeValue)
-                        }
-                    })
-                })
-            })
-
             return {
                 ...productFlashDeals,
-                flashDealProducts: productFlashDeals?.flashDealProducts.map(_flashDeal => ({
-                    ..._flashDeal.product,
-                    productAttributes: Object.values(productAttributes),
-                    productVariants: _flashDeal.product.productVariants.map(_productVariant => ({
-                        ..._productVariant,
-                        ..._productVariant.productPrices[0],
-                        productPrices: undefined
-                    }))
-                }))
+                flashDealProducts: productFlashDeals?.flashDealProducts.map(_flashDeal => {
+                    const productAttributes: Record<string, IProductAttribute> = {}
+
+                    _flashDeal.product.productVariants.forEach(({ productVariantAttributeValues }) => {
+                        productVariantAttributeValues.forEach(({ productAttributeValues }) => {
+                            const { id: attributeId, name } = productAttributeValues.productAttribute
+                            const attributeValue = {
+                                id: productAttributeValues.id,
+                                value: productAttributeValues.value
+                            }
+
+                            if (!productAttributes[attributeId]) {
+                                productAttributes[attributeId] = {
+                                    id: attributeId,
+                                    name,
+                                    product_attribute_values: []
+                                }
+                            }
+
+                            const attributeValuesSet = new Set(productAttributes[attributeId].product_attribute_values.map(val => val.id))
+
+                            if (!attributeValuesSet.has(attributeValue.id)) {
+                                productAttributes[attributeId].product_attribute_values.push(attributeValue)
+                            }
+                        })
+                    })
+
+                    return {
+                        ..._flashDeal.product,
+                        productAttributes: Object.values(productAttributes),
+                        productVariants: _flashDeal.product.productVariants.map(({ productPrices, ..._productVariant }) => ({
+                            ..._productVariant,
+                            ...productPrices[0],
+                            productPrices: undefined
+                        }))
+                    }
+                })
             }
         } catch (error) {
             handleDatabaseError(error)
