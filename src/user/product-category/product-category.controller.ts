@@ -10,7 +10,7 @@ import { ProductCategoryService } from './product-category.service'
 
 export const productCategoryController = new Elysia({ prefix: '/product-category' })
     .decorate({
-        ProductCategoryService: new ProductCategoryService()
+        UserProductCategoryService: new ProductCategoryService()
     })
     .use(redis())
-    .get('data-list-nested', ({ ProductCategoryService, redis }) => ProductCategoryService.getNestedList(redis))
+    .get('data-list-nested', ({ UserProductCategoryService, redis }) => UserProductCategoryService.getNestedList(redis))
