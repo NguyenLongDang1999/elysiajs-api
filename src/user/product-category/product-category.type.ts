@@ -1,4 +1,5 @@
 // ** Elysia Imports
+import { paginationType } from '@src/types/core.type'
 import { Static, t } from 'elysia'
 
 // ** Types Definition
@@ -15,5 +16,15 @@ export const productCategoryNestedList = t.Object({
     children: t.Array(t.Object(productCategory))
 })
 
+export const productCategorySearchType = t.Object({
+    ...paginationType,
+    sort: t.Optional(t.String()),
+    productBrands: t.Optional(t.Union([t.Array(t.String()), t.String()])),
+    productRating: t.Optional(t.Union([t.Array(t.String()), t.String()])),
+    productAttributes: t.Optional(t.Union([t.Array(t.String()), t.String()]))
+})
+
 // ** Types
 export type IProductCategoryNestedListDTO = Static<typeof productCategoryNestedList>
+
+export type IProductCategorySearchDTO = Static<typeof productCategorySearchType>

@@ -1,12 +1,9 @@
-// // ** Elysia Imports
-// import { Elysia } from 'elysia'
+// ** Elysia Imports
+import { Elysia } from 'elysia'
 
-// // ** Types Imports
-// import { productCategoryType, productCategorySearchType } from './product-category.type'
-// import { deleteType } from '@src/types/core.type'
+// ** Types Imports
+import { productCategorySearchType } from './product-category.type'
 
-// export const productCategoryModels = new Elysia().model({
-//     productCategory: productCategoryType,
-//     productCategorySearch: productCategorySearchType,
-//     productCategoryDelete: deleteType
-// })
+export const productCategoryModels = new Elysia().model({
+    userProductCategorySearch: productCategorySearchType
+})

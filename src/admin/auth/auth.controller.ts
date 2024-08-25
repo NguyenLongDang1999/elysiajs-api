@@ -84,13 +84,13 @@ export const authController = new Elysia({ prefix: '/auth' })
             sub: response.id
         })
 
-        cookie.refreshTokenAdmin.set({
-            value: refreshTokenJWT,
-            maxAge: Number(JWT.REFRESH_TOKEN_EXP),
-            secure: Bun.env.NODE_ENV === 'production',
-            httpOnly: Bun.env.NODE_ENV === 'production',
-            sameSite: Bun.env.NODE_ENV === 'production'
-        })
+        // cookie.refreshTokenAdmin.set({
+        //     value: refreshTokenJWT,
+        //     maxAge: Number(JWT.REFRESH_TOKEN_EXP),
+        //     secure: Bun.env.NODE_ENV === 'production',
+        //     httpOnly: Bun.env.NODE_ENV === 'production',
+        //     sameSite: Bun.env.NODE_ENV === 'production'
+        // })
 
         await AuthService.updateRefreshToken(response.id, refreshTokenJWT)
 
