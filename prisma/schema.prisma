@@ -228,7 +228,7 @@ model ProductRelations {
 }
 
 model FlashDeals {
-  id                    String              @id @default(uuid())
+  id                    String              @id @default(cuid())
   title                 String              @db.VarChar
   slug                  String              @unique @db.VarChar
   description           String?             @db.VarChar
@@ -297,4 +297,41 @@ model SystemSettingOptions {
   systemSettings    SystemSettings @relation(fields: [system_setting_id], references: [id], onDelete: Cascade)
 
   @@unique([system_setting_id, key])
+}
+
+model EmailVerificationToken {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  user_id    String
+  created_at DateTime @default(now())
+  expires_at DateTime
+  users      Users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Users {
+  id                           String                   @id @default(cuid())
+  provider                     String?                  @db.VarChar
+  provider_id                  String?                  @db.VarChar
+  name                         String                   @db.VarChar
+  email                        String                   @unique @db.VarChar
+  email_verified               Boolean?                 @default(false)
+  email_verified_at            DateTime?
+  last_password_reset          DateTime?
+  verification_code            String?                  @db.VarChar
+  new_email_verificiation_code String?                  @db.VarChar
+  password                     String                   @db.VarChar
+  phone                        String                   @db.VarChar
+  gender                       Int?                     @db.SmallInt
+  address                      String?                  @db.VarChar
+  access_token                 String?                  @db.VarChar
+  refresh_token                String?                  @db.VarChar
+  refresh_token_expire         DateTime?
+  device_token                 String?                  @db.VarChar
+  remember_token               String?                  @db.VarChar
+  image_uri                    String?                  @db.VarChar
+  banned                       Int?                     @default(10) @db.SmallInt
+  created_at                   DateTime                 @default(now())
+  updated_at                   DateTime                 @updatedAt
+  deleted_flg                  Boolean                  @default(false)
+  emailVerificationToken       EmailVerificationToken[]
 }

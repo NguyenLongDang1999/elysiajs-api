@@ -5,11 +5,11 @@ import { Elysia } from 'elysia'
 import prismaClient from '@src/database/prisma'
 
 // ** Plugins Imports
-import { jwtPlugin } from './jwt'
+import { jwtUserPlugin } from './jwt'
 
-const authPlugin = (app: Elysia) =>
-    app.use(jwtPlugin).derive(async ({ jwtAccessToken, error, path, headers }) => {
-        if (path === '/api/admin/auth/sign-in' || path === '/api/admin/auth/refresh') return
+const authUserPlugin = (app: Elysia) =>
+    app.use(jwtUserPlugin).derive(async ({ jwtAccessToken, error, path, headers }) => {
+        if (path === '/api/user/auth/sign-in' || path === '/api/user/auth/refresh') return
 
         const authorization = headers['authorization']
 
@@ -23,7 +23,7 @@ const authPlugin = (app: Elysia) =>
 
         if (!jwtPayload) throw error('Unauthorized')
 
-        const user = await prismaClient.admins.findFirst({
+        const user = await prismaClient.users.findFirst({
             where: { id: jwtPayload.sub },
             select: {
                 id: true
@@ -35,5 +35,5 @@ const authPlugin = (app: Elysia) =>
         return { user }
     })
 
-export { authPlugin }
+export { authUserPlugin }
 
