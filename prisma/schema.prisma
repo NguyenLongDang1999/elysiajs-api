@@ -262,6 +262,7 @@ model Admins {
   gender                       Int?                           @db.SmallInt
   address                      String?                        @db.VarChar
   refresh_token                String?                        @db.VarChar
+  refresh_token_expire         DateTime?
   role                         Int                            @db.SmallInt
   image_uri                    String?                        @db.VarChar
   status                       Int?                           @default(10) @db.SmallInt

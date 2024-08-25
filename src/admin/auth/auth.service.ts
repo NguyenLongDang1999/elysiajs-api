@@ -86,13 +86,16 @@ export class AuthService {
         })
     }
 
-    async updateRefreshToken(userId: string, refreshToken: string) {
+    async updateRefreshToken(userId: string, refreshToken: string, expireAt?: Date) {
         try {
             const hashedRefreshToken = await this.hashData(refreshToken)
 
             await prismaClient.admins.update({
                 where: { id: userId },
-                data: { refresh_token: hashedRefreshToken },
+                data: {
+                    refresh_token: hashedRefreshToken,
+                    refresh_token_expire: expireAt
+                },
                 select: {
                     id: true
                 }
@@ -108,7 +111,8 @@ export class AuthService {
                 where: { id },
                 select: {
                     id: true,
-                    refresh_token: true
+                    refresh_token: true,
+                    refresh_token_expire: true
                 }
             })
 
@@ -122,7 +126,10 @@ export class AuthService {
 
             if (!refreshTokenMatches) throw error('Forbidden')
 
-            return { id: user.id }
+            return {
+                id: user.id,
+                refresh_token_expire: user.refresh_token_expire
+            }
         } catch (error) {
             handleDatabaseError(error)
         }
@@ -132,7 +139,10 @@ export class AuthService {
         try {
             return await prismaClient.admins.update({
                 where: { id: userId },
-                data: { refresh_token: null },
+                data: {
+                    refresh_token: null,
+                    refresh_token_expire: null
+                },
                 select: {
                     id: true
                 }
