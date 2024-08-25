@@ -1,3 +1,7 @@
+// ** Types Imports
+import { Prisma } from '@prisma/client'
+import { ISortDTO } from '@src/user/product-category/product-category.type'
+
 export const slugTimestamp = (slug: string) => {
     const dateSuffix = new Date().toISOString().slice(0, 10).replace(/-/g, '')
 
@@ -16,29 +20,29 @@ export const createRedisKey = (prefix: string, identifier?: string) => {
     return `${prefix}:${identifier}`
 }
 
-export const getProductOrderBy = (orderBy: '1' | '2' | '3' | '4' | '5' | '6') => {
+export const getProductOrderBy = (orderBy?: ISortDTO) => {
     const sortConditions = {
         '1': {
-            created_at: 'desc'
+            created_at: Prisma.SortOrder.desc
         },
         '2': {
-            created_at: 'asc'
+            created_at: Prisma.SortOrder.asc
         },
         '3': {
-            name: 'asc'
+            name: Prisma.SortOrder.asc
         },
         '4': {
-            name: 'desc'
+            name: Prisma.SortOrder.desc
         },
         '5': {
-            price: 'asc'
+            price: Prisma.SortOrder.asc
         },
         '6': {
-            price: 'desc'
+            price: Prisma.SortOrder.desc
         }
     }
 
-    return sortConditions[orderBy]
+    return sortConditions[orderBy ?? '1']
 }
 
 export const getNormalizedList = (value: string | string[]) => {

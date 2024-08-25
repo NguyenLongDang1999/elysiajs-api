@@ -16,9 +16,18 @@ export const productCategoryNestedList = t.Object({
     children: t.Array(t.Object(productCategory))
 })
 
+export const sortType = t.Union([
+    t.Literal('1'),
+    t.Literal('2'),
+    t.Literal('3'),
+    t.Literal('4'),
+    t.Literal('5'),
+    t.Literal('6')
+])
+
 export const productCategorySearchType = t.Object({
     ...paginationType,
-    sort: t.Optional(t.String()),
+    sort: t.Optional(sortType),
     productBrands: t.Optional(t.Union([t.Array(t.String()), t.String()])),
     productRating: t.Optional(t.Union([t.Array(t.String()), t.String()])),
     productAttributes: t.Optional(t.Union([t.Array(t.String()), t.String()]))
@@ -28,3 +37,5 @@ export const productCategorySearchType = t.Object({
 export type IProductCategoryNestedListDTO = Static<typeof productCategoryNestedList>
 
 export type IProductCategorySearchDTO = Static<typeof productCategorySearchType>
+
+export type ISortDTO = Static<typeof sortType>

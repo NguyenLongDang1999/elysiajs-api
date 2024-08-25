@@ -104,9 +104,9 @@ export class ProductCategoryService {
             }))
             const cachedData = await redis.get(cachedKey)
 
-            // if (cachedData) {
-            //     return JSON.parse(cachedData)
-            // }
+            if (cachedData) {
+                return JSON.parse(cachedData)
+            }
 
             const productCategory = await prismaClient.productCategory.findFirstOrThrow({
                 where: {
@@ -188,11 +188,8 @@ export class ProductCategoryService {
     }
 
     async getListProductShop(query: IProductCategorySearchDTO, categoryId?: string) {
-        let allCategories
-
-        if (categoryId) {
-            allCategories = await this.getAllSubcategories(categoryId)
-        }
+        const allCategories = categoryId ? await this.getAllSubcategories(categoryId) : undefined
+        const categoryIds = allCategories?.map(category => category.id)
 
         const search: Prisma.ProductWhereInput = {
             deleted_flg: false,
@@ -200,9 +197,7 @@ export class ProductCategoryService {
             productCategory: {
                 deleted_flg: false,
                 status: STATUS.ACTIVE,
-                id: {
-                    in: categoryId ? allCategories?.map((_v) => _v.id) : undefined
-                }
+                id: categoryIds ? { in: categoryIds } : undefined
             },
             product_brand_id: {
                 in: getNormalizedList(query.productBrands as string[])
@@ -237,7 +232,7 @@ export class ProductCategoryService {
         const product = await prismaClient.product.findMany({
             take: Number(query.pageSize),
             skip: Number(query.page),
-            orderBy: getProductOrderBy(query.sort as string),
+            orderBy: getProductOrderBy(query.sort),
             where: search,
             select: {
                 id: true,
@@ -300,21 +295,33 @@ export class ProductCategoryService {
         }
     }
 
-    async getAllSubcategories(categoryId: string): Promise<{ id: string; name: string }[]> {
-        const subcategoryIds: { id: string; name: string }[] = await prismaClient.$queryRaw`
-            WITH RECURSIVE CategoryHierarchy AS (
-                SELECT id, parent_id
-                FROM "ProductCategory"
-                WHERE id = ${categoryId} AND deleted_flg = false AND status = ${STATUS.ACTIVE}
-                UNION ALL
-                SELECT c.id, c.parent_id
-                FROM "ProductCategory" c
-                JOIN CategoryHierarchy ch ON c.parent_id = ch.id
-                WHERE c.deleted_flg = false AND c.status = ${STATUS.ACTIVE}
-            )
-            SELECT id FROM CategoryHierarchy
-        `
+    async getAllSubcategories(categoryId: string) {
+        const subcategories = await this.getSubcategoriesRecursive(categoryId)
+        return subcategories.map(category => ({ id: category.id, name: category.name }))
+    }
 
-        return subcategoryIds
+    private async getSubcategoriesRecursive(parentId: string) {
+        const category = await prismaClient.productCategory.findUnique({
+            where: { id: parentId },
+            include: {
+                categoryChildren: {
+                    where: {
+                        deleted_flg: false,
+                        status: STATUS.ACTIVE
+                    }
+                }
+            }
+        })
+
+        if (!category) return []
+
+        const subcategories = [...category.categoryChildren]
+
+        for (const child of category.categoryChildren) {
+            const childSubcategories = await this.getSubcategoriesRecursive(child.id)
+            subcategories.push(...childSubcategories)
+        }
+
+        return subcategories
     }
 }

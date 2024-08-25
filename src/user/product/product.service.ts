@@ -157,12 +157,16 @@ export class ProductService {
 
             const formattedProduct = {
                 ...product,
+                flashDeal: product.flashDealProducts[0] ? {
+                    ...product.flashDealProducts[0].flashDeal
+                } : undefined,
                 productAttributes: Object.values(productAttributes),
                 productVariants: product.productVariants.map(({ productPrices, ..._productVariant }) => ({
                     ..._productVariant,
                     ...productPrices[0],
                     productPrices: undefined
-                }))
+                })),
+                flashDealProducts: undefined
             }
 
             await redis.set(
