@@ -22,22 +22,32 @@ export const authController = new Elysia({ prefix: '/auth' })
     .use(jwtUserPlugin)
     .post(
         'sign-in',
-        async ({ UserAuthService, body, jwtAccessToken, jwtRefreshToken }) => {
+        async ({ UserAuthService, body, jwtAccessToken, jwtRefreshToken, cookie }) => {
             const { id } = await UserAuthService.signIn(body)
 
             const accessTokenJWT = await jwtAccessToken.sign({ sub: id })
+
+            cookie.accessToken.set({
+                value: accessTokenJWT,
+                maxAge: Number(JWT.ACCESS_TOKEN_EXP),
+                secure: Bun.env.NODE_ENV === 'production',
+                httpOnly: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production'
+            })
+
             const refreshTokenJWT = await jwtRefreshToken.sign({ sub: id })
+
+            cookie.refreshToken.set({
+                value: refreshTokenJWT,
+                maxAge: Number(JWT.REFRESH_TOKEN_EXP),
+                secure: Bun.env.NODE_ENV === 'production',
+                httpOnly: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production'
+            })
 
             const expireAt = new Date(Date.now() + JWT.REFRESH_TOKEN_EXP * 1000)
 
-            await UserAuthService.updateRefreshToken(id, refreshTokenJWT, expireAt)
-
-            return {
-                token: {
-                    accessToken: accessTokenJWT,
-                    refreshToken: refreshTokenJWT
-                }
-            }
+            return await UserAuthService.updateRefreshToken(id, refreshTokenJWT, expireAt)
         },
         {
             body: 'signIn'
@@ -45,28 +55,38 @@ export const authController = new Elysia({ prefix: '/auth' })
     )
     .post(
         'sign-up',
-        async ({ UserAuthService, body, jwtAccessToken, jwtRefreshToken }) => {
+        async ({ UserAuthService, body, jwtAccessToken, jwtRefreshToken, cookie }) => {
             const { id } = await UserAuthService.signUp(body)
 
             const accessTokenJWT = await jwtAccessToken.sign({ sub: id })
+
+            cookie.accessToken.set({
+                value: accessTokenJWT,
+                maxAge: Number(JWT.ACCESS_TOKEN_EXP),
+                secure: Bun.env.NODE_ENV === 'production',
+                httpOnly: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production'
+            })
+
             const refreshTokenJWT = await jwtRefreshToken.sign({ sub: id })
+
+            cookie.refreshToken.set({
+                value: refreshTokenJWT,
+                maxAge: Number(JWT.REFRESH_TOKEN_EXP),
+                secure: Bun.env.NODE_ENV === 'production',
+                httpOnly: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production'
+            })
 
             const expireAt = new Date(Date.now() + JWT.REFRESH_TOKEN_EXP * 1000)
 
-            await UserAuthService.updateRefreshToken(id, refreshTokenJWT, expireAt)
-
-            return {
-                token: {
-                    accessToken: accessTokenJWT,
-                    refreshToken: refreshTokenJWT
-                }
-            }
+            return await UserAuthService.updateRefreshToken(id, refreshTokenJWT, expireAt)
         },
         {
             body: 'signUp'
         }
     )
-    .post('refresh', async ({ UserAuthService, jwtAccessToken, jwtRefreshToken, error, cookie }) => {
+    .get('refresh', async ({ UserAuthService, jwtAccessToken, jwtRefreshToken, error, cookie }) => {
         if (!cookie.refreshToken.value) throw error('Forbidden')
 
         const jwtPayload = await jwtRefreshToken.verify(cookie.refreshToken.value)
@@ -78,34 +98,32 @@ export const authController = new Elysia({ prefix: '/auth' })
         if (!response || !response.id) throw error('Not Found')
 
         const accessTokenJWT = await jwtAccessToken.sign({ sub: response.id })
+
+        cookie.accessToken.set({
+            value: accessTokenJWT,
+            maxAge: Number(JWT.ACCESS_TOKEN_EXP),
+            secure: Bun.env.NODE_ENV === 'production',
+            httpOnly: Bun.env.NODE_ENV === 'production',
+            sameSite: Bun.env.NODE_ENV === 'production'
+        })
+
         const refreshTokenJWT = await jwtRefreshToken.sign({ sub: response.id })
 
-        await UserAuthService.updateRefreshToken(response.id, refreshTokenJWT)
+        cookie.refreshToken.set({
+            value: refreshTokenJWT,
+            maxAge: Number(JWT.REFRESH_TOKEN_EXP),
+            secure: Bun.env.NODE_ENV === 'production',
+            httpOnly: Bun.env.NODE_ENV === 'production',
+            sameSite: Bun.env.NODE_ENV === 'production'
+        })
 
-        return {
-            token: {
-                accessToken: accessTokenJWT,
-                refreshToken: refreshTokenJWT
-            }
-        }
+        return await UserAuthService.updateRefreshToken(response.id, refreshTokenJWT)
     })
     .use(authUserPlugin)
-    .get('session', async ({ jwtAccessToken, headers, error }) => {
-        const authorization = headers['authorization']
+    .get('sign-out', async ({ UserAuthService, user, error, cookie }) => {
+        cookie.accessToken.remove()
+        cookie.refreshToken.remove()
 
-        if (!authorization) throw error('Unauthorized')
-
-        const token = authorization?.startsWith('Bearer ') ? authorization.slice(7) : null
-
-        if (!token) throw error('Unauthorized')
-
-        const jwtPayload = await jwtAccessToken.verify(token)
-
-        if (!jwtPayload) throw error('Unauthorized')
-
-        return jwtPayload
-    })
-    .get('sign-out', async ({ UserAuthService, user, error }) => {
         if (!user || !user.id) throw error('Not Found')
 
         return UserAuthService.signOut(user.id)

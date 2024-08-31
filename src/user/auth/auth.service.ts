@@ -73,7 +73,7 @@ export class AuthService {
         try {
             const hashedRefreshToken = await this.hashData(refreshToken)
 
-            await prismaClient.users.update({
+            return await prismaClient.users.update({
                 where: { id: userId },
                 data: {
                     refresh_token: hashedRefreshToken,
