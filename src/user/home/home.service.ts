@@ -16,7 +16,7 @@ import { SystemSettingsService } from '../system-settings/system-settings.servic
 import { IHomeProductCollectionDTO, IHomeProductFlashDealsDTO, IProductAttribute } from './home.type'
 
 export class HomeService {
-    async data(SystemSettingsService: SystemSettingsService, redis: RedisClientType) {
+    async data(SystemSettingsService: SystemSettingsService, redis: RedisClientType, user_id?: string) {
         try {
             const systemSettings = await SystemSettingsService.getDataList({ key: 'home_' }, redis)
 
@@ -35,7 +35,7 @@ export class HomeService {
 
             const flashDealData = await this.getProductFlashDeals(product_flash_deals, redis)
             const productCategoryData = await this.getProductCategoryPopular(product_category_popular, redis)
-            const productCollectionData = await this.getProductCollection(product_collection, redis)
+            const productCollectionData = await this.getProductCollection(product_collection, redis, user_id)
 
             return {
                 slider,
@@ -232,7 +232,7 @@ export class HomeService {
         }
     }
 
-    async getProductCollection(product_collection: IHomeProductCollectionDTO, redis: RedisClientType) {
+    async getProductCollection(product_collection: IHomeProductCollectionDTO, redis: RedisClientType, user_id?: string) {
         try {
             const productCollectionData = await Promise.all(
                 product_collection.product_collection.map(async (_pc) => {
@@ -330,18 +330,34 @@ export class HomeService {
                     return {
                         ..._pcd,
                         product: await Promise.all(
-                            _pcd.productCollectionProduct.map(async (_p: any) => ({
-                                ..._p.product,
-                                flashDeal: _p.product.flashDealProducts[0] ? {
-                                    ..._p.product.flashDealProducts[0].flashDeal
-                                } : undefined,
-                                productPrice: {
-                                    price: _p.product.price,
-                                    special_price: _p.product.special_price,
-                                    special_price_type: _p.product.special_price_type
-                                },
-                                flashDealProducts: undefined
-                            }))
+                            _pcd.productCollectionProduct.map(async (_p: any) => {
+                                let isWishlist = false
+
+                                if (user_id) {
+                                    const wishlistItems = await prismaClient.wishlist.findMany({
+                                        where: { user_id },
+                                        select: { product_id: true }
+                                    })
+
+                                    const wishlistProductIds = new Set(wishlistItems.map(item => item.product_id))
+
+                                    isWishlist = wishlistProductIds.has(_p.product.id)
+                                }
+
+                                return {
+                                    ..._p.product,
+                                    isWishlist,
+                                    flashDeal: _p.product.flashDealProducts[0] ? {
+                                        ..._p.product.flashDealProducts[0].flashDeal
+                                    } : undefined,
+                                    productPrice: {
+                                        price: _p.product.price,
+                                        special_price: _p.product.special_price,
+                                        special_price_type: _p.product.special_price_type
+                                    },
+                                    flashDealProducts: undefined
+                                }
+                            })
                         )
                     }
                 })

@@ -13,15 +13,15 @@ const authUserPlugin = (app: Elysia) =>
 
         const authorization = headers['authorization']
 
-        if (!authorization) throw error('Unauthorized')
+        if (!authorization) return
 
         const token = authorization?.startsWith('Bearer ') ? authorization.slice(7) : null
 
-        if (!token) throw error('Unauthorized')
+        if (!token) return
 
         const jwtPayload = await jwtAccessToken.verify(token)
 
-        if (!jwtPayload) throw error('Unauthorized')
+        if (!jwtPayload) return
 
         const user = await prismaClient.users.findFirst({
             where: { id: jwtPayload.sub },
@@ -30,7 +30,7 @@ const authUserPlugin = (app: Elysia) =>
             }
         })
 
-        if (!user) throw error('Unauthorized')
+        if (!user) return
 
         return { user }
     })

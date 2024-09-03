@@ -2,12 +2,12 @@
 import { redis } from '@atakan75/elysia-redis'
 import { Elysia } from 'elysia'
 
-// ** Models Imports
-// import { homeModels } from './home.model'
-
 // ** Service Imports
 import { SystemSettingsService } from '../system-settings/system-settings.service'
 import { HomeService } from './home.service'
+
+// ** Plugins Imports
+import { authUserPlugin } from '../plugins/auth'
 
 export const homeController = new Elysia({ prefix: '/home' })
     .decorate({
@@ -15,5 +15,5 @@ export const homeController = new Elysia({ prefix: '/home' })
         UserSystemSettingsService: new SystemSettingsService()
     })
     .use(redis())
-    // .use(homeModels)
-    .get('data', async ({ HomeService, UserSystemSettingsService, redis }) => HomeService.data(UserSystemSettingsService, redis))
+    .use(authUserPlugin)
+    .get('data', async ({ HomeService, UserSystemSettingsService, redis, user }) => HomeService.data(UserSystemSettingsService, redis, user?.id))

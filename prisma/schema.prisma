@@ -147,6 +147,7 @@ model Product {
   productRelatedMain       ProductRelations[]         @relation("ProductRelated")
   productCollectionProduct ProductCollectionProduct[]
   flashDealProducts        FlashDealProducts[]
+  wishlist                 Wishlist[]
 }
 
 model ProductVariants {
@@ -334,4 +335,16 @@ model Users {
   updated_at                   DateTime                 @updatedAt
   deleted_flg                  Boolean                  @default(false)
   emailVerificationToken       EmailVerificationToken[]
+  wishlist                     Wishlist[]
+}
+
+model Wishlist {
+  id         String   @id @default(cuid())
+  user_id    String
+  product_id String
+  created_at DateTime @default(now())
+  users      Users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, product_id])
 }
