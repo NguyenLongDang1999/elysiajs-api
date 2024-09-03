@@ -102,6 +102,7 @@ export class ProductCategoryService {
                 slug,
                 query
             }))
+
             const cachedData = await redis.get(cachedKey)
 
             if (cachedData) {
@@ -295,33 +296,21 @@ export class ProductCategoryService {
         }
     }
 
-    async getAllSubcategories(categoryId: string) {
-        const subcategories = await this.getSubcategoriesRecursive(categoryId)
-        return subcategories.map(category => ({ id: category.id, name: category.name }))
-    }
+    async getAllSubcategories(categoryId: string): Promise<{ id: string; name: string }[]> {
+        const subcategoryIds: { id: string; name: string }[] = await prismaClient.$queryRaw`
+            WITH RECURSIVE CategoryHierarchy AS (
+                SELECT id, parent_id
+                FROM "ProductCategory"
+                WHERE id = ${categoryId} AND deleted_flg = false AND status = ${STATUS.ACTIVE}
+                UNION ALL
+                SELECT c.id, c.parent_id
+                FROM "ProductCategory" c
+                JOIN CategoryHierarchy ch ON c.parent_id = ch.id
+                WHERE c.deleted_flg = false AND c.status = ${STATUS.ACTIVE}
+            )
+            SELECT id FROM CategoryHierarchy
+        `
 
-    private async getSubcategoriesRecursive(parentId: string) {
-        const category = await prismaClient.productCategory.findUnique({
-            where: { id: parentId },
-            include: {
-                categoryChildren: {
-                    where: {
-                        deleted_flg: false,
-                        status: STATUS.ACTIVE
-                    }
-                }
-            }
-        })
-
-        if (!category) return []
-
-        const subcategories = [...category.categoryChildren]
-
-        for (const child of category.categoryChildren) {
-            const childSubcategories = await this.getSubcategoriesRecursive(child.id)
-            subcategories.push(...childSubcategories)
-        }
-
-        return subcategories
+        return subcategoryIds
     }
 }
