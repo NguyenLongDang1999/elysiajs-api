@@ -21,9 +21,12 @@
     "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/client": "^5.17.0",
     "elysia": "latest",
-    "immer": "^10.1.1"
+    "handlebars": "^4.7.8",
+    "immer": "^10.1.1",
+    "nodemailer": "^6.9.15"
   },
   "devDependencies": {
+    "@types/nodemailer": "^6.4.15",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "bun-types": "latest",

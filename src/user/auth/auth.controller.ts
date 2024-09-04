@@ -119,6 +119,7 @@ export const authController = new Elysia({ prefix: '/auth' })
 
         return await UserAuthService.updateRefreshToken(response.id, refreshTokenJWT)
     })
+    .post('forgot-password', ({ UserAuthService, body }) => UserAuthService.forgotPassword(body), { body: 'changePassword' })
     .use(authUserPlugin)
     .get('sign-out', async ({ UserAuthService, user, error, cookie }) => {
         cookie.accessToken.remove()

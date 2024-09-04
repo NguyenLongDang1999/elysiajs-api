@@ -26,7 +26,16 @@ export const signUpType = t.Object({
     })
 })
 
+export const changePasswordType = t.Object({
+    email: t.String({
+        minLength: 1,
+        format: 'email'
+    })
+})
+
 // ** Types
 export type IAuthSignInDTO = Static<typeof signInType>
 
 export type IAuthSignUpDTO = Static<typeof signUpType>
+
+export type IAuthChangePasswordDTO = Static<typeof changePasswordType>

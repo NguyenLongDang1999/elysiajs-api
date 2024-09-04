@@ -1,17 +1,25 @@
 // ** Elysia Imports
 import { error } from 'elysia'
 
+// ** Third Party Imports
+import { createId } from '@paralleldrive/cuid2'
+import fs from 'fs'
+import handlebars from 'handlebars'
+import nodemailer from 'nodemailer'
+
 // ** Prisma Imports
 import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
-import { IAuthSignInDTO, IAuthSignUpDTO } from './auth.type'
+import { IAuthChangePasswordDTO, IAuthSignInDTO, IAuthSignUpDTO } from './auth.type'
 
 // ** Utils Imports
 import { HASH_PASSWORD } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class AuthService {
+    private readonly PASSWORD_RESET_INTERVAL = 15
+
     async signIn(data: IAuthSignInDTO) {
         const user = await prismaClient.users.findFirst({
             where: {
@@ -152,5 +160,93 @@ export class AuthService {
         } catch (error) {
             handleDatabaseError(error)
         }
+    }
+
+    async forgotPassword(forgotPasswordDto: IAuthChangePasswordDTO) {
+        try {
+            const user = await prismaClient.users.findUnique({
+                where: {
+                    deleted_flg: false,
+                    email: forgotPasswordDto.email
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    last_password_reset: true
+                }
+            })
+
+            if (!user) {
+                throw error('Not Found')
+            }
+
+            const now = new Date()
+
+            if (user.last_password_reset && this.addMinutesToDate(user.last_password_reset, this.PASSWORD_RESET_INTERVAL) > now) {
+                throw error('Forbidden')
+            }
+
+            const token = createId()
+
+            await prismaClient.passwordResetToken.create({
+                data: {
+                    user_id: user.id,
+                    token,
+                    expires_at: this.addHoursToDate(new Date(), 1)
+                }
+            })
+
+            await prismaClient.users.update({
+                where: { id: user.id },
+                data: { last_password_reset: now }
+            })
+
+            const resetLink = `http://localhost:3030/dat-lai-mat-khau?token=${token}`
+
+            const templateSource = fs.readFileSync('src/templates/reset-password.hbs', 'utf-8')
+
+            const template = handlebars.compile(templateSource)
+
+            const data = {
+                name: user.name,
+                resetLink
+            }
+
+            const htmlToSend = template(data)
+
+            const transporter = nodemailer.createTransport({
+                host: 'smtp.gmail.com',
+                port: 465,
+                secure: true,
+                auth: {
+                    user: '...',
+                    pass: '...'
+                }
+            })
+
+            await transporter.sendMail({
+                from: '"Maddison Foo Koch 👻" <maddison53@ethereal.email>',
+                to: 'longdang0412@gmail.com',
+                subject: 'Hello ✔',
+                text: 'Hello world?',
+                html: htmlToSend
+            })
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    addHoursToDate(date: Date, hours: number): Date {
+        const result = new Date(date)
+        result.setHours(result.getHours() + hours)
+
+        return result
+    }
+
+    addMinutesToDate(date: Date, minutes: number): Date {
+        const result = new Date(date)
+        result.setMinutes(result.getMinutes() + minutes)
+
+        return result
     }
 }

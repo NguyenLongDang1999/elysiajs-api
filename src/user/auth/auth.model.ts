@@ -2,9 +2,10 @@
 import { Elysia } from 'elysia'
 
 // ** Types Imports
-import { signInType, signUpType } from './auth.type'
+import { changePasswordType, signInType, signUpType } from './auth.type'
 
 export const AuthModels = new Elysia().model({
     signIn: signInType,
-    signUp: signUpType
+    signUp: signUpType,
+    changePassword: changePasswordType
 })

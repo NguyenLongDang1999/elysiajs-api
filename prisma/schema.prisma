@@ -336,6 +336,17 @@ model Users {
   deleted_flg                  Boolean                  @default(false)
   emailVerificationToken       EmailVerificationToken[]
   wishlist                     Wishlist[]
+  passwordResetToken           PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id         String   @id @default(cuid())
+  user_id    String
+  token      String   @unique
+  expires_at DateTime
+  users      Users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([token], name: "token_index")
 }
 
 model Wishlist {
