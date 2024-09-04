@@ -1,25 +1,16 @@
 // ** Elysia Imports
-import { RedisClientType } from '@atakan75/elysia-redis'
 
 // ** Prisma Imports
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
-import { createRedisKey } from '@src/utils'
-import { EXPIRES_AT, REDIS_KEY, STATUS } from '@src/utils/enums'
+import { STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 import { IProductAttribute } from '../home/home.type'
 
 export class ProductService {
-    async retrieve(slug: string, redis: RedisClientType) {
+    async retrieve(slug: string, user_id?: string) {
         try {
-            const cachedKey = createRedisKey(REDIS_KEY.USER_PRODUCT, slug)
-            const cachedData = await redis.get(cachedKey)
-
-            if (cachedData) {
-                return JSON.parse(cachedData)
-            }
-
             const product = await prismaClient.product.findFirstOrThrow({
                 where: {
                     slug,
@@ -155,8 +146,22 @@ export class ProductService {
                 })
             })
 
+            let isWishlist = false
+
+            if (user_id) {
+                const wishlistItems = await prismaClient.wishlist.findMany({
+                    where: { user_id },
+                    select: { product_id: true }
+                })
+
+                const wishlistProductIds = new Set(wishlistItems.map(item => item.product_id))
+
+                isWishlist = wishlistProductIds.has(product.id)
+            }
+
             const formattedProduct = {
                 ...product,
+                isWishlist,
                 flashDeal: product.flashDealProducts[0] ? {
                     ...product.flashDealProducts[0].flashDeal
                 } : undefined,
@@ -168,12 +173,6 @@ export class ProductService {
                 })),
                 flashDealProducts: undefined
             }
-
-            await redis.set(
-                cachedKey,
-                JSON.stringify(formattedProduct),
-                EXPIRES_AT.REDIS_EXPIRES_AT
-            )
 
             return formattedProduct
         } catch (error) {

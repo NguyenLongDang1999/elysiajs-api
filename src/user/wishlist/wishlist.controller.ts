@@ -16,6 +16,11 @@ export const wishlistController = new Elysia({ prefix: '/wishlist' })
     })
     .use(WishlistModels)
     .use(authUserPlugin)
+    .get('/', ({ UserWishlistService, user, error }) => {
+        if (!user || !user.id) throw error('Not Found')
+
+        return UserWishlistService.getList(user.id)
+    })
     .post('/', ({ UserWishlistService, user, error, body }) => {
         if (!user || !user.id) throw error('Not Found')
 
