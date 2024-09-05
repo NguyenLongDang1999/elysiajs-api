@@ -163,6 +163,7 @@ model ProductVariants {
   productVariantAttributeValues ProductVariantAttributeValues[]
   productInventoryTransactions  ProductInventoryTransactions[]
   productPrices                 ProductPrices[]
+  cartItem                      CartItem[]
 }
 
 model ProductVariantAttributeValues {
@@ -337,6 +338,7 @@ model Users {
   emailVerificationToken       EmailVerificationToken[]
   wishlist                     Wishlist[]
   passwordResetToken           PasswordResetToken[]
+  carts                        Carts[]
 }
 
 model PasswordResetToken {
@@ -358,4 +360,29 @@ model Wishlist {
   product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, product_id])
+}
+
+model Carts {
+  id                    String     @id @default(cuid())
+  user_id               String?
+  session_id            String?    @unique
+  applied_discount      Decimal?   @default(0) @db.Decimal(18, 0)
+  applied_discount_type Int?       @db.SmallInt
+  created_at            DateTime   @default(now())
+  updated_at            DateTime   @updatedAt
+  users                 Users?     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  cartItem              CartItem[]
+}
+
+model CartItem {
+  id                 String          @id @default(cuid())
+  cart_id            String
+  product_variant_id String
+  quantity           Int             @db.SmallInt
+  created_at         DateTime        @default(now())
+  updated_at         DateTime        @updatedAt
+  carts              Carts           @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  productVariants    ProductVariants @relation(fields: [product_variant_id], references: [id], onDelete: Cascade)
+
+  @@unique([cart_id, product_variant_id])
 }
