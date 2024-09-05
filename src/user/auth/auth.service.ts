@@ -201,39 +201,47 @@ export class AuthService {
                 data: { last_password_reset: now }
             })
 
-            const resetLink = `http://localhost:3030/dat-lai-mat-khau?token=${token}`
+            const resetLink = `${Bun.env.USER_URL}/dat-lai-mat-khau?token=${token}`
 
-            const templateSource = fs.readFileSync('src/templates/reset-password.hbs', 'utf-8')
-
-            const template = handlebars.compile(templateSource)
-
-            const data = {
+            const emailContent = this.compileEmailTemplate('src/templates/reset-password.hbs', {
                 name: user.name,
                 resetLink
-            }
-
-            const htmlToSend = template(data)
-
-            const transporter = nodemailer.createTransport({
-                host: 'smtp.gmail.com',
-                port: 465,
-                secure: true,
-                auth: {
-                    user: '...',
-                    pass: '...'
-                }
             })
 
-            await transporter.sendMail({
-                from: '"Maddison Foo Koch 👻" <maddison53@ethereal.email>',
-                to: 'longdang0412@gmail.com',
-                subject: 'Hello ✔',
-                text: 'Hello world?',
-                html: htmlToSend
-            })
+            await this.sendResetPasswordEmail(forgotPasswordDto.email, emailContent)
         } catch (error) {
             handleDatabaseError(error)
         }
+    }
+
+    private compileEmailTemplate(templatePath: string, data: any): string {
+        const templateSource = fs.readFileSync(templatePath, 'utf-8')
+        const template = handlebars.compile(templateSource)
+
+        return template(data)
+    }
+
+    private async sendResetPasswordEmail(to: string, htmlContent: string) {
+        const transporter = this.createEmailTransporter()
+
+        await transporter.sendMail({
+            from: `"Mydashop" <${Bun.env.NODEMAILER_AUTH_USER}>`,
+            to,
+            subject: 'Yêu cầu khôi phục mật khẩu',
+            html: htmlContent
+        })
+    }
+
+    private createEmailTransporter() {
+        return nodemailer.createTransport({
+            host: Bun.env.NODEMAILER_HOST,
+            port: Number(Bun.env.NODEMAILER_PORT),
+            secure: Boolean(Bun.env.NODEMAILER_SECURE),
+            auth: {
+                user: Bun.env.NODEMAILER_AUTH_USER,
+                pass: Bun.env.NODEMAILER_AUTH_PASSWORD
+            }
+        })
     }
 
     addHoursToDate(date: Date, hours: number): Date {
