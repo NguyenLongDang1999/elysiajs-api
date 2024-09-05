@@ -3,6 +3,7 @@ import { Elysia } from 'elysia'
 
 // ** Controllers Imports
 import { authController } from './auth/auth.controller'
+import { cartController } from './cart/cart.controller'
 import { homeController } from './home/home.controller'
 import { productCategoryController } from './product-category/product-category.controller'
 import { productController } from './product/product.controller'
@@ -11,6 +12,7 @@ import { wishlistController } from './wishlist/wishlist.controller'
 
 export const user = new Elysia({ prefix: '/user' })
     .use(authController)
+    .use(cartController)
     .use(homeController)
     .use(productCategoryController)
     .use(productController)

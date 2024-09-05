@@ -7,7 +7,8 @@ export enum JWT {
     ACCESS_TOKEN_NAME = 'jwtAccessToken',
     ACCESS_TOKEN_EXP = 1 * 60 * 60, // 60 minutes
     REFRESH_TOKEN_NAME = 'jwtRefreshToken',
-    REFRESH_TOKEN_EXP = 7 * 24 * 60 * 60 // 7 days
+    REFRESH_TOKEN_EXP = 7 * 24 * 60 * 60, // 7 days
+    SESSION_ID_EXP = 30 * 24 * 60 * 60 // 30 days
 }
 
 export enum REDIS_KEY {
