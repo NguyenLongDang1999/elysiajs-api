@@ -33,9 +33,24 @@ export const changePasswordType = t.Object({
     })
 })
 
+export const resetPasswordType = t.Object({
+    password: t.String({
+        minLength: 6,
+        maxLength: 20
+    })
+})
+
+export const resetPasswordTokenType = t.Object({
+    token: t.String()
+})
+
 // ** Types
 export type IAuthSignInDTO = Static<typeof signInType>
 
 export type IAuthSignUpDTO = Static<typeof signUpType>
 
 export type IAuthChangePasswordDTO = Static<typeof changePasswordType>
+
+export type IAuthResetPasswordDTO = Static<typeof resetPasswordType>
+
+export type IAuthResetPasswordTokenDTO = Static<typeof resetPasswordTokenType>

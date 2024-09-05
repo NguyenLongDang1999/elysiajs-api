@@ -11,7 +11,7 @@ import nodemailer from 'nodemailer'
 import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
-import { IAuthChangePasswordDTO, IAuthSignInDTO, IAuthSignUpDTO } from './auth.type'
+import { IAuthChangePasswordDTO, IAuthResetPasswordDTO, IAuthResetPasswordTokenDTO, IAuthSignInDTO, IAuthSignUpDTO } from './auth.type'
 
 // ** Utils Imports
 import { HASH_PASSWORD } from '@src/utils/enums'
@@ -209,6 +209,36 @@ export class AuthService {
             })
 
             await this.sendResetPasswordEmail(forgotPasswordDto.email, emailContent)
+
+            return { message: 'success' }
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    async resetPassword(query: IAuthResetPasswordTokenDTO, data: IAuthResetPasswordDTO) {
+        try {
+            const resetToken = await prismaClient.passwordResetToken.findFirst({
+                where: { token: query.token },
+                include: { users: true }
+            })
+
+            if (!resetToken || resetToken.expires_at < new Date()) {
+                throw error('Bad Request')
+            }
+
+            const hashedPassword = await this.hashData(data.password)
+
+            await prismaClient.users.update({
+                where: { id: resetToken.user_id },
+                data: { password: hashedPassword }
+            })
+
+            await prismaClient.passwordResetToken.delete({
+                where: { id: resetToken.id }
+            })
+
+            return { message: 'success' }
         } catch (error) {
             handleDatabaseError(error)
         }
