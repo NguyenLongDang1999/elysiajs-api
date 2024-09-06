@@ -248,6 +248,14 @@ export class ProductCategoryService {
                         name: true
                     }
                 },
+                productVariants: {
+                    where: {
+                        deleted_flg: false
+                    },
+                    select: {
+                        id: true
+                    }
+                },
                 flashDealProducts: {
                     where: {
                         flashDeal: {
@@ -282,11 +290,13 @@ export class ProductCategoryService {
                         ..._product.flashDealProducts[0].flashDeal
                     }
                     : undefined,
+                product_variant_id: _product.productVariants ? _product.productVariants[0].id : undefined,
                 productPrice: {
                     price: _product.price,
                     special_price: _product.special_price,
                     special_price_type: _product.special_price_type
                 },
+                productVariants: undefined,
                 flashDealProducts: undefined
             })),
             aggregations: await prismaClient.product.count({ where: search })

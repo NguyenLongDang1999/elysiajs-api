@@ -34,7 +34,7 @@ export class HomeService {
             const product_collection = getParseValueWithKey('home_product_collection')
             const product_flash_deals = getParseValueWithKey('home_product_flash_deals')
 
-            const flashDealData = await this.getProductFlashDeals(product_flash_deals, redis)
+            const flashDealData = await this.getProductFlashDeals(product_flash_deals, redis, user_id)
             const productCategoryData = await this.getProductCategoryPopular(product_category_popular, redis)
             const productCollectionData = await this.getProductCollection(product_collection, redis, user_id)
 
@@ -49,14 +49,14 @@ export class HomeService {
         }
     }
 
-    async getProductFlashDeals(product_flash_deals: IHomeProductFlashDealsDTO, redis: RedisClientType) {
+    async getProductFlashDeals(product_flash_deals: IHomeProductFlashDealsDTO, redis: RedisClientType, user_id?: string) {
         try {
             const cachedKey = createRedisKey(REDIS_KEY.USER_HOME_FLASH_DEALS, product_flash_deals.flash_deals_id)
             const cachedData = await redis.get(cachedKey)
 
-            if (cachedData) {
-                return JSON.parse(cachedData)
-            }
+            // if (cachedData) {
+            //     return JSON.parse(cachedData)
+            // }
 
             const productFlashDeals = await prismaClient.flashDeals.findFirst({
                 where: {
@@ -154,49 +154,67 @@ export class HomeService {
                 }
             })
 
-            return {
-                ...productFlashDeals,
-                flashDealProducts: productFlashDeals?.flashDealProducts.map((_flashDeal) => {
-                    const productAttributes: Record<string, IProductAttribute> = {}
+            const flashDealProducts = []
 
-                    _flashDeal.product.productVariants.forEach(({ productVariantAttributeValues }) => {
-                        productVariantAttributeValues.forEach(({ productAttributeValues }) => {
-                            const { id: attributeId, name } = productAttributeValues.productAttribute
-                            const attributeValue = {
-                                id: productAttributeValues.id,
-                                value: productAttributeValues.value
-                            }
+            for (const _flashDeal of productFlashDeals?.flashDealProducts || []) {
+                let isWishlist = false
 
-                            if (!productAttributes[attributeId]) {
-                                productAttributes[attributeId] = {
-                                    id: attributeId,
-                                    name,
-                                    product_attribute_values: []
-                                }
-                            }
-
-                            const attributeValuesSet = new Set(
-                                productAttributes[attributeId].product_attribute_values.map((val) => val.id)
-                            )
-
-                            if (!attributeValuesSet.has(attributeValue.id)) {
-                                productAttributes[attributeId].product_attribute_values.push(attributeValue)
-                            }
-                        })
+                if (user_id) {
+                    const wishlistItems = await prismaClient.wishlist.findMany({
+                        where: { user_id },
+                        select: { product_id: true }
                     })
 
-                    return {
-                        ..._flashDeal.product,
-                        productAttributes: Object.values(productAttributes),
-                        productVariants: _flashDeal.product.productVariants.map(
-                            ({ productPrices, ..._productVariant }) => ({
-                                ..._productVariant,
-                                ...productPrices[0],
-                                productPrices: undefined
-                            })
+                    const wishlistProductIds = new Set(wishlistItems.map((item) => item.product_id))
+
+                    isWishlist = wishlistProductIds.has(_flashDeal.product.id)
+                }
+
+                const productAttributes: Record<string, IProductAttribute> = {}
+
+                _flashDeal.product.productVariants.forEach(({ productVariantAttributeValues }) => {
+                    productVariantAttributeValues.forEach(({ productAttributeValues }) => {
+                        const { id: attributeId, name } = productAttributeValues.productAttribute
+                        const attributeValue = {
+                            id: productAttributeValues.id,
+                            value: productAttributeValues.value
+                        }
+
+                        if (!productAttributes[attributeId]) {
+                            productAttributes[attributeId] = {
+                                id: attributeId,
+                                name,
+                                product_attribute_values: []
+                            }
+                        }
+
+                        const attributeValuesSet = new Set(
+                            productAttributes[attributeId].product_attribute_values.map((val) => val.id)
                         )
-                    }
+
+                        if (!attributeValuesSet.has(attributeValue.id)) {
+                            productAttributes[attributeId].product_attribute_values.push(attributeValue)
+                        }
+                    })
                 })
+
+                flashDealProducts.push({
+                    ..._flashDeal.product,
+                    isWishlist,
+                    productAttributes: Object.values(productAttributes),
+                    productVariants: _flashDeal.product.productVariants.map(
+                        ({ productPrices, ..._productVariant }) => ({
+                            ..._productVariant,
+                            ...productPrices[0],
+                            productPrices: undefined
+                        })
+                    )
+                })
+            }
+
+            return {
+                ...productFlashDeals,
+                flashDealProducts
             }
         } catch (error) {
             handleDatabaseError(error)
@@ -365,7 +383,7 @@ export class HomeService {
                                             ..._p.product.flashDealProducts[0].flashDeal
                                         }
                                         : undefined,
-                                    product_variant_id: _p.product.productVariants[0].id,
+                                    product_variant_id: _p.product.productVariants ? _p.product.productVariants[0].id : undefined,
                                     productPrice: {
                                         price: _p.product.price,
                                         special_price: _p.product.special_price,

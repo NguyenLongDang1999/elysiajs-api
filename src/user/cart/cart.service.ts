@@ -11,10 +11,149 @@ import prismaClient from '@src/database/prisma'
 import { ICartDTO } from './cart.type'
 
 // ** Utils Imports
-import { JWT } from '@src/utils/enums'
+import { JWT, STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class CartService {
+    async getDataList(cookie: Record<string, Cookie<any>>, user_id?: string) {
+        try {
+            const session_id = cookie.session_id.value
+
+            if (session_id) {
+                const product = await prismaClient.carts.findFirst({
+                    where: { session_id },
+                    select: {
+                        id: true,
+                        cartItem: {
+                            where: {
+                                productVariants: {
+                                    deleted_flg: false,
+                                    product: {
+                                        deleted_flg: false,
+                                        status: STATUS.ACTIVE,
+                                        productCategory: {
+                                            deleted_flg: false,
+                                            status: STATUS.ACTIVE
+                                        }
+                                    }
+                                }
+                            },
+                            orderBy: {
+                                created_at: 'desc'
+                            },
+                            select: {
+                                id: true,
+                                quantity: true,
+                                productVariants: {
+                                    select: {
+                                        productPrices: {
+                                            select: {
+                                                price: true,
+                                                special_price: true,
+                                                special_price_type: true
+                                            }
+                                        },
+                                        product: {
+                                            select: {
+                                                id: true,
+                                                slug: true,
+                                                name: true,
+                                                image_uri: true,
+                                                productCategory: {
+                                                    select: {
+                                                        id: true,
+                                                        slug: true,
+                                                        name: true
+                                                    }
+                                                },
+                                                flashDealProducts: {
+                                                    where: {
+                                                        flashDeal: {
+                                                            status: STATUS.ACTIVE,
+                                                            start_time: {
+                                                                lte: new Date()
+                                                            },
+                                                            end_time: {
+                                                                gte: new Date()
+                                                            }
+                                                        }
+                                                    },
+                                                    select: {
+                                                        flashDeal: {
+                                                            select: {
+                                                                id: true,
+                                                                title: true,
+                                                                discounted_price: true,
+                                                                discounted_price_type: true
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        productVariantAttributeValues: {
+                                            select: {
+                                                productAttributeValues: {
+                                                    select: {
+                                                        id: true,
+                                                        value: true,
+                                                        productAttribute: {
+                                                            select: {
+                                                                id: true,
+                                                                name: true
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                })
+
+                const cartItem = product?.cartItem.map((_c) => {
+                    const { productVariants } = _c
+                    const { productVariantAttributeValues, productPrices } = productVariants
+                    const { price, special_price, special_price_type } = productPrices[0]
+
+                    const productPrice = {
+                        price,
+                        special_price,
+                        special_price_type
+                    }
+
+                    const cartItemProductAttribute = productVariantAttributeValues
+                        .map(({ productAttributeValues }) =>
+                            `${productAttributeValues.productAttribute.name}: ${productAttributeValues.value}`
+                        )
+                        .join(', ')
+
+                    return {
+                        ..._c,
+                        product: {
+                            ...productVariants.product,
+                            ...productPrice
+                        },
+                        cartItemProductAttribute
+                    }
+                })
+
+                return {
+                    ...product,
+                    cartItem
+                }
+            }
+
+            return []
+        } catch (error) {
+            console.log(error)
+            handleDatabaseError(error)
+        }
+    }
+
     async create(cookie: Record<string, Cookie<any>>, data: ICartDTO, user_id?: string) {
         try {
             const session_id = cookie.session_id.value
