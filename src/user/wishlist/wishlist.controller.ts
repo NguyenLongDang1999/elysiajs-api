@@ -21,11 +21,15 @@ export const wishlistController = new Elysia({ prefix: '/wishlist' })
 
         return UserWishlistService.getList(user.id)
     })
-    .post('/', ({ UserWishlistService, user, error, body }) => {
-        if (!user || !user.id) throw error('Not Found')
+    .post(
+        '/',
+        ({ UserWishlistService, user, error, body }) => {
+            if (!user || !user.id) throw error('Not Found')
 
-        return UserWishlistService.create(user.id, body)
-    }, { body: 'wishlist' })
+            return UserWishlistService.create(user.id, body)
+        },
+        { body: 'wishlist' }
+    )
     .delete(
         '/:id',
         ({ UserWishlistService, user, error, params }) => {

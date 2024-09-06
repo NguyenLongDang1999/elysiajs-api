@@ -62,11 +62,7 @@ export class CartService {
         }
     }
 
-    private async getOrCreateCart(
-        prisma: any,
-        user_id?: string,
-        session_id?: string
-    ) {
+    private async getOrCreateCart(prisma: any, user_id?: string, session_id?: string) {
         const cart = session_id
             ? await prisma.carts.findFirst({
                 where: { session_id },

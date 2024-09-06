@@ -138,7 +138,9 @@ export class ProductService {
                         }
                     }
 
-                    const attributeValuesSet = new Set(productAttributes[attributeId].product_attribute_values.map(val => val.id))
+                    const attributeValuesSet = new Set(
+                        productAttributes[attributeId].product_attribute_values.map((val) => val.id)
+                    )
 
                     if (!attributeValuesSet.has(attributeValue.id)) {
                         productAttributes[attributeId].product_attribute_values.push(attributeValue)
@@ -154,7 +156,7 @@ export class ProductService {
                     select: { product_id: true }
                 })
 
-                const wishlistProductIds = new Set(wishlistItems.map(item => item.product_id))
+                const wishlistProductIds = new Set(wishlistItems.map((item) => item.product_id))
 
                 isWishlist = wishlistProductIds.has(product.id)
             }
@@ -162,9 +164,11 @@ export class ProductService {
             const formattedProduct = {
                 ...product,
                 isWishlist,
-                flashDeal: product.flashDealProducts[0] ? {
-                    ...product.flashDealProducts[0].flashDeal
-                } : undefined,
+                flashDeal: product.flashDealProducts[0]
+                    ? {
+                        ...product.flashDealProducts[0].flashDeal
+                    }
+                    : undefined,
                 productAttributes: Object.values(productAttributes),
                 productVariants: product.productVariants.map(({ productPrices, ..._productVariant }) => ({
                     ..._productVariant,

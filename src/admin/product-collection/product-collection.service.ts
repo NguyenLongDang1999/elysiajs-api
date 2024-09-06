@@ -260,7 +260,7 @@ export class ProductCollectionService {
             const productCollection = productCollectionData.map((_v) => ({
                 id: _v.id,
                 name: _v.title,
-                product_id: _v.productCollectionProduct.map(_collection => _collection.product_id)
+                product_id: _v.productCollectionProduct.map((_collection) => _collection.product_id)
             }))
 
             await redis.set(

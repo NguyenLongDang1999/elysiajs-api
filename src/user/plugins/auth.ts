@@ -36,4 +36,3 @@ const authUserPlugin = (app: Elysia) =>
     })
 
 export { authUserPlugin }
-

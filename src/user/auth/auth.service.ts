@@ -11,7 +11,13 @@ import nodemailer from 'nodemailer'
 import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
-import { IAuthChangePasswordDTO, IAuthResetPasswordDTO, IAuthResetPasswordTokenDTO, IAuthSignInDTO, IAuthSignUpDTO } from './auth.type'
+import {
+    IAuthChangePasswordDTO,
+    IAuthResetPasswordDTO,
+    IAuthResetPasswordTokenDTO,
+    IAuthSignInDTO,
+    IAuthSignUpDTO
+} from './auth.type'
 
 // ** Utils Imports
 import { HASH_PASSWORD } from '@src/utils/enums'
@@ -182,7 +188,10 @@ export class AuthService {
 
             const now = new Date()
 
-            if (user.last_password_reset && this.addMinutesToDate(user.last_password_reset, this.PASSWORD_RESET_INTERVAL) > now) {
+            if (
+                user.last_password_reset &&
+                this.addMinutesToDate(user.last_password_reset, this.PASSWORD_RESET_INTERVAL) > now
+            ) {
                 throw error('Forbidden')
             }
 

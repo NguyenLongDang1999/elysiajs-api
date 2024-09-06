@@ -32,14 +32,10 @@ describe('ProductCategoryService', () => {
         //     updated_at: new Date(),
         //     deleted_flg: false
         // } as unknown as Prisma.Prisma__ProductCategoryClient<ProductCategory>
-
         // spyOn(prismaClient.productCategory, 'create').mockResolvedValue(() => userRecord)
-
         //     const mockCount = 1
-
         //     prismaClient.productCategory.findMany.mockResolvedValue(mockCategories)
         //     prismaClient.productCategory.count.mockResolvedValue(mockCount)
-
         //     const { data, error } = await app['product-categories'].index.get({
         //         query: {
         //             page: '1',
@@ -47,12 +43,9 @@ describe('ProductCategoryService', () => {
         //             status: '10'
         //         }
         //     })
-
         //     expect(data).toEqual({ data: mockCategories, aggregations: mockCount })
         //     expect(prismaClient.productCategory.findMany).toHaveBeenCalled()
         //     expect(prismaClient.productCategory.count).toHaveBeenCalled()
-
-
         //     // expect(result).toEqual({ data: mockCategories, aggregations: mockCount })
     })
 

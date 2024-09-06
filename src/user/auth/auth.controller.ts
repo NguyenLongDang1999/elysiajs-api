@@ -119,7 +119,9 @@ export const authController = new Elysia({ prefix: '/auth' })
 
         return await UserAuthService.updateRefreshToken(response.id, refreshTokenJWT)
     })
-    .post('forgot-password', ({ UserAuthService, body }) => UserAuthService.forgotPassword(body), { body: 'changePassword' })
+    .post('forgot-password', ({ UserAuthService, body }) => UserAuthService.forgotPassword(body), {
+        body: 'changePassword'
+    })
     .post('reset-password', ({ UserAuthService, query, body }) => UserAuthService.resetPassword(query, body), {
         body: 'resetPassword',
         query: 'resetPasswordToken'

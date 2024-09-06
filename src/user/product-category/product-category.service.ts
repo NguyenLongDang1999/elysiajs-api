@@ -52,11 +52,7 @@ export class ProductCategoryService {
                 categoryNested.push(categoryWithChildren)
             }
 
-            await redis.set(
-                cachedKey,
-                JSON.stringify(categoryNested),
-                EXPIRES_AT.REDIS_EXPIRES_AT
-            )
+            await redis.set(cachedKey, JSON.stringify(categoryNested), EXPIRES_AT.REDIS_EXPIRES_AT)
 
             return categoryNested
         } catch (error) {
@@ -98,10 +94,13 @@ export class ProductCategoryService {
 
     async retrieve(slug: string, query: IProductCategorySearchDTO, redis: RedisClientType) {
         try {
-            const cachedKey = createRedisKey(REDIS_KEY.USER_PRODUCT_CATEGORY_RETRIEVE, JSON.stringify({
-                slug,
-                query
-            }))
+            const cachedKey = createRedisKey(
+                REDIS_KEY.USER_PRODUCT_CATEGORY_RETRIEVE,
+                JSON.stringify({
+                    slug,
+                    query
+                })
+            )
 
             const cachedData = await redis.get(cachedKey)
 
@@ -168,11 +167,7 @@ export class ProductCategoryService {
                 }))
             }
 
-            await redis.set(
-                cachedKey,
-                JSON.stringify(formattedProductCategory),
-                EXPIRES_AT.REDIS_EXPIRES_AT
-            )
+            await redis.set(cachedKey, JSON.stringify(formattedProductCategory), EXPIRES_AT.REDIS_EXPIRES_AT)
 
             return formattedProductCategory
         } catch (error) {
@@ -190,7 +185,7 @@ export class ProductCategoryService {
 
     async getListProductShop(query: IProductCategorySearchDTO, categoryId?: string) {
         const allCategories = categoryId ? await this.getAllSubcategories(categoryId) : undefined
-        const categoryIds = allCategories?.map(category => category.id)
+        const categoryIds = allCategories?.map((category) => category.id)
 
         const search: Prisma.ProductWhereInput = {
             deleted_flg: false,
@@ -280,11 +275,13 @@ export class ProductCategoryService {
         })
 
         return {
-            data: product.map(_product => ({
+            data: product.map((_product) => ({
                 ..._product,
-                flashDeal: _product.flashDealProducts[0] ? {
-                    ..._product.flashDealProducts[0].flashDeal
-                } : undefined,
+                flashDeal: _product.flashDealProducts[0]
+                    ? {
+                        ..._product.flashDealProducts[0].flashDeal
+                    }
+                    : undefined,
                 productPrice: {
                     price: _product.price,
                     special_price: _product.special_price,

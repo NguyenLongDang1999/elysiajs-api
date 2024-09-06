@@ -79,14 +79,16 @@ export class WishlistService {
                 }
             })
 
-            return wishlist.map(_wishlist => ({
+            return wishlist.map((_wishlist) => ({
                 ..._wishlist,
                 product: {
                     ..._wishlist.product,
                     isWishlist: true,
-                    flashDeal: _wishlist.product.flashDealProducts[0] ? {
-                        ..._wishlist.product.flashDealProducts[0].flashDeal
-                    } : undefined,
+                    flashDeal: _wishlist.product.flashDealProducts[0]
+                        ? {
+                            ..._wishlist.product.flashDealProducts[0].flashDeal
+                        }
+                        : undefined,
                     productPrice: {
                         price: _wishlist.product.price,
                         special_price: _wishlist.product.special_price,

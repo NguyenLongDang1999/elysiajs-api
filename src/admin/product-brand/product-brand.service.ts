@@ -113,9 +113,9 @@ export class ProductBrandService {
 
                 const deleteRedisKeys = product_category_id.map((category_id) =>
                     redis.del(createRedisKey(REDIS_KEY.PRODUCT_BRAND, category_id))
-                );
+                )
 
-                await Promise.all(deleteRedisKeys);
+                await Promise.all(deleteRedisKeys)
 
                 return productBrand
             })
@@ -147,9 +147,9 @@ export class ProductBrandService {
 
                 const deleteRedisKeys = product_category_id.map((category_id) =>
                     redis.del(createRedisKey(REDIS_KEY.PRODUCT_BRAND, category_id))
-                );
+                )
 
-                await Promise.all(deleteRedisKeys);
+                await Promise.all(deleteRedisKeys)
                 await redis.del(createRedisKey(REDIS_KEY.PRODUCT_BRAND, id))
 
                 return productBrand

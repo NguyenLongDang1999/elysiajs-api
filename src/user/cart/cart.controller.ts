@@ -16,4 +16,6 @@ export const cartController = new Elysia({ prefix: '/cart' })
     })
     .use(CartModels)
     .use(authUserPlugin)
-    .post('/', async ({ UserCartService, user, body, cookie }) => UserCartService.create(cookie, body, user?.id), { body: 'cart' })
+    .post('/', async ({ UserCartService, user, body, cookie }) => UserCartService.create(cookie, body, user?.id), {
+        body: 'cart'
+    })

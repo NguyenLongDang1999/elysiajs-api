@@ -20,7 +20,8 @@ export class HomeService {
         try {
             const systemSettings = await SystemSettingsService.getDataList({ key: 'home_' }, redis)
 
-            const homeSystem = (key: string) => systemSettings.find((system: { key: string | string[] }) => system.key.includes(key))
+            const homeSystem = (key: string) =>
+                systemSettings.find((system: { key: string | string[] }) => system.key.includes(key))
 
             const getParseValueWithKey = (key: string) => {
                 const system = homeSystem(key)
@@ -155,7 +156,7 @@ export class HomeService {
 
             return {
                 ...productFlashDeals,
-                flashDealProducts: productFlashDeals?.flashDealProducts.map(_flashDeal => {
+                flashDealProducts: productFlashDeals?.flashDealProducts.map((_flashDeal) => {
                     const productAttributes: Record<string, IProductAttribute> = {}
 
                     _flashDeal.product.productVariants.forEach(({ productVariantAttributeValues }) => {
@@ -174,7 +175,9 @@ export class HomeService {
                                 }
                             }
 
-                            const attributeValuesSet = new Set(productAttributes[attributeId].product_attribute_values.map(val => val.id))
+                            const attributeValuesSet = new Set(
+                                productAttributes[attributeId].product_attribute_values.map((val) => val.id)
+                            )
 
                             if (!attributeValuesSet.has(attributeValue.id)) {
                                 productAttributes[attributeId].product_attribute_values.push(attributeValue)
@@ -185,11 +188,13 @@ export class HomeService {
                     return {
                         ..._flashDeal.product,
                         productAttributes: Object.values(productAttributes),
-                        productVariants: _flashDeal.product.productVariants.map(({ productPrices, ..._productVariant }) => ({
-                            ..._productVariant,
-                            ...productPrices[0],
-                            productPrices: undefined
-                        }))
+                        productVariants: _flashDeal.product.productVariants.map(
+                            ({ productPrices, ..._productVariant }) => ({
+                                ..._productVariant,
+                                ...productPrices[0],
+                                productPrices: undefined
+                            })
+                        )
                     }
                 })
             }
@@ -200,7 +205,10 @@ export class HomeService {
 
     async getProductCategoryPopular(product_category_popular: string[], redis: RedisClientType) {
         try {
-            const cachedKey = createRedisKey(REDIS_KEY.USER_HOME_PRODUCT_CATEGORY_POPULAR, product_category_popular.join(', '))
+            const cachedKey = createRedisKey(
+                REDIS_KEY.USER_HOME_PRODUCT_CATEGORY_POPULAR,
+                product_category_popular.join(', ')
+            )
             const cachedData = await redis.get(cachedKey)
 
             if (cachedData) {
@@ -221,11 +229,7 @@ export class HomeService {
                 }
             })
 
-            await redis.set(
-                cachedKey,
-                JSON.stringify(productCategory),
-                EXPIRES_AT.REDIS_EXPIRES_AT
-            )
+            await redis.set(cachedKey, JSON.stringify(productCategory), EXPIRES_AT.REDIS_EXPIRES_AT)
 
             return productCategory
         } catch (error) {
@@ -233,16 +237,20 @@ export class HomeService {
         }
     }
 
-    async getProductCollection(product_collection: IHomeProductCollectionDTO, redis: RedisClientType, user_id?: string) {
+    async getProductCollection(
+        product_collection: IHomeProductCollectionDTO,
+        redis: RedisClientType,
+        user_id?: string
+    ) {
         try {
             const productCollectionData = await Promise.all(
                 product_collection.product_collection.map(async (_pc) => {
                     const cachedKey = createRedisKey(REDIS_KEY.USER_HOME_PRODUCT_COLLECTION, _pc.product_collection_id)
                     const cachedData = await redis.get(cachedKey)
 
-                    // if (cachedData) {
-                    //     return JSON.parse(cachedData)
-                    // }
+                    if (cachedData) {
+                        return JSON.parse(cachedData)
+                    }
 
                     const result = await prismaClient.productCollection.findUnique({
                         where: {
@@ -324,11 +332,7 @@ export class HomeService {
                         }
                     })
 
-                    await redis.set(
-                        cachedKey,
-                        JSON.stringify(result),
-                        EXPIRES_AT.REDIS_EXPIRES_AT
-                    )
+                    await redis.set(cachedKey, JSON.stringify(result), EXPIRES_AT.REDIS_EXPIRES_AT)
 
                     return result
                 })
@@ -348,7 +352,7 @@ export class HomeService {
                                         select: { product_id: true }
                                     })
 
-                                    const wishlistProductIds = new Set(wishlistItems.map(item => item.product_id))
+                                    const wishlistProductIds = new Set(wishlistItems.map((item) => item.product_id))
 
                                     isWishlist = wishlistProductIds.has(_p.product.id)
                                 }
@@ -356,9 +360,11 @@ export class HomeService {
                                 return {
                                     ..._p.product,
                                     isWishlist,
-                                    flashDeal: _p.product.flashDealProducts[0] ? {
-                                        ..._p.product.flashDealProducts[0].flashDeal
-                                    } : undefined,
+                                    flashDeal: _p.product.flashDealProducts[0]
+                                        ? {
+                                            ..._p.product.flashDealProducts[0].flashDeal
+                                        }
+                                        : undefined,
                                     product_variant_id: _p.product.productVariants[0].id,
                                     productPrice: {
                                         price: _p.product.price,

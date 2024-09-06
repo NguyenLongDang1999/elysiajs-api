@@ -141,7 +141,7 @@ export class ProductFlashDealsService {
 
             return {
                 ...productFlashDeals,
-                product_id: productFlashDeals.flashDealProducts.map(_f => _f.product_id),
+                product_id: productFlashDeals.flashDealProducts.map((_f) => _f.product_id),
                 flashDealProducts: undefined
             }
         } catch (error) {
