@@ -30,7 +30,7 @@ export const productCategoryController = new Elysia({ prefix: '/product-categori
         }
     )
     .delete(
-        '/:id',
+        ':id',
         ({ ProductCategoryService, query, params, redis }) => ProductCategoryService.delete(params.id, query, redis),
         {
             query: 'productCategoryDelete'
