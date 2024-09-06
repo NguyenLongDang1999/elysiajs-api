@@ -15,11 +15,12 @@ import { JWT } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class CartService {
-    async create(cookie: Record<string, Cookie<any>>, data: ICartDTO, user_id?: string, session_id?: string) {
+    async create(cookie: Record<string, Cookie<any>>, data: ICartDTO, user_id?: string) {
         try {
+            const session_id = cookie.session_id.value
             let session_id_value = session_id
 
-            if (!session_id) {
+            if (!session_id_value) {
                 session_id_value = createId()
 
                 cookie.session_id.set({
@@ -66,29 +67,21 @@ export class CartService {
         user_id?: string,
         session_id?: string
     ) {
-        if (session_id) {
-            const cart = await prisma.carts.findFirst({
+        const cart = session_id
+            ? await prisma.carts.findFirst({
                 where: { session_id },
-                select: {
-                    id: true,
-                    session_id: true
-                }
+                select: { id: true, session_id: true }
             })
+            : null
 
-            if (cart) {
-                return cart
-            }
-        }
+        if (cart) return cart
 
-        return await prisma.carts.create({
+        return prisma.carts.create({
             data: {
                 user_id: session_id ? null : user_id,
                 session_id: session_id || undefined
             },
-            select: {
-                id: true,
-                session_id: true
-            }
+            select: { id: true, session_id: true }
         })
     }
 }

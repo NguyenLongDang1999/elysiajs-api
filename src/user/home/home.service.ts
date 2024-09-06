@@ -92,6 +92,7 @@ export class HomeService {
                                     image_uri: true,
                                     short_description: true,
                                     total_rating: true,
+                                    product_type: true,
                                     productImages: {
                                         orderBy: { index: 'asc' },
                                         select: { image_uri: true }
@@ -239,9 +240,9 @@ export class HomeService {
                     const cachedKey = createRedisKey(REDIS_KEY.USER_HOME_PRODUCT_COLLECTION, _pc.product_collection_id)
                     const cachedData = await redis.get(cachedKey)
 
-                    if (cachedData) {
-                        return JSON.parse(cachedData)
-                    }
+                    // if (cachedData) {
+                    //     return JSON.parse(cachedData)
+                    // }
 
                     const result = await prismaClient.productCollection.findUnique({
                         where: {
@@ -283,6 +284,14 @@ export class HomeService {
                                                     id: true,
                                                     slug: true,
                                                     name: true
+                                                }
+                                            },
+                                            productVariants: {
+                                                where: {
+                                                    deleted_flg: false
+                                                },
+                                                select: {
+                                                    id: true
                                                 }
                                             },
                                             flashDealProducts: {
@@ -350,11 +359,13 @@ export class HomeService {
                                     flashDeal: _p.product.flashDealProducts[0] ? {
                                         ..._p.product.flashDealProducts[0].flashDeal
                                     } : undefined,
+                                    product_variant_id: _p.product.productVariants[0].id,
                                     productPrice: {
                                         price: _p.product.price,
                                         special_price: _p.product.special_price,
                                         special_price_type: _p.product.special_price_type
                                     },
+                                    productVariants: undefined,
                                     flashDealProducts: undefined
                                 }
                             })
