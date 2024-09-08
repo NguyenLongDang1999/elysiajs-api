@@ -24,7 +24,8 @@ export enum REDIS_KEY {
     USER_HOME_PRODUCT_CATEGORY_POPULAR = 'user_home_product_category_popular',
     USER_PRODUCT_CATEGORY = 'user_product_category',
     USER_PRODUCT_CATEGORY_RETRIEVE = 'user_product_category_retrieve',
-    USER_PRODUCT = 'user_product'
+    USER_PRODUCT = 'user_product',
+    USER_WISHLIST = 'user_wishlist'
 }
 
 export enum EXPIRES_AT {

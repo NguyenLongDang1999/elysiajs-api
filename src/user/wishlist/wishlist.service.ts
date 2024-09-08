@@ -1,4 +1,5 @@
 // ** Elysia Imports
+import { RedisClientType } from '@libs/ioredis'
 import { error } from 'elysia'
 
 // ** Prisma Imports
@@ -9,7 +10,8 @@ import prismaClient from '@src/database/prisma'
 import { IDeleteWishlistDTO, IWishlistDTO } from './wishlist.type'
 
 // ** Utils Imports
-import { STATUS } from '@src/utils/enums'
+import { createRedisKey } from '@src/utils'
+import { REDIS_KEY, STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class WishlistService {
@@ -102,7 +104,7 @@ export class WishlistService {
         }
     }
 
-    async create(user_id: string, data: IWishlistDTO) {
+    async create(user_id: string, redis: RedisClientType, data: IWishlistDTO) {
         try {
             const product = await prismaClient.product.findUnique({
                 where: { id: data.product_id },
@@ -115,13 +117,20 @@ export class WishlistService {
                 throw error('Not Found')
             }
 
-            return prismaClient.wishlist.create({
+            const wishlist = await prismaClient.wishlist.create({
                 data: {
                     user_id,
                     product_id: data.product_id
                 }
             })
+
+            if (wishlist) {
+                await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), data.product_id)
+            }
+
+            return wishlist
         } catch (error) {
+            console.log(error)
             handleDatabaseError(error)
         }
     }

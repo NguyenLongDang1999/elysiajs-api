@@ -23,10 +23,10 @@ export const wishlistController = new Elysia({ prefix: '/wishlist' })
     })
     .post(
         '/',
-        ({ UserWishlistService, user, error, body }) => {
+        ({ UserWishlistService, user, error, redis, body }) => {
             if (!user || !user.id) throw error('Not Found')
 
-            return UserWishlistService.create(user.id, body)
+            return UserWishlistService.create(user.id, redis, body)
         },
         { body: 'wishlist' }
     )

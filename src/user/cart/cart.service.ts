@@ -114,8 +114,6 @@ export class CartService {
                     }
                 })
 
-                console.log(product)
-
                 const cartItem = product?.cartItem.map((_c) => {
                     const { productVariants } = _c
                     const { productVariantAttributeValues, productPrices } = productVariants
@@ -151,7 +149,6 @@ export class CartService {
 
             return []
         } catch (error) {
-            console.log(error)
             handleDatabaseError(error)
         }
     }

@@ -1,5 +1,4 @@
 // ** Elysia Imports
-import { redis } from '@atakan75/elysia-redis'
 import { Elysia } from 'elysia'
 
 // ** Service Imports
@@ -14,8 +13,7 @@ export const homeController = new Elysia({ prefix: '/home' })
         HomeService: new HomeService(),
         UserSystemSettingsService: new SystemSettingsService()
     })
-    .use(redis())
     .use(authUserPlugin)
-    .get('data', async ({ HomeService, UserSystemSettingsService, redis, user }) =>
+    .get('/data', async ({ HomeService, UserSystemSettingsService, redis, user }) =>
         HomeService.data(UserSystemSettingsService, redis, user?.id)
     )

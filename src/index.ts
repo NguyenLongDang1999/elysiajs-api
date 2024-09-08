@@ -3,6 +3,9 @@ import { cors } from '@elysiajs/cors'
 import { swagger } from '@elysiajs/swagger'
 import { Elysia } from 'elysia'
 
+// ** Libs Imports
+import { RedisClient } from '@libs/ioredis'
+
 // ** Router Imports
 import { admin } from './admin'
 import { user } from './user'
@@ -24,6 +27,9 @@ const app = new Elysia({ prefix: '/api', normalize: true })
         if (allowHeader === '*') {
             set.headers['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers') ?? ''
         }
+    })
+    .decorate({
+        redisClient: new RedisClient(Bun.env.REDIS_URL)
     })
     .use(swagger())
     .use(

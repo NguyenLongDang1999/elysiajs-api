@@ -1,5 +1,5 @@
 // ** Elysia Imports
-import { RedisClientType } from '@atakan75/elysia-redis'
+import { RedisClientType } from '@libs/ioredis'
 
 // ** Prisma Imports
 import prismaClient from '@src/database/prisma'
@@ -50,7 +50,6 @@ export class SystemSettingsService {
     async metadata(redis: RedisClientType) {
         try {
             const systemSettings = await this.getDataList({ key: 'system_' }, redis)
-
             const theme_colour = systemSettings.find((_s: { key: string }) => _s.key === 'system_theme_colour')
 
             return {

@@ -1,5 +1,5 @@
 // ** Elysia Imports
-import { RedisClientType } from '@atakan75/elysia-redis'
+import { RedisClientType } from '@libs/ioredis'
 
 // ** Prisma Imports
 import prismaClient from '@src/database/prisma'
@@ -54,9 +54,9 @@ export class HomeService {
             const cachedKey = createRedisKey(REDIS_KEY.USER_HOME_FLASH_DEALS, product_flash_deals.flash_deals_id)
             const cachedData = await redis.get(cachedKey)
 
-            // if (cachedData) {
-            //     return JSON.parse(cachedData)
-            // }
+            if (cachedData) {
+                return JSON.parse(cachedData)
+            }
 
             const productFlashDeals = await prismaClient.flashDeals.findFirst({
                 where: {
