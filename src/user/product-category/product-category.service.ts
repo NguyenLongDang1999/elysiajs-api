@@ -104,9 +104,9 @@ export class ProductCategoryService {
 
             const cachedData = await redis.get(cachedKey)
 
-            if (cachedData) {
-                return JSON.parse(cachedData)
-            }
+            // if (cachedData) {
+            //     return JSON.parse(cachedData)
+            // }
 
             const productCategory = await prismaClient.productCategory.findFirstOrThrow({
                 where: {
@@ -167,8 +167,6 @@ export class ProductCategoryService {
                 }))
             }
 
-            await redis.set(cachedKey, JSON.stringify(formattedProductCategory), EXPIRES_AT.REDIS_EXPIRES_AT)
-
             return formattedProductCategory
         } catch (error) {
             handleDatabaseError(error)
@@ -210,19 +208,19 @@ export class ProductCategoryService {
                         }
                     }
                 }
+            }),
+            ...(query.productRating &&
+                query.productRating.length > 0 && {
+                OR: getNormalizedList(query.productRating as string[])?.map((rate) => ({
+                    total_rating:
+                        Number(rate) === 5
+                            ? Number(rate)
+                            : {
+                                gte: Number(rate),
+                                lte: Number(rate) + 1
+                            }
+                }))
             })
-            // ...(query.productRating &&
-            //     query.productRating.length > 0 && {
-            //     OR: getNormalizedList(query.productRating as string[]).map((rate) => ({
-            //         total_rating:
-            //             Number(rate) === 5
-            //                 ? Number(rate)
-            //                 : {
-            //                     gte: Number(rate),
-            //                     lte: Number(rate) + 1
-            //                 }
-            //     }))
-            // })
         }
 
         const product = await prismaClient.product.findMany({
