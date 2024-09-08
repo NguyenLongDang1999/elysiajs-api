@@ -2,8 +2,10 @@
 import { Elysia } from 'elysia'
 
 // ** Types Imports
-import { cartType } from './cart.type'
+import { cartDeleteType, cartType, cartUpdateType } from './cart.type'
 
 export const CartModels = new Elysia().model({
-    cart: cartType
+    cart: cartType,
+    cartUpdate: cartUpdateType,
+    cartDelete: cartDeleteType
 })

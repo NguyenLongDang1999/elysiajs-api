@@ -21,7 +21,7 @@ const authUserPlugin = (app: Elysia) =>
 
         const jwtPayload = await jwtAccessToken.verify(token)
 
-        if (!jwtPayload) return
+        if (!jwtPayload) throw error('Unauthorized')
 
         const user = await prismaClient.users.findFirst({
             where: { id: jwtPayload.sub },
@@ -30,7 +30,7 @@ const authUserPlugin = (app: Elysia) =>
             }
         })
 
-        if (!user) return
+        if (!user) throw error('Unauthorized')
 
         return { user }
     })

@@ -92,7 +92,7 @@ export class ProductCategoryService {
         return categoryNested
     }
 
-    async retrieve(slug: string, query: IProductCategorySearchDTO, redis: RedisClientType) {
+    async retrieve(slug: string, query: IProductCategorySearchDTO, redis: RedisClientType, user_id?: string) {
         try {
             const cachedKey = createRedisKey(
                 REDIS_KEY.USER_PRODUCT_CATEGORY_RETRIEVE,
@@ -150,7 +150,7 @@ export class ProductCategoryService {
                 }
             })
 
-            const { data: product, aggregations } = await this.getListProductShop(query, productCategory.id)
+            const { data: product, aggregations } = await this.getListProductShop(query, productCategory.id, user_id)
 
             const formattedProductCategory = {
                 ...productCategory,
@@ -175,15 +175,15 @@ export class ProductCategoryService {
         }
     }
 
-    async getDataListShop(query: IProductCategorySearchDTO, redis: RedisClientType) {
+    async getDataListShop(query: IProductCategorySearchDTO, redis: RedisClientType, user_id?: string) {
         try {
-            return await this.getListProductShop(query, undefined)
+            return await this.getListProductShop(query, undefined, user_id)
         } catch (error) {
             handleDatabaseError(error)
         }
     }
 
-    async getListProductShop(query: IProductCategorySearchDTO, categoryId?: string) {
+    async getListProductShop(query: IProductCategorySearchDTO, categoryId?: string, user_id?: string) {
         const allCategories = categoryId ? await this.getAllSubcategories(categoryId) : undefined
         const categoryIds = allCategories?.map((category) => category.id)
 
@@ -282,9 +282,25 @@ export class ProductCategoryService {
             }
         })
 
-        return {
-            data: product.map((_product) => ({
+        const formattedProduct = []
+
+        for (const _product of product || []) {
+            let isWishlist = false
+
+            if (user_id) {
+                const wishlistItems = await prismaClient.wishlist.findMany({
+                    where: { user_id },
+                    select: { product_id: true }
+                })
+
+                const wishlistProductIds = new Set(wishlistItems.map((item) => item.product_id))
+
+                isWishlist = wishlistProductIds.has(_product.id)
+            }
+
+            formattedProduct.push({
                 ..._product,
+                isWishlist,
                 flashDeal: _product.flashDealProducts[0]
                     ? {
                         ..._product.flashDealProducts[0].flashDeal
@@ -298,7 +314,11 @@ export class ProductCategoryService {
                 },
                 productVariants: undefined,
                 flashDealProducts: undefined
-            })),
+            })
+        }
+
+        return {
+            data: formattedProduct,
             aggregations: await prismaClient.product.count({ where: search })
         }
     }

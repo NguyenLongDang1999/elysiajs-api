@@ -8,7 +8,7 @@ import { createId } from '@paralleldrive/cuid2'
 import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
-import { ICartDTO } from './cart.type'
+import { ICartDeleteDTO, ICartDTO, ICartUpdateDTO } from './cart.type'
 
 // ** Utils Imports
 import { JWT, STATUS } from '@src/utils/enums'
@@ -114,6 +114,8 @@ export class CartService {
                     }
                 })
 
+                console.log(product)
+
                 const cartItem = product?.cartItem.map((_c) => {
                     const { productVariants } = _c
                     const { productVariantAttributeValues, productPrices } = productVariants
@@ -195,6 +197,43 @@ export class CartService {
                 })
 
                 return cart
+            })
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    async update(updateCartDto: ICartUpdateDTO) {
+        try {
+            return await prismaClient.$transaction(async (prisma) => {
+                for (const _data of updateCartDto.updatedData) {
+                    await prisma.cartItem.update({
+                        where: {
+                            id: _data.cart_item_id
+                        },
+                        data: {
+                            quantity: _data.quantity
+                        }
+                    })
+                }
+
+                return { message: 'success' }
+            })
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    async delete(id: string, query: ICartDeleteDTO) {
+        try {
+            if (query.force) {
+                return await prismaClient.carts.delete({
+                    where: { id }
+                })
+            }
+
+            return await prismaClient.cartItem.delete({
+                where: { id }
             })
         } catch (error) {
             handleDatabaseError(error)
