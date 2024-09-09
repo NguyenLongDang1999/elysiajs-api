@@ -7,6 +7,7 @@ import prismaClient from '@src/database/prisma'
 // ** Utils Imports
 import { REDIS_KEY, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
+import { formatSellingPrice, type ProductPrice } from '@utils/format'
 import { createRedisKey } from '@utils/index'
 
 // ** Service Imports
@@ -73,6 +74,8 @@ export class HomeService {
                     },
                     select: {
                         title: true,
+                        discounted_price: true,
+                        discounted_price_type: true,
                         flashDealProducts: {
                             where: {
                                 product: {
@@ -213,17 +216,31 @@ export class HomeService {
                     })
                 })
 
+                const productVariants = _flashDeal.product.productVariants.map(({ productPrices, ..._productVariant }) => {
+                    const getPrice = productPrices[0]
+
+                    const productPrice: ProductPrice = {
+                        price: Number(getPrice.price),
+                        special_price: Number(getPrice.special_price),
+                        special_price_type: Number(getPrice.special_price_type),
+                        hasDiscount: true,
+                        discounted_price: Number(productFlashDeals.discounted_price),
+                        discounted_price_type: Number(productFlashDeals.discounted_price_type)
+                    }
+
+                    return {
+                        ..._productVariant,
+                        ...productPrice,
+                        selling_price: formatSellingPrice(productPrice),
+                        productPrices: undefined
+                    }
+                })
+
                 flashDealProducts.push({
                     ..._flashDeal.product,
                     isWishlist,
                     productAttributes: Object.values(productAttributes),
-                    productVariants: _flashDeal.product.productVariants.map(
-                        ({ productPrices, ..._productVariant }) => ({
-                            ..._productVariant,
-                            ...productPrices[0],
-                            productPrices: undefined
-                        })
-                    )
+                    productVariants
                 })
             }
 
@@ -400,9 +417,16 @@ export class HomeService {
                         product: await Promise.all(
                             _pcd.productCollectionProduct.map(async (_p: any) => {
                                 const isWishlist = wishlistProductIds ? wishlistProductIds.has(_p.product.id) : false
+                                const productPrice = {
+                                    price: Number(_p.product.price),
+                                    special_price: Number(_p.product.special_price),
+                                    special_price_type: Number(_p.product.special_price_type)
+                                }
 
                                 return {
                                     ..._p.product,
+                                    ...productPrice,
+                                    selling_price: formatSellingPrice(productPrice),
                                     isWishlist,
                                     flashDeal: _p.product.flashDealProducts[0]
                                         ? {
@@ -410,11 +434,6 @@ export class HomeService {
                                         }
                                         : undefined,
                                     product_variant_id: _p.product.productVariants ? _p.product.productVariants[0].id : undefined,
-                                    productPrice: {
-                                        price: _p.product.price,
-                                        special_price: _p.product.special_price,
-                                        special_price_type: _p.product.special_price_type
-                                    },
                                     productVariants: undefined,
                                     flashDealProducts: undefined
                                 }

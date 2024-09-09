@@ -9,6 +9,7 @@ import prismaClient from '@src/database/prisma'
 import { createRedisKey, getNormalizedList, getProductOrderBy } from '@src/utils'
 import { REDIS_KEY, STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
+import { formatSellingPrice } from '@utils/format'
 
 // ** Types Imports
 import { IProductCategoryNestedListDTO, IProductCategorySearchDTO } from './product-category.type'
@@ -308,9 +309,16 @@ export class ProductCategoryService {
 
         for (const _product of product || []) {
             const isWishlist = wishlistProductIds ? wishlistProductIds.has(_product.id) : false
+            const productPrice = {
+                price: Number(_product.price),
+                special_price: Number(_product.special_price),
+                special_price_type: Number(_product.special_price_type)
+            }
 
             formattedProduct.push({
                 ..._product,
+                ...productPrice,
+                selling_price: formatSellingPrice(productPrice),
                 isWishlist,
                 flashDeal: _product.flashDealProducts[0]
                     ? {
