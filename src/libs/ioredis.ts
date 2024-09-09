@@ -1,8 +1,12 @@
 // ** Third Party Imports
 import Redis from 'ioredis'
 
+// ** Utils Imports
+import { EXPIRES_AT } from '@utils/enums'
+
 export class RedisClient {
     private redisClient: Redis
+    private expiresAt = EXPIRES_AT.REDIS_EXPIRES_AT
 
     constructor(_connectionString?: string) {
         this.redisClient = _connectionString ? new Redis(_connectionString) : new Redis()
@@ -16,8 +20,8 @@ export class RedisClient {
         })
     }
 
-    async set(key: string, value: string, expiresAt: number) {
-        return this.redisClient.set(key, value, 'EX', expiresAt)
+    async set(key: string, value: string) {
+        return this.redisClient.set(key, value, 'EX', this.expiresAt)
     }
 
     async get(key: string) {
@@ -32,7 +36,7 @@ export class RedisClient {
         return this.redisClient.flushall()
     }
 
-    async sadd(key: string, value: string) {
+    async sadd(key: string, value: any) {
         return this.redisClient.sadd(key, value)
     }
 

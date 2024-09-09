@@ -5,7 +5,7 @@ import { RedisClientType } from '@libs/ioredis'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
-import { EXPIRES_AT, REDIS_KEY, STATUS } from '@utils/enums'
+import { REDIS_KEY, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 import { createRedisKey } from '@utils/index'
 
@@ -54,91 +54,93 @@ export class HomeService {
             const cachedKey = createRedisKey(REDIS_KEY.USER_HOME_FLASH_DEALS, product_flash_deals.flash_deals_id)
             const cachedData = await redis.get(cachedKey)
 
-            if (cachedData) {
-                return JSON.parse(cachedData)
-            }
+            let productFlashDeals
 
-            const productFlashDeals = await prismaClient.flashDeals.findFirst({
-                where: {
-                    id: product_flash_deals.flash_deals_id,
-                    deleted_flg: false,
-                    status: STATUS.ACTIVE,
-                    start_time: {
-                        lte: new Date()
-                    },
-                    end_time: {
-                        gte: new Date()
-                    }
-                },
-                select: {
-                    title: true,
-                    flashDealProducts: {
-                        where: {
-                            product: {
-                                deleted_flg: false,
-                                status: STATUS.ACTIVE,
-                                productCategory: {
-                                    deleted_flg: false,
-                                    status: STATUS.ACTIVE
-                                }
-                            }
+            if (cachedData) {
+                productFlashDeals = JSON.parse(cachedData)
+            } else {
+                productFlashDeals = await prismaClient.flashDeals.findFirst({
+                    where: {
+                        id: product_flash_deals.flash_deals_id,
+                        deleted_flg: false,
+                        status: STATUS.ACTIVE,
+                        start_time: {
+                            lte: new Date()
                         },
-                        select: {
-                            product: {
-                                select: {
-                                    id: true,
-                                    sku: true,
-                                    slug: true,
-                                    name: true,
-                                    image_uri: true,
-                                    short_description: true,
-                                    total_rating: true,
-                                    product_type: true,
-                                    productImages: {
-                                        orderBy: { index: 'asc' },
-                                        select: { image_uri: true }
-                                    },
-                                    productBrand: {
-                                        select: {
-                                            id: true,
-                                            name: true
-                                        }
-                                    },
+                        end_time: {
+                            gte: new Date()
+                        }
+                    },
+                    select: {
+                        title: true,
+                        flashDealProducts: {
+                            where: {
+                                product: {
+                                    deleted_flg: false,
+                                    status: STATUS.ACTIVE,
                                     productCategory: {
-                                        select: {
-                                            id: true,
-                                            slug: true,
-                                            name: true
-                                        }
-                                    },
-                                    productVariants: {
-                                        select: {
-                                            id: true,
-                                            productPrices: {
-                                                select: {
-                                                    price: true,
-                                                    special_price: true,
-                                                    special_price_type: true
-                                                }
-                                            },
-                                            productVariantAttributeValues: {
-                                                where: {
-                                                    productAttributeValues: {
-                                                        deleted_flg: false,
-                                                        productAttribute: {
-                                                            deleted_flg: false
-                                                        }
+                                        deleted_flg: false,
+                                        status: STATUS.ACTIVE
+                                    }
+                                }
+                            },
+                            select: {
+                                product: {
+                                    select: {
+                                        id: true,
+                                        sku: true,
+                                        slug: true,
+                                        name: true,
+                                        image_uri: true,
+                                        short_description: true,
+                                        total_rating: true,
+                                        product_type: true,
+                                        productImages: {
+                                            orderBy: { index: 'asc' },
+                                            select: { image_uri: true }
+                                        },
+                                        productBrand: {
+                                            select: {
+                                                id: true,
+                                                name: true
+                                            }
+                                        },
+                                        productCategory: {
+                                            select: {
+                                                id: true,
+                                                slug: true,
+                                                name: true
+                                            }
+                                        },
+                                        productVariants: {
+                                            select: {
+                                                id: true,
+                                                productPrices: {
+                                                    select: {
+                                                        price: true,
+                                                        special_price: true,
+                                                        special_price_type: true
                                                     }
                                                 },
-                                                select: {
-                                                    productAttributeValues: {
-                                                        select: {
-                                                            id: true,
-                                                            value: true,
+                                                productVariantAttributeValues: {
+                                                    where: {
+                                                        productAttributeValues: {
+                                                            deleted_flg: false,
                                                             productAttribute: {
-                                                                select: {
-                                                                    id: true,
-                                                                    name: true
+                                                                deleted_flg: false
+                                                            }
+                                                        }
+                                                    },
+                                                    select: {
+                                                        productAttributeValues: {
+                                                            select: {
+                                                                id: true,
+                                                                value: true,
+                                                                productAttribute: {
+                                                                    select: {
+                                                                        id: true,
+                                                                        name: true
+                                                                    }
                                                                 }
                                                             }
                                                         }
@@ -151,25 +153,38 @@ export class HomeService {
                             }
                         }
                     }
-                }
-            })
+                })
 
+                if (productFlashDeals) {
+                    await redis.set(cachedKey, JSON.stringify(productFlashDeals))
+                }
+            }
+
+            let wishlistProductIds: Set<string> = new Set()
+            let wishlistItems: string[] = []
             const flashDealProducts = []
 
-            for (const _flashDeal of productFlashDeals?.flashDealProducts || []) {
-                let isWishlist = false
+            if (user_id) {
+                wishlistItems = await redis.smembers(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id))
 
-                if (user_id) {
-                    const wishlistItems = await prismaClient.wishlist.findMany({
+                if (!wishlistItems || wishlistItems.length === 0) {
+                    const productWishlist = await prismaClient.wishlist.findMany({
                         where: { user_id },
                         select: { product_id: true }
                     })
 
-                    const wishlistProductIds = new Set(wishlistItems.map((item) => item.product_id))
+                    wishlistItems = productWishlist.map(_product => _product.product_id)
 
-                    isWishlist = wishlistProductIds.has(_flashDeal.product.id)
+                    if (wishlistItems.length > 0) {
+                        await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), wishlistItems)
+                    }
                 }
 
+                wishlistProductIds = new Set(wishlistItems)
+            }
+
+            for (const _flashDeal of productFlashDeals?.flashDealProducts || []) {
+                const isWishlist = wishlistProductIds ? wishlistProductIds.has(_flashDeal.product.id) : false
                 const productAttributes: Record<string, IProductAttribute> = {}
 
                 _flashDeal.product.productVariants.forEach(({ productVariantAttributeValues }) => {
@@ -247,7 +262,7 @@ export class HomeService {
                 }
             })
 
-            await redis.set(cachedKey, JSON.stringify(productCategory), EXPIRES_AT.REDIS_EXPIRES_AT)
+            await redis.set(cachedKey, JSON.stringify(productCategory))
 
             return productCategory
         } catch (error) {
@@ -350,7 +365,7 @@ export class HomeService {
                         }
                     })
 
-                    await redis.set(cachedKey, JSON.stringify(result), EXPIRES_AT.REDIS_EXPIRES_AT)
+                    await redis.set(cachedKey, JSON.stringify(result))
 
                     return result
                 })
@@ -358,22 +373,33 @@ export class HomeService {
 
             return await Promise.all(
                 productCollectionData.map(async (_pcd) => {
+                    let wishlistProductIds: Set<string> = new Set()
+                    let wishlistItems: string[] = []
+
+                    if (user_id) {
+                        wishlistItems = await redis.smembers(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id))
+
+                        if (!wishlistItems || wishlistItems.length === 0) {
+                            const productWishlist = await prismaClient.wishlist.findMany({
+                                where: { user_id },
+                                select: { product_id: true }
+                            })
+
+                            wishlistItems = productWishlist.map(_product => _product.product_id)
+
+                            if (wishlistItems.length > 0) {
+                                await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), wishlistItems)
+                            }
+                        }
+
+                        wishlistProductIds = new Set(wishlistItems)
+                    }
+
                     return {
                         ..._pcd,
                         product: await Promise.all(
                             _pcd.productCollectionProduct.map(async (_p: any) => {
-                                let isWishlist = false
-
-                                if (user_id) {
-                                    const wishlistItems = await prismaClient.wishlist.findMany({
-                                        where: { user_id },
-                                        select: { product_id: true }
-                                    })
-
-                                    const wishlistProductIds = new Set(wishlistItems.map((item) => item.product_id))
-
-                                    isWishlist = wishlistProductIds.has(_p.product.id)
-                                }
+                                const isWishlist = wishlistProductIds ? wishlistProductIds.has(_p.product.id) : false
 
                                 return {
                                     ..._p.product,
