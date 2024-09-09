@@ -9,5 +9,4 @@ export const systemSettingsController = new Elysia({ prefix: '/system-settings' 
     .decorate({
         UserSystemSettingsService: new SystemSettingsService()
     })
-
     .get('metadata', ({ UserSystemSettingsService, redis }) => UserSystemSettingsService.metadata(redis))

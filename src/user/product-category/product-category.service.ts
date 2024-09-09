@@ -7,7 +7,7 @@ import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
 import { createRedisKey, getNormalizedList, getProductOrderBy } from '@src/utils'
-import { EXPIRES_AT, REDIS_KEY, STATUS } from '@src/utils/enums'
+import { REDIS_KEY, STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 // ** Types Imports
@@ -52,7 +52,7 @@ export class ProductCategoryService {
                 categoryNested.push(categoryWithChildren)
             }
 
-            await redis.set(cachedKey, JSON.stringify(categoryNested), EXPIRES_AT.REDIS_EXPIRES_AT)
+            await redis.set(cachedKey, JSON.stringify(categoryNested))
 
             return categoryNested
         } catch (error) {
@@ -96,61 +96,63 @@ export class ProductCategoryService {
         try {
             const cachedKey = createRedisKey(
                 REDIS_KEY.USER_PRODUCT_CATEGORY_RETRIEVE,
-                JSON.stringify({
-                    slug,
-                    query
-                })
+                slug
             )
 
+            let productCategory
             const cachedData = await redis.get(cachedKey)
 
-            // if (cachedData) {
-            //     return JSON.parse(cachedData)
-            // }
-
-            const productCategory = await prismaClient.productCategory.findFirstOrThrow({
-                where: {
-                    slug,
-                    deleted_flg: false,
-                    status: STATUS.ACTIVE
-                },
-                select: {
-                    id: true,
-                    name: true,
-                    image_uri: true,
-                    description: true,
-                    meta_title: true,
-                    meta_description: true,
-                    productCategoryBrand: {
-                        where: {
-                            productBrand: {
-                                deleted_flg: false,
-                                status: STATUS.ACTIVE
-                            }
-                        },
-                        select: {
-                            productBrand: true
-                        }
+            if (cachedData) {
+                productCategory = JSON.parse(cachedData)
+            } else {
+                productCategory = await prismaClient.productCategory.findFirstOrThrow({
+                    where: {
+                        slug,
+                        deleted_flg: false,
+                        status: STATUS.ACTIVE
                     },
-                    productCategoryAttributes: {
-                        where: {
-                            productAttribute: {
-                                deleted_flg: false,
-                                status: STATUS.ACTIVE
+                    select: {
+                        id: true,
+                        name: true,
+                        image_uri: true,
+                        description: true,
+                        meta_title: true,
+                        meta_description: true,
+                        productCategoryBrand: {
+                            where: {
+                                productBrand: {
+                                    deleted_flg: false,
+                                    status: STATUS.ACTIVE
+                                }
+                            },
+                            select: {
+                                productBrand: true
                             }
                         },
-                        select: {
-                            productAttribute: {
-                                include: {
-                                    productAttributeValues: true
+                        productCategoryAttributes: {
+                            where: {
+                                productAttribute: {
+                                    deleted_flg: false,
+                                    status: STATUS.ACTIVE
+                                }
+                            },
+                            select: {
+                                productAttribute: {
+                                    include: {
+                                        productAttributeValues: true
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            })
+                })
 
-            const { data: product, aggregations } = await this.getListProductShop(query, productCategory.id, user_id)
+                if (productCategory) {
+                    await redis.set(cachedKey, JSON.stringify(productCategory))
+                }
+            }
+
+            const { data: product, aggregations } = await this.getListProductShop(query, redis, productCategory.id, user_id)
 
             const formattedProductCategory = {
                 ...productCategory,
@@ -175,13 +177,13 @@ export class ProductCategoryService {
 
     async getDataListShop(query: IProductCategorySearchDTO, redis: RedisClientType, user_id?: string) {
         try {
-            return await this.getListProductShop(query, undefined, user_id)
+            return await this.getListProductShop(query, redis, undefined, user_id)
         } catch (error) {
             handleDatabaseError(error)
         }
     }
 
-    async getListProductShop(query: IProductCategorySearchDTO, categoryId?: string, user_id?: string) {
+    async getListProductShop(query: IProductCategorySearchDTO, redis: RedisClientType, categoryId?: string, user_id?: string) {
         const allCategories = categoryId ? await this.getAllSubcategories(categoryId) : undefined
         const categoryIds = allCategories?.map((category) => category.id)
 
@@ -282,19 +284,30 @@ export class ProductCategoryService {
 
         const formattedProduct = []
 
-        for (const _product of product || []) {
-            let isWishlist = false
+        let wishlistProductIds: Set<string> = new Set()
+        let wishlistItems: string[] = []
 
-            if (user_id) {
-                const wishlistItems = await prismaClient.wishlist.findMany({
+        if (user_id) {
+            wishlistItems = await redis.smembers(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id))
+
+            if (!wishlistItems || wishlistItems.length === 0) {
+                const productWishlist = await prismaClient.wishlist.findMany({
                     where: { user_id },
                     select: { product_id: true }
                 })
 
-                const wishlistProductIds = new Set(wishlistItems.map((item) => item.product_id))
+                wishlistItems = productWishlist.map(_product => _product.product_id)
 
-                isWishlist = wishlistProductIds.has(_product.id)
+                if (wishlistItems.length > 0) {
+                    await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), wishlistItems)
+                }
             }
+
+            wishlistProductIds = new Set(wishlistItems)
+        }
+
+        for (const _product of product || []) {
+            const isWishlist = wishlistProductIds ? wishlistProductIds.has(_product.id) : false
 
             formattedProduct.push({
                 ..._product,

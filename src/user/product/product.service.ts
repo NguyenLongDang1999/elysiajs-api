@@ -1,15 +1,19 @@
 // ** Elysia Imports
+import { RedisClientType } from '@libs/ioredis'
 
 // ** Prisma Imports
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
-import { STATUS } from '@src/utils/enums'
+import { REDIS_KEY, STATUS } from '@src/utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
+import { createRedisKey } from '@utils/index'
+
+// ** Types Imports
 import { IProductAttribute } from '../home/home.type'
 
 export class ProductService {
-    async retrieve(slug: string, user_id?: string) {
+    async retrieve(slug: string, redis: RedisClientType, user_id?: string) {
         try {
             const product = await prismaClient.product.findFirstOrThrow({
                 where: {
@@ -148,22 +152,31 @@ export class ProductService {
                 })
             })
 
-            let isWishlist = false
+            let wishlistProductIds: Set<string> = new Set()
+            let wishlistItems: string[] = []
 
             if (user_id) {
-                const wishlistItems = await prismaClient.wishlist.findMany({
-                    where: { user_id },
-                    select: { product_id: true }
-                })
+                wishlistItems = await redis.smembers(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id))
 
-                const wishlistProductIds = new Set(wishlistItems.map((item) => item.product_id))
+                if (!wishlistItems || wishlistItems.length === 0) {
+                    const productWishlist = await prismaClient.wishlist.findMany({
+                        where: { user_id },
+                        select: { product_id: true }
+                    })
 
-                isWishlist = wishlistProductIds.has(product.id)
+                    wishlistItems = productWishlist.map(_product => _product.product_id)
+
+                    if (wishlistItems.length > 0) {
+                        await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), wishlistItems)
+                    }
+                }
+
+                wishlistProductIds = new Set(wishlistItems)
             }
 
             const formattedProduct = {
                 ...product,
-                isWishlist,
+                isWishlist: wishlistProductIds ? wishlistProductIds.has(product.id) : false,
                 flashDeal: product.flashDealProducts[0]
                     ? {
                         ...product.flashDealProducts[0].flashDeal

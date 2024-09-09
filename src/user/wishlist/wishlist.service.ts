@@ -162,7 +162,6 @@ export class WishlistService {
 
             return deletedWishlist
         } catch (error) {
-            console.log(error)
             handleDatabaseError(error)
         }
     }
