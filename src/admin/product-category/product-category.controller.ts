@@ -1,5 +1,5 @@
 // ** Elysia Imports
-import { redis } from '@atakan75/elysia-redis'
+
 import { Elysia } from 'elysia'
 
 // ** Models Imports
@@ -12,7 +12,7 @@ export const productCategoryController = new Elysia({ prefix: '/product-categori
     .decorate({
         ProductCategoryService: new ProductCategoryService()
     })
-    .use(redis())
+
     .use(productCategoryModels)
     .get('/', ({ ProductCategoryService, query }) => ProductCategoryService.getTableList(query), {
         query: 'productCategorySearch'

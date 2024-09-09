@@ -1,5 +1,5 @@
 // ** Elysia Imports
-import { RedisClientType } from '@atakan75/elysia-redis'
+import { RedisClientType } from '@libs/ioredis'
 
 // ** Prisma Imports
 import { Prisma } from '@prisma/client'

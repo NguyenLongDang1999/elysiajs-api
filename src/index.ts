@@ -1,7 +1,8 @@
 // ** Elysia Imports
 import { cors } from '@elysiajs/cors'
 import { swagger } from '@elysiajs/swagger'
-import { Elysia } from 'elysia'
+import { env } from '@yolk-oss/elysia-env'
+import { Elysia, t } from 'elysia'
 
 // ** Libs Imports
 import { RedisClient } from '@libs/ioredis'
@@ -28,9 +29,14 @@ const app = new Elysia({ prefix: '/api', normalize: true })
             set.headers['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers') ?? ''
         }
     })
-    .decorate({
-        redisClient: new RedisClient(Bun.env.REDIS_URL)
-    })
+    .use(env({
+        REDIS_URL: t.String({
+            default: 'redis://localhost:6379'
+        })
+    }))
+    .decorate(({ env }) => ({
+        redis: new RedisClient(env.REDIS_URL)
+    }))
     .use(swagger())
     .use(
         cors({

@@ -39,6 +39,10 @@ export class RedisClient {
     async smembers(key: string) {
         return this.redisClient.smembers(key)
     }
+
+    async srem(key: string, value: string) {
+        return this.redisClient.srem(key, value)
+    }
 };
 
 export type RedisClientType = InstanceType<typeof RedisClient>;

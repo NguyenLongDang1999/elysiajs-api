@@ -106,14 +106,14 @@ export class WishlistService {
 
     async create(user_id: string, redis: RedisClientType, data: IWishlistDTO) {
         try {
-            const product = await prismaClient.product.findUnique({
+            const productExists = await prismaClient.product.findUnique({
                 where: { id: data.product_id },
                 select: {
                     id: true
                 }
             })
 
-            if (!product) {
+            if (!productExists) {
                 throw error('Not Found')
             }
 
@@ -125,17 +125,16 @@ export class WishlistService {
             })
 
             if (wishlist) {
-                await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), data.product_id)
+                await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), wishlist.product_id)
             }
 
             return wishlist
         } catch (error) {
-            console.log(error)
             handleDatabaseError(error)
         }
     }
 
-    async delete(user_id: string, data: IDeleteWishlistDTO) {
+    async delete(user_id: string, redis: RedisClientType, data: IDeleteWishlistDTO) {
         try {
             const wishlistItem = await prismaClient.wishlist.findUnique({
                 where: {
@@ -150,7 +149,7 @@ export class WishlistService {
                 throw error('Not Found')
             }
 
-            return prismaClient.wishlist.delete({
+            const deletedWishlist = await prismaClient.wishlist.delete({
                 where: {
                     user_id_product_id: {
                         user_id,
@@ -158,7 +157,12 @@ export class WishlistService {
                     }
                 }
             })
+
+            await redis.srem(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), data.id)
+
+            return deletedWishlist
         } catch (error) {
+            console.log(error)
             handleDatabaseError(error)
         }
     }

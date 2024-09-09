@@ -1,5 +1,5 @@
 // ** Elysia Imports
-import { redis } from '@atakan75/elysia-redis'
+
 import { Elysia } from 'elysia'
 
 // ** Models Imports
@@ -15,7 +15,7 @@ export const productCategoryController = new Elysia({ prefix: '/product-category
     .decorate({
         UserProductCategoryService: new ProductCategoryService()
     })
-    .use(redis())
+
     .use(authUserPlugin)
     .use(productCategoryModels)
     .get('data-list-nested', ({ UserProductCategoryService, redis }) => UserProductCategoryService.getNestedList(redis))

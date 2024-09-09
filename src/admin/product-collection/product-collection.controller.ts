@@ -1,5 +1,5 @@
 // ** Elysia Imports
-import { redis } from '@atakan75/elysia-redis'
+
 import { Elysia } from 'elysia'
 
 // ** Models Imports
@@ -12,7 +12,7 @@ export const productCollectionController = new Elysia({ prefix: '/product-collec
     .decorate({
         ProductCollectionService: new ProductCollectionService()
     })
-    .use(redis())
+
     .use(productCollectionModels)
     .get('/', ({ ProductCollectionService, query }) => ProductCollectionService.getTableList(query), {
         query: 'productCollectionSearch'

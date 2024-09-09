@@ -32,10 +32,10 @@ export const wishlistController = new Elysia({ prefix: '/wishlist' })
     )
     .delete(
         '/:id',
-        ({ UserWishlistService, user, error, params }) => {
+        ({ UserWishlistService, user, error, redis, params }) => {
             if (!user || !user.id) throw error('Not Found')
 
-            return UserWishlistService.delete(user.id, params)
+            return UserWishlistService.delete(user.id, redis, params)
         },
         {
             params: 'deleteWishlist'
