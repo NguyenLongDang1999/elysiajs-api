@@ -31,29 +31,6 @@ export class AuthService {
                     password: hashPassword
                 }
             })
-
-            await prismaClient.systemSettings.createMany({
-                data: [
-                    {
-                        label: 'BUNNY CDN Access Key',
-                        key: 'secret_key_bunnycdn_access_key',
-                        value: '...',
-                        input_type: 10
-                    },
-                    {
-                        label: 'BUNNY CDN Storage Name',
-                        key: 'secret_key_bunnycdn_storage_name',
-                        value: 'images-data',
-                        input_type: 10
-                    },
-                    {
-                        label: 'BUNNY CDN Storage Zone',
-                        key: 'secret_key_bunnycdn_storage_zone',
-                        value: 'sg',
-                        input_type: 10
-                    }
-                ]
-            })
         } catch (error) {
             handleDatabaseError(error)
         }
