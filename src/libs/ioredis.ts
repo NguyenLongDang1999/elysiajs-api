@@ -11,7 +11,7 @@ export class RedisClient {
     constructor(_connectionString?: string) {
         this.redisClient = _connectionString ? new Redis(_connectionString) : new Redis()
 
-        this.redisClient.on('error', error => {
+        this.redisClient.on('error', (error) => {
             console.error('[Redis] Error:', error)
         })
 
@@ -47,6 +47,6 @@ export class RedisClient {
     async srem(key: string, value: string) {
         return this.redisClient.srem(key, value)
     }
-};
+}
 
-export type RedisClientType = InstanceType<typeof RedisClient>;
+export type RedisClientType = InstanceType<typeof RedisClient>

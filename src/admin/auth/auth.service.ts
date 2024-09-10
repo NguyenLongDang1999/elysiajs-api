@@ -1,14 +1,14 @@
 // ** Elysia Imports
-import { error } from 'elysia'
+import { Cookie, error } from 'elysia'
 
 // ** Prisma Imports
 import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
-import { IAuthSignInDTO } from './auth.type'
+import { IAuthSignInDTO, IAuthJwt } from './auth.type'
 
 // ** Utils Imports
-import { HASH_PASSWORD } from '@src/utils/enums'
+import { HASH_PASSWORD, JWT } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class AuthService {
@@ -59,31 +59,94 @@ export class AuthService {
         }
     }
 
-    async signIn(data: IAuthSignInDTO) {
-        const user = await prismaClient.admins.findFirst({
-            where: {
-                email: data.email,
-                deleted_flg: false
-            },
-            select: {
-                id: true,
-                password: true
-            }
+    async signIn(
+        data: IAuthSignInDTO,
+        jwtAccessToken: IAuthJwt,
+        jwtRefreshToken: IAuthJwt,
+        cookie: Record<string, Cookie<any>>
+    ) {
+        try {
+            const user = await prismaClient.admins.findFirst({
+                where: {
+                    email: data.email,
+                    deleted_flg: false
+                },
+                select: {
+                    id: true,
+                    password: true
+                }
+            })
+
+            if (!user) throw error('Not Found')
+
+            const passwordMatches = await Bun.password.verify(data.password, user.password, HASH_PASSWORD.ALGORITHM)
+
+            if (!passwordMatches) throw error('Bad Request')
+
+            const expireAt = new Date(Date.now() + JWT.REFRESH_TOKEN_EXP * 1000)
+
+            await this.setCookie(user.id, jwtAccessToken, jwtRefreshToken, cookie, expireAt)
+
+            return { message: 'success' }
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }
+
+    async setCookie(
+        user_id: string,
+        jwtAccessToken: IAuthJwt,
+        jwtRefreshToken: IAuthJwt,
+        cookie: Record<string, Cookie<any>>,
+        expireAt?: Date
+    ) {
+        const accessTokenJWT = await jwtAccessToken.sign({
+            sub: user_id
         })
 
-        if (!user) throw error('Not Found')
+        cookie.accessTokenAdmin.set({
+            value: accessTokenJWT,
+            maxAge: Number(JWT.ACCESS_TOKEN_EXP),
+            secure: Bun.env.NODE_ENV === 'production',
+            httpOnly: Bun.env.NODE_ENV === 'production',
+            sameSite: Bun.env.NODE_ENV === 'production'
+        })
 
-        const passwordMatches = await Bun.password.verify(data.password, user.password, HASH_PASSWORD.ALGORITHM)
+        const refreshTokenJWT = await jwtRefreshToken.sign({
+            sub: user_id
+        })
 
-        if (!passwordMatches) throw error('Bad Request')
+        cookie.refreshTokenAdmin.set({
+            value: refreshTokenJWT,
+            maxAge: Number(JWT.REFRESH_TOKEN_EXP),
+            secure: Bun.env.NODE_ENV === 'production',
+            httpOnly: Bun.env.NODE_ENV === 'production',
+            sameSite: Bun.env.NODE_ENV === 'production'
+        })
 
-        return { id: user.id }
+        await this.updateRefreshToken(user_id, refreshTokenJWT, expireAt)
     }
 
     hashData(data: string) {
         return Bun.password.hash(data, {
             algorithm: HASH_PASSWORD.ALGORITHM
         })
+    }
+
+    async refresh(jwtAccessToken: IAuthJwt, jwtRefreshToken: IAuthJwt, cookie: Record<string, Cookie<any>>) {
+        if (!cookie.refreshTokenAdmin.value) throw error('Forbidden')
+
+        const jwtPayload = await jwtRefreshToken.verify(cookie.refreshTokenAdmin.value)
+
+        if (!jwtPayload || typeof jwtPayload.sub !== 'string') throw error('Unauthorized')
+
+        const response = await this.refreshTokens(jwtPayload.sub, cookie.refreshTokenAdmin.value)
+
+        if (!response || !response.id) throw error('Not Found')
+
+        await this.setCookie(response.id, jwtAccessToken, jwtRefreshToken, cookie)
+
+        return { message: 'success' }
     }
 
     async updateRefreshToken(userId: string, refreshToken: string, expireAt?: Date) {
@@ -135,10 +198,15 @@ export class AuthService {
         }
     }
 
-    async signOut(userId: string) {
+    async signOut(cookie: Record<string, Cookie<any>>, user_id?: string) {
         try {
+            if (!user_id) throw error('Not Found')
+
+            cookie.accessTokenAdmin.remove()
+            cookie.refreshTokenAdmin.remove()
+
             return await prismaClient.admins.update({
-                where: { id: userId },
+                where: { id: user_id },
                 data: {
                     refresh_token: null,
                     refresh_token_expire: null
@@ -152,10 +220,12 @@ export class AuthService {
         }
     }
 
-    async profile(id: string) {
+    async profile(user_id?: string) {
         try {
+            if (!user_id) throw error('Not Found')
+
             return await prismaClient.admins.findFirst({
-                where: { id },
+                where: { id: user_id },
                 select: {
                     id: true,
                     name: true,

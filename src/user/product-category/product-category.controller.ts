@@ -21,7 +21,8 @@ export const productCategoryController = new Elysia({ prefix: '/product-category
     .get('data-list-nested', ({ UserProductCategoryService, redis }) => UserProductCategoryService.getNestedList(redis))
     .get(
         'data-list-shop',
-        ({ UserProductCategoryService, query, redis, user }) => UserProductCategoryService.getDataListShop(query, redis, user?.id),
+        ({ UserProductCategoryService, query, redis, user }) =>
+            UserProductCategoryService.getDataListShop(query, redis, user?.id),
         {
             query: 'userProductCategorySearch'
         }

@@ -94,10 +94,7 @@ export class ProductCategoryService {
 
     async retrieve(slug: string, query: IProductCategorySearchDTO, redis: RedisClientType, user_id?: string) {
         try {
-            const cachedKey = createRedisKey(
-                REDIS_KEY.USER_PRODUCT_CATEGORY_RETRIEVE,
-                slug
-            )
+            const cachedKey = createRedisKey(REDIS_KEY.USER_PRODUCT_CATEGORY_RETRIEVE, slug)
 
             let productCategory
             const cachedData = await redis.get(cachedKey)
@@ -152,7 +149,12 @@ export class ProductCategoryService {
                 }
             }
 
-            const { data: product, aggregations } = await this.getListProductShop(query, redis, productCategory.id, user_id)
+            const { data: product, aggregations } = await this.getListProductShop(
+                query,
+                redis,
+                productCategory.id,
+                user_id
+            )
 
             const formattedProductCategory = {
                 ...productCategory,
@@ -183,7 +185,12 @@ export class ProductCategoryService {
         }
     }
 
-    async getListProductShop(query: IProductCategorySearchDTO, redis: RedisClientType, categoryId?: string, user_id?: string) {
+    async getListProductShop(
+        query: IProductCategorySearchDTO,
+        redis: RedisClientType,
+        categoryId?: string,
+        user_id?: string
+    ) {
         const allCategories = categoryId ? await this.getAllSubcategories(categoryId) : undefined
         const categoryIds = allCategories?.map((category) => category.id)
 
@@ -215,12 +222,12 @@ export class ProductCategoryService {
                 query.productRating.length > 0 && {
                 OR: getNormalizedList(query.productRating as string[])?.map((rate) => ({
                     total_rating:
-                        Number(rate) === 5
-                            ? Number(rate)
-                            : {
-                                gte: Number(rate),
-                                lte: Number(rate) + 1
-                            }
+                            Number(rate) === 5
+                                ? Number(rate)
+                                : {
+                                    gte: Number(rate),
+                                    lte: Number(rate) + 1
+                                }
                 }))
             })
         }
@@ -296,7 +303,7 @@ export class ProductCategoryService {
                     select: { product_id: true }
                 })
 
-                wishlistItems = productWishlist.map(_product => _product.product_id)
+                wishlistItems = productWishlist.map((_product) => _product.product_id)
 
                 if (wishlistItems.length > 0) {
                     await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), wishlistItems)

@@ -12,4 +12,6 @@ export const productController = new Elysia({ prefix: '/product' })
         UserProductService: new ProductService()
     })
     .use(authUserPlugin)
-    .get('/:slug', ({ UserProductService, params, redis, user }) => UserProductService.retrieve(params.slug, redis, user?.id))
+    .get('/:slug', ({ UserProductService, params, redis, user }) =>
+        UserProductService.retrieve(params.slug, redis, user?.id)
+    )

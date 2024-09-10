@@ -49,7 +49,11 @@ export class HomeService {
         }
     }
 
-    async getProductFlashDeals(product_flash_deals: IHomeProductFlashDealsDTO, redis: RedisClientType, user_id?: string) {
+    async getProductFlashDeals(
+        product_flash_deals: IHomeProductFlashDealsDTO,
+        redis: RedisClientType,
+        user_id?: string
+    ) {
         try {
             const cachedKey = createRedisKey(REDIS_KEY.USER_HOME_FLASH_DEALS, product_flash_deals.flash_deals_id)
             const cachedData = await redis.get(cachedKey)
@@ -173,7 +177,7 @@ export class HomeService {
                         select: { product_id: true }
                     })
 
-                    wishlistItems = productWishlist.map(_product => _product.product_id)
+                    wishlistItems = productWishlist.map((_product) => _product.product_id)
 
                     if (wishlistItems.length > 0) {
                         await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), wishlistItems)
@@ -385,7 +389,7 @@ export class HomeService {
                                 select: { product_id: true }
                             })
 
-                            wishlistItems = productWishlist.map(_product => _product.product_id)
+                            wishlistItems = productWishlist.map((_product) => _product.product_id)
 
                             if (wishlistItems.length > 0) {
                                 await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), wishlistItems)
@@ -409,7 +413,9 @@ export class HomeService {
                                             ..._p.product.flashDealProducts[0].flashDeal
                                         }
                                         : undefined,
-                                    product_variant_id: _p.product.productVariants ? _p.product.productVariants[0].id : undefined,
+                                    product_variant_id: _p.product.productVariants
+                                        ? _p.product.productVariants[0].id
+                                        : undefined,
                                     productPrice: {
                                         price: _p.product.price,
                                         special_price: _p.product.special_price,

@@ -19,13 +19,16 @@ const mockProductCategory = {
 
 describe('ProductCategoryService', () => {
     afterEach(async () => {
-        await app['product-categories:id'].delete({
-            slug: 'electronics-1'
-        }, {
-            query: {
+        await app['product-categories:id'].delete(
+            {
                 slug: 'electronics-1'
+            },
+            {
+                query: {
+                    slug: 'electronics-1'
+                }
             }
-        })
+        )
     })
 
     it('should create a new ProductCategory', async () => {

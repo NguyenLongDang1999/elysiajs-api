@@ -126,8 +126,9 @@ export class CartService {
                     }
 
                     const cartItemProductAttribute = productVariantAttributeValues
-                        .map(({ productAttributeValues }) =>
-                            `${productAttributeValues.productAttribute.name}: ${productAttributeValues.value}`
+                        .map(
+                            ({ productAttributeValues }) =>
+                                `${productAttributeValues.productAttribute.name}: ${productAttributeValues.value}`
                         )
                         .join(', ')
 

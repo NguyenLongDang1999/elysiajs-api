@@ -29,11 +29,13 @@ const app = new Elysia({ prefix: '/api', normalize: true })
             set.headers['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers') ?? ''
         }
     })
-    .use(env({
-        REDIS_URL: t.String({
-            default: 'redis://localhost:6379'
+    .use(
+        env({
+            REDIS_URL: t.String({
+                default: 'redis://localhost:6379'
+            })
         })
-    }))
+    )
     .decorate(({ env }) => ({
         redis: new RedisClient(env.REDIS_URL)
     }))

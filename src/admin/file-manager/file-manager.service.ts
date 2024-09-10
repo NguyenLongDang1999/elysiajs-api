@@ -1,6 +1,3 @@
-// ** Database Imports
-import prismaClient from '@src/database/prisma'
-
 // ** Types Imports
 import { IFileManagerDTO, IFileManagerSearchDTO, IFileManagerUploadDTO } from './file-manager.type'
 
@@ -10,10 +7,10 @@ import { handleDatabaseError } from '@utils/error-handling'
 export class FileManagerService {
     async getTableList(query: IFileManagerSearchDTO) {
         try {
-            const storageName = await this.systemSettingBunnyCDN('storage_name')
+            const storageName = Bun.env.BUNNY_STORAGE_NAME
 
             const pathName = this.buildPath(query.path)
-            const url = `${await this.getBaseUrl()}${storageName?.value}/${pathName}/`
+            const url = `${await this.getBaseUrl()}${storageName}/${pathName}/`
 
             return this.sendRequest('get', url)
         } catch (error) {
@@ -22,30 +19,31 @@ export class FileManagerService {
     }
 
     async create(createFileManagerDto: IFileManagerDTO, query: IFileManagerSearchDTO) {
-        const storageName = await this.systemSettingBunnyCDN('storage_name')
+        const storageName = Bun.env.BUNNY_STORAGE_NAME
 
         const pathName = this.buildPath(query.path, createFileManagerDto.folder_name + '/')
-        const url = `${await this.getBaseUrl()}${storageName?.value}/${pathName}`
+        const url = `${await this.getBaseUrl()}${storageName}/${pathName}`
 
         return this.sendRequest('put', url)
     }
 
     async delete(createFileManagerDto: IFileManagerDTO, query: IFileManagerSearchDTO) {
-        const storageName = await this.systemSettingBunnyCDN('storage_name')
+        const storageName = Bun.env.BUNNY_STORAGE_NAME
 
         const pathName = this.buildPath(
             query.path,
             createFileManagerDto.folder_name + (createFileManagerDto.is_folder ? '/' : '')
         )
-        const url = `${await this.getBaseUrl()}${storageName?.value}/${pathName}`
+        const url = `${await this.getBaseUrl()}${storageName}/${pathName}`
 
         return this.sendRequest('delete', url)
     }
 
     async uploadFile(query: IFileManagerSearchDTO, body: IFileManagerUploadDTO) {
-        const storageName = await this.systemSettingBunnyCDN('storage_name')
+        const storageName = Bun.env.BUNNY_STORAGE_NAME
+
         const pathName = this.buildPath(query.path, body.file.name)
-        const url = `${await this.getBaseUrl()}${storageName?.value}/${pathName}`
+        const url = `${await this.getBaseUrl()}${storageName}/${pathName}`
         const buffer = await body.file.arrayBuffer()
 
         return this.sendRequest('put', url, buffer)
@@ -53,13 +51,14 @@ export class FileManagerService {
 
     private async sendRequest(method: string, url: string, data?: any) {
         try {
-            const accessKey = await this.systemSettingBunnyCDN('access_key')
+            const accessKey = Bun.env.BUNNY_ACCESS_KEY
+
             const response = await fetch(url, {
                 method,
                 body: data,
                 headers: {
                     Accept: '*/*',
-                    Accesskey: accessKey?.value as string
+                    Accesskey: accessKey as string
                 }
             })
 
@@ -74,31 +73,10 @@ export class FileManagerService {
     }
 
     private async getBaseUrl() {
-        const storageZone = await this.systemSettingBunnyCDN('storage_zone')
+        const storageZone = Bun.env.BUNNY_STORAGE_ZONE
 
-        return storageZone?.value
-            ? `https://${storageZone.value}.storage.bunnycdn.com/`
+        return storageZone
+            ? `https://${storageZone}.storage.bunnycdn.com/`
             : 'https://storage.bunnycdn.com/'
-    }
-
-    private async systemSettingBunnyCDN(key: string) {
-        try {
-            const systemSetting = await prismaClient.systemSettings.findMany({
-                orderBy: { created_at: 'desc' },
-                where: {
-                    deleted_flg: false,
-                    key: {
-                        startsWith: 'secret_key_bunnycdn_'
-                    }
-                },
-                include: {
-                    systemSettingOptions: true
-                }
-            })
-
-            return systemSetting.find((_s) => _s.key.endsWith(key))
-        } catch (error) {
-            handleDatabaseError(error)
-        }
     }
 }

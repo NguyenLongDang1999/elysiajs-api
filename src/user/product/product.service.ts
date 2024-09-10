@@ -164,7 +164,7 @@ export class ProductService {
                         select: { product_id: true }
                     })
 
-                    wishlistItems = productWishlist.map(_product => _product.product_id)
+                    wishlistItems = productWishlist.map((_product) => _product.product_id)
 
                     if (wishlistItems.length > 0) {
                         await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), wishlistItems)
