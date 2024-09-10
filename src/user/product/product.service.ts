@@ -5,8 +5,9 @@ import { RedisClientType } from '@libs/ioredis'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
-import { REDIS_KEY, STATUS } from '@src/utils/enums'
+import { REDIS_KEY, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
+import { formatSellingPrice, type ProductPrice } from '@utils/format'
 import { createRedisKey } from '@utils/index'
 
 // ** Types Imports
@@ -174,20 +175,44 @@ export class ProductService {
                 wishlistProductIds = new Set(wishlistItems)
             }
 
+            const flashDeal = product.flashDealProducts[0]
+
+            const productVariants = product.productVariants.map(({ productPrices, ..._productVariant }) => {
+                const getPrice = productPrices[0]
+
+                let productPrice: ProductPrice = {
+                    price: Number(getPrice.price),
+                    special_price: Number(getPrice.special_price),
+                    special_price_type: Number(getPrice.special_price_type)
+                }
+
+                if (flashDeal && flashDeal.flashDeal) {
+                    productPrice = {
+                        ...productPrice,
+                        hasDiscount: true,
+                        discounted_price: Number(flashDeal.flashDeal.discounted_price),
+                        discounted_price_type: Number(flashDeal.flashDeal.discounted_price_type)
+                    }
+                }
+
+                return {
+                    ..._productVariant,
+                    ...productPrice,
+                    selling_price: formatSellingPrice(productPrice),
+                    productPrices: undefined
+                }
+            })
+
             const formattedProduct = {
                 ...product,
                 isWishlist: wishlistProductIds ? wishlistProductIds.has(product.id) : false,
-                flashDeal: product.flashDealProducts[0]
+                flashDeal: flashDeal
                     ? {
-                        ...product.flashDealProducts[0].flashDeal
+                        ...flashDeal.flashDeal
                     }
                     : undefined,
                 productAttributes: Object.values(productAttributes),
-                productVariants: product.productVariants.map(({ productPrices, ..._productVariant }) => ({
-                    ..._productVariant,
-                    ...productPrices[0],
-                    productPrices: undefined
-                })),
+                productVariants,
                 flashDealProducts: undefined
             }
 
