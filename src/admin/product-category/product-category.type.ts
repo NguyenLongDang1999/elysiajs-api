@@ -25,7 +25,7 @@ export const productCategorySearchType = t.Object({
     status: t
         .Transform(t.Optional(t.Exclude(t.Union([t.String(), t.Number()]), t.Number())))
         .Decode((value) => (typeof value === 'string' ? parseInt(value) : value))
-        .Encode((value) => value.toString()),
+        .Encode((value) => value.toString())
 })
 
 // ** Types

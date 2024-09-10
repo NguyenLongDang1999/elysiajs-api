@@ -159,10 +159,7 @@ export class ProductCategoryService {
                 }
             })
 
-            await redis.set(
-                createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, id),
-                JSON.stringify(productCategory)
-            )
+            await redis.set(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, id), JSON.stringify(productCategory))
 
             return productCategory
         } catch (error) {
@@ -228,10 +225,7 @@ export class ProductCategoryService {
                 categoryNested.push(category, ...categories)
             }
 
-            await redis.set(
-                createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'),
-                JSON.stringify(categoryNested)
-            )
+            await redis.set(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'), JSON.stringify(categoryNested))
 
             return categoryNested
         } catch (error) {

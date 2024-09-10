@@ -43,10 +43,7 @@ export class SystemSettingsService {
                 }))
             }))
 
-            await redis.set(
-                createRedisKey(REDIS_KEY.SYSTEM_SETTINGS, query.key),
-                JSON.stringify(systemSettings)
-            )
+            await redis.set(createRedisKey(REDIS_KEY.SYSTEM_SETTINGS, query.key), JSON.stringify(systemSettings))
 
             return systemSettings
         } catch (error) {

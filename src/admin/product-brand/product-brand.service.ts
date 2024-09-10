@@ -196,10 +196,7 @@ export class ProductBrandService {
                 productCategoryBrand: undefined
             }
 
-            await redis.set(
-                createRedisKey(REDIS_KEY.PRODUCT_BRAND, id),
-                JSON.stringify(productBrand)
-            )
+            await redis.set(createRedisKey(REDIS_KEY.PRODUCT_BRAND, id), JSON.stringify(productBrand))
 
             return productBrand
         } catch (error) {
@@ -266,10 +263,7 @@ export class ProductBrandService {
 
             const productBrand = data.map((_v) => _v.productBrand)
 
-            await redis.set(
-                createRedisKey(REDIS_KEY.PRODUCT_BRAND, product_category_id),
-                JSON.stringify(productBrand)
-            )
+            await redis.set(createRedisKey(REDIS_KEY.PRODUCT_BRAND, product_category_id), JSON.stringify(productBrand))
 
             return productBrand
         } catch (error) {
