@@ -41,7 +41,5 @@ export const formatSellingPrice = (row: ProductPrice) => {
         }
     }
 
-    console.log(sellingPrice)
-
     return sellingPrice
 }

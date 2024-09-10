@@ -341,6 +341,12 @@ model Users {
   carts                        Carts[]
 }
 
+model UserSocialAccounts {
+  id                           String                   @id @default(cuid())
+  provider                     String?                  @db.VarChar
+  provider_id                  String?                  @db.VarChar
+}
+
 model PasswordResetToken {
   id         String   @id @default(cuid())
   user_id    String
