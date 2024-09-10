@@ -8,7 +8,7 @@ import { AuthModels } from './auth.model'
 import { AuthService } from './auth.service'
 
 // ** Utils Imports
-import { JWT } from '@src/utils/enums'
+import { JWT } from '@utils/enums'
 
 // ** Plugins Imports
 import { authUserPlugin } from '../plugins/auth'

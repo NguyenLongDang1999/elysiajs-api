@@ -10,8 +10,8 @@ import prismaClient from '@src/database/prisma'
 import { IDeleteWishlistDTO, IWishlistDTO } from './wishlist.type'
 
 // ** Utils Imports
-import { createRedisKey } from '@src/utils'
-import { REDIS_KEY, STATUS } from '@src/utils/enums'
+import { createRedisKey } from '@utils/index'
+import { REDIS_KEY, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class WishlistService {

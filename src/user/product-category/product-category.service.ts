@@ -6,8 +6,8 @@ import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
-import { createRedisKey, getNormalizedList, getProductOrderBy } from '@src/utils'
-import { REDIS_KEY, STATUS } from '@src/utils/enums'
+import { createRedisKey, getNormalizedList, getProductOrderBy } from '@utils/index'
+import { REDIS_KEY, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 import { formatSellingPrice } from '@utils/format'
 

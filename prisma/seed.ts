@@ -2,7 +2,7 @@
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
-import { HASH_PASSWORD } from '@src/utils/enums'
+import { HASH_PASSWORD } from '@utils/enums'
 
 async function main() {
     console.log('Start seeding ...')

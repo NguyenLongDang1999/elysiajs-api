@@ -13,7 +13,7 @@ import {
 } from './product.type'
 
 // ** Utils Imports
-import { MANAGE_INVENTORY, PRODUCT_TYPE, RELATIONS_TYPE, STATUS } from '@src/utils/enums'
+import { MANAGE_INVENTORY, PRODUCT_TYPE, RELATIONS_TYPE, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class ProductService {

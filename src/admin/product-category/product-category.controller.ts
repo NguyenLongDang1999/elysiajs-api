@@ -1,5 +1,4 @@
 // ** Elysia Imports
-
 import { Elysia } from 'elysia'
 
 // ** Models Imports
@@ -12,7 +11,6 @@ export const productCategoryController = new Elysia({ prefix: '/product-categori
     .decorate({
         ProductCategoryService: new ProductCategoryService()
     })
-
     .use(productCategoryModels)
     .get('/', ({ ProductCategoryService, query }) => ProductCategoryService.getTableList(query), {
         query: 'productCategorySearch'
@@ -30,7 +28,7 @@ export const productCategoryController = new Elysia({ prefix: '/product-categori
         }
     )
     .delete(
-        ':id',
+        '/:id',
         ({ ProductCategoryService, query, params, redis }) => ProductCategoryService.delete(params.id, query, redis),
         {
             query: 'productCategoryDelete'

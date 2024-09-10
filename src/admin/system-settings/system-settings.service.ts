@@ -8,8 +8,8 @@ import prismaClient from '@src/database/prisma'
 import { ISystemSettingsDTO, ISystemSettingsSearchDTO } from './system-settings.type'
 
 // ** Utils Imports
-import { createRedisKey } from '@src/utils'
-import { EXPIRES_AT, REDIS_KEY } from '@src/utils/enums'
+import { createRedisKey } from '@utils/index'
+import { REDIS_KEY } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class SystemSettingsService {
@@ -45,8 +45,7 @@ export class SystemSettingsService {
 
             await redis.set(
                 createRedisKey(REDIS_KEY.SYSTEM_SETTINGS, query.key),
-                JSON.stringify(systemSettings),
-                EXPIRES_AT.REDIS_EXPIRES_AT
+                JSON.stringify(systemSettings)
             )
 
             return systemSettings

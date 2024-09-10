@@ -1,5 +1,4 @@
 // ** Elysia Imports
-
 import { Elysia } from 'elysia'
 
 // ** Models Imports
@@ -12,7 +11,6 @@ export const systemSettingsController = new Elysia({ prefix: '/system-settings' 
     .decorate({
         SystemSettingsService: new SystemSettingsService()
     })
-
     .use(systemSettingsModels)
     .get('/', ({ SystemSettingsService, query, redis }) => SystemSettingsService.getDataList(query, redis), {
         query: 'systemSettingsSearch'

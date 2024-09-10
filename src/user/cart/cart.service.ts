@@ -11,7 +11,7 @@ import prismaClient from '@src/database/prisma'
 import { ICartDeleteDTO, ICartDTO, ICartUpdateDTO } from './cart.type'
 
 // ** Utils Imports
-import { JWT, STATUS } from '@src/utils/enums'
+import { JWT, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class CartService {

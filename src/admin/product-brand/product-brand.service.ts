@@ -10,8 +10,8 @@ import { IDeleteDTO } from '@src/types/core.type'
 import { IProductBrandDTO, IProductBrandSearchDTO } from './product-brand.type'
 
 // ** Utils Imports
-import { createRedisKey, slugTimestamp } from '@src/utils'
-import { EXPIRES_AT, REDIS_KEY } from '@src/utils/enums'
+import { createRedisKey, slugTimestamp } from '@utils/index'
+import { REDIS_KEY } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class ProductBrandService {
@@ -49,10 +49,13 @@ export class ProductBrandService {
                         status: true,
                         image_uri: true,
                         created_at: true,
-                        product: {
-                            where: { deleted_flg: false },
+                        _count: {
                             select: {
-                                _count: true
+                                product: {
+                                    where: {
+                                        deleted_flg: false
+                                    }
+                                }
                             }
                         },
                         productCategoryBrand: {
@@ -195,8 +198,7 @@ export class ProductBrandService {
 
             await redis.set(
                 createRedisKey(REDIS_KEY.PRODUCT_BRAND, id),
-                JSON.stringify(productBrand),
-                EXPIRES_AT.REDIS_EXPIRES_AT
+                JSON.stringify(productBrand)
             )
 
             return productBrand
@@ -266,8 +268,7 @@ export class ProductBrandService {
 
             await redis.set(
                 createRedisKey(REDIS_KEY.PRODUCT_BRAND, product_category_id),
-                JSON.stringify(productBrand),
-                EXPIRES_AT.REDIS_EXPIRES_AT
+                JSON.stringify(productBrand)
             )
 
             return productBrand

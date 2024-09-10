@@ -7,7 +7,7 @@ import { IDeleteDTO } from '@src/types/core.type'
 import { IProductAttributeDTO, IProductAttributeSearchDTO } from './product-attribute.type'
 
 // ** Utils Imports
-import { slugTimestamp } from '@src/utils'
+import { slugTimestamp } from '@utils/index'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class ProductAttributeService {
@@ -46,12 +46,13 @@ export class ProductAttributeService {
                         name: true,
                         status: true,
                         created_at: true,
-                        productAttributeValues: {
-                            where: {
-                                deleted_flg: false
-                            },
+                        _count: {
                             select: {
-                                _count: true
+                                productAttributeValues: {
+                                    where: {
+                                        deleted_flg: false
+                                    }
+                                }
                             }
                         },
                         productCategoryAttributes: {

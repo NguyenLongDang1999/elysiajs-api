@@ -1,5 +1,4 @@
 // ** Elysia Imports
-
 import { Elysia } from 'elysia'
 
 // ** Models Imports
@@ -12,7 +11,6 @@ export const productCollectionController = new Elysia({ prefix: '/product-collec
     .decorate({
         ProductCollectionService: new ProductCollectionService()
     })
-
     .use(productCollectionModels)
     .get('/', ({ ProductCollectionService, query }) => ProductCollectionService.getTableList(query), {
         query: 'productCollectionSearch'

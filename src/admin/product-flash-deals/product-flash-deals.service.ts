@@ -7,8 +7,8 @@ import { IDeleteDTO } from '@src/types/core.type'
 import { IProductFlashDealsDTO, IProductFlashDealsSearchDTO } from './product-flash-deals.type'
 
 // ** Utils Imports
-import { slugTimestamp } from '@src/utils'
-import { STATUS } from '@src/utils/enums'
+import { slugTimestamp } from '@utils/index'
+import { STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class ProductFlashDealsService {

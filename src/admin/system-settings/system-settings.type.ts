@@ -2,7 +2,7 @@
 import { Static, t } from 'elysia'
 
 // ** Utils Imports
-import { INPUT_TYPE } from '@src/utils/enums'
+import { INPUT_TYPE } from '@utils/enums'
 
 // ** Types Definition
 export const systemSettingsType = t.Object({

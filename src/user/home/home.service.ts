@@ -220,25 +220,27 @@ export class HomeService {
                     })
                 })
 
-                const productVariants = _flashDeal.product.productVariants.map(({ productPrices, ..._productVariant }) => {
-                    const getPrice = productPrices[0]
+                const productVariants = _flashDeal.product.productVariants.map(
+                    ({ productPrices, ..._productVariant }) => {
+                        const getPrice = productPrices[0]
 
-                    const productPrice: ProductPrice = {
-                        price: Number(getPrice.price),
-                        special_price: Number(getPrice.special_price),
-                        special_price_type: Number(getPrice.special_price_type),
-                        hasDiscount: true,
-                        discounted_price: Number(productFlashDeals.discounted_price),
-                        discounted_price_type: Number(productFlashDeals.discounted_price_type)
-                    }
+                        const productPrice: ProductPrice = {
+                            price: Number(getPrice.price),
+                            special_price: Number(getPrice.special_price),
+                            special_price_type: Number(getPrice.special_price_type),
+                            hasDiscount: true,
+                            discounted_price: Number(productFlashDeals.discounted_price),
+                            discounted_price_type: Number(productFlashDeals.discounted_price_type)
+                        }
 
-                    return {
-                        ..._productVariant,
-                        ...productPrice,
-                        selling_price: formatSellingPrice(productPrice),
-                        productPrices: undefined
+                        return {
+                            ..._productVariant,
+                            ...productPrice,
+                            selling_price: formatSellingPrice(productPrice),
+                            productPrices: undefined
+                        }
                     }
-                })
+                )
 
                 flashDealProducts.push({
                     ..._flashDeal.product,
@@ -437,7 +439,9 @@ export class HomeService {
                                             ..._p.product.flashDealProducts[0].flashDeal
                                         }
                                         : undefined,
-                                    product_variant_id: _p.product.productVariants ? _p.product.productVariants[0].id : undefined,
+                                    product_variant_id: _p.product.productVariants
+                                        ? _p.product.productVariants[0].id
+                                        : undefined,
                                     productVariants: undefined,
                                     flashDealProducts: undefined
                                 }

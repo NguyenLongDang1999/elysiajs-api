@@ -10,8 +10,8 @@ import { IDeleteDTO } from '@src/types/core.type'
 import { IProductCollectionDTO, IProductCollectionSearchDTO } from './product-collection.type'
 
 // ** Utils Imports
-import { createRedisKey, slugTimestamp } from '@src/utils'
-import { EXPIRES_AT, REDIS_KEY, STATUS } from '@src/utils/enums'
+import { createRedisKey, slugTimestamp } from '@utils/index'
+import { EXPIRES_AT, REDIS_KEY, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class ProductCollectionService {
@@ -44,16 +44,13 @@ export class ProductCollectionService {
                         title: true,
                         status: true,
                         created_at: true,
-                        productCollectionProduct: {
-                            where: {
-                                product: {
-                                    deleted_flg: false
-                                }
-                            },
+                        _count: {
                             select: {
-                                product: {
-                                    select: {
-                                        _count: true
+                                productCollectionProduct: {
+                                    where: {
+                                        product: {
+                                            deleted_flg: false
+                                        }
                                     }
                                 }
                             }
@@ -66,12 +63,7 @@ export class ProductCollectionService {
             ])
 
             return {
-                data: data.map((item) => {
-                    return {
-                        ...item,
-                        product: item.productCollectionProduct.map((_pcItem) => _pcItem.product)
-                    }
-                }),
+                data,
                 aggregations: count
             }
         } catch (error) {

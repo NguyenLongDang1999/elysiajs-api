@@ -20,7 +20,7 @@ import {
 } from './auth.type'
 
 // ** Utils Imports
-import { HASH_PASSWORD } from '@src/utils/enums'
+import { HASH_PASSWORD } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class AuthService {

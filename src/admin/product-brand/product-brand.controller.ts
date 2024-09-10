@@ -1,5 +1,4 @@
 // ** Elysia Imports
-
 import { Elysia } from 'elysia'
 
 // ** Models Imports
@@ -12,7 +11,6 @@ export const productBrandController = new Elysia({ prefix: '/product-brands' })
     .decorate({
         ProductBrandService: new ProductBrandService()
     })
-
     .use(productBrandModels)
     .get('/', ({ ProductBrandService, query }) => ProductBrandService.getTableList(query), {
         query: 'productBrandSearch'

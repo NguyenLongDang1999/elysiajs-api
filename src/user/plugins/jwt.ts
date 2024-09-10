@@ -3,7 +3,7 @@ import { jwt } from '@elysiajs/jwt'
 import { Elysia, t } from 'elysia'
 
 // ** Utils Imports
-import { JWT } from '@src/utils/enums'
+import { JWT } from '@utils/enums'
 
 const jwtUserPlugin = (app: Elysia) =>
     app
