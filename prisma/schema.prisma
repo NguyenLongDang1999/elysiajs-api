@@ -339,12 +339,20 @@ model Users {
   wishlist                     Wishlist[]
   passwordResetToken           PasswordResetToken[]
   carts                        Carts[]
+  userSocialAccounts           UserSocialAccounts[]
 }
 
 model UserSocialAccounts {
-  id                           String                   @id @default(cuid())
-  provider                     String?                  @db.VarChar
-  provider_id                  String?                  @db.VarChar
+  id                   String    @id @default(cuid())
+  user_id              String
+  provider             String    @db.VarChar
+  provider_id          String    @db.VarChar
+  access_token         String?   @db.VarChar
+  refresh_token        String?   @db.VarChar
+  refresh_token_expire DateTime?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+  users                Users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model PasswordResetToken {

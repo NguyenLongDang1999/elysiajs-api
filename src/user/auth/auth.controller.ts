@@ -13,12 +13,14 @@ import { JWT } from '@utils/enums'
 // ** Plugins Imports
 import { authUserPlugin } from '../plugins/auth'
 import { jwtUserPlugin } from '../plugins/jwt'
+import { googleUserPlugin } from '../plugins/google'
 
 export const authController = new Elysia({ prefix: '/auth' })
     .decorate({
         UserAuthService: new AuthService()
     })
     .use(AuthModels)
+    .use(googleUserPlugin)
     .use(jwtUserPlugin)
     .post(
         'sign-in',
