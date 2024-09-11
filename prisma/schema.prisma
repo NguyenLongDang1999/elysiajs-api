@@ -312,8 +312,6 @@ model EmailVerificationToken {
 
 model Users {
   id                           String                   @id @default(cuid())
-  provider                     String?                  @db.VarChar
-  provider_id                  String?                  @db.VarChar
   name                         String                   @db.VarChar
   email                        String                   @unique @db.VarChar
   email_verified               Boolean?                 @default(false)
@@ -321,8 +319,8 @@ model Users {
   last_password_reset          DateTime?
   verification_code            String?                  @db.VarChar
   new_email_verificiation_code String?                  @db.VarChar
-  password                     String                   @db.VarChar
-  phone                        String                   @db.VarChar
+  password                     String?                  @db.VarChar
+  phone                        String?                  @db.VarChar
   gender                       Int?                     @db.SmallInt
   address                      String?                  @db.VarChar
   access_token                 String?                  @db.VarChar
