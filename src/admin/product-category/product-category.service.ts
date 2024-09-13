@@ -17,8 +17,8 @@ import { handleDatabaseError } from '@utils/error-handling'
 export class ProductCategoryService {
     async getTableList(query: IProductCategorySearchDTO) {
         try {
-            const take = Number(query.pageSize) || undefined
-            const skip = Number(query.page) || undefined
+            const take = query.pageSize || undefined
+            const skip = query.page || undefined
 
             const search: Prisma.ProductCategoryWhereInput = {
                 deleted_flg: false,
