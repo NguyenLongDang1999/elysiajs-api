@@ -6,7 +6,7 @@ import { oauth2 } from 'elysia-oauth2'
 import prismaClient from '@src/database/prisma'
 
 const fetchGoogleUserInfo = async (accessToken: string) => {
-    const response = await fetch('https://people.googleapis.com/v1/people/me?personFields=phoneNumbers,photos,emailAddresses,names', {
+    const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: {
             Authorization: `Bearer ${accessToken}`
         }
@@ -32,8 +32,7 @@ const googleUserPlugin = (app: Elysia) =>
                 const authorizationUrl = await oauth2.createURL('Google', {
                     scopes: [
                         'https://www.googleapis.com/auth/userinfo.profile',
-                        'https://www.googleapis.com/auth/userinfo.email',
-                        'https://www.googleapis.com/auth/user.phonenumbers.read'
+                        'https://www.googleapis.com/auth/userinfo.email'
                     ]
                 })
 
@@ -42,7 +41,7 @@ const googleUserPlugin = (app: Elysia) =>
 
                 return authorizationUrl.toString()
             })
-            .get('/google/callback', async ({ oauth2, cookie: { redirectUrl, userRefreshToken }, error, redirect }) => {
+            .get('/google/callback', async ({ oauth2, error, cookie }) => {
                 try {
                     const token = await oauth2.authorize('Google')
 
@@ -50,30 +49,38 @@ const googleUserPlugin = (app: Elysia) =>
 
                     await prismaClient.users.create({
                         data: {
-                            name: userInfo.names[0].displayName,
-                            email: userInfo.emailAddresses[0].value,
-                            email_verified: userInfo.emailAddresses[0].metadata.verified,
-                            image_uri: userInfo.photos[0].url
-
+                            name: userInfo.name,
+                            email: userInfo.email,
+                            email_verified: userInfo.email_verified,
+                            image_uri: userInfo.picture,
+                            userSocialAccounts: {
+                                create: [
+                                    {
+                                        provider: 'Google',
+                                        provider_id: userInfo.sub,
+                                        access_token: token.accessToken,
+                                        refresh_token: token.refreshToken
+                                    }
+                                ]
+                            }
                         }
                     })
 
-                    if (token.refreshToken) {
-                        userRefreshToken.set({
-                            value: token.refreshToken,
-                            secure: true,
-                            httpOnly: true,
-                            sameSite: 'strict'
-                        })
-                    }
+                    cookie.accessToken.set({
+                        value: token.accessToken,
+                        expires: token.accessTokenExpiresAt,
+                        secure: Bun.env.NODE_ENV === 'production',
+                        httpOnly: Bun.env.NODE_ENV === 'production',
+                        sameSite: Bun.env.NODE_ENV === 'production'
+                    })
 
-                    return redirect(redirectUrl.value || '/')
+                    return { message: 'success' }
                 } catch (err) {
                     if (err instanceof Error) {
                         console.error('Failed to authorize Google:', err.message)
                     }
 
-                    return error(500)
+                    return error('Internal Server Error')
                 }
             })
     )

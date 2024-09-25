@@ -14,6 +14,4 @@ export const homeController = new Elysia({ prefix: '/home' })
         UserSystemSettingsService: new SystemSettingsService()
     })
     .use(authUserPlugin)
-    .get('/data', async ({ HomeService, UserSystemSettingsService, redis, user }) =>
-        HomeService.data(UserSystemSettingsService, redis, user?.id)
-    )
+    .get('/data', ({ HomeService, UserSystemSettingsService, redis, user }) => HomeService.data(UserSystemSettingsService, redis, user?.id))

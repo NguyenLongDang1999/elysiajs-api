@@ -12,8 +12,8 @@ import { JWT } from '@utils/enums'
 
 // ** Plugins Imports
 import { authUserPlugin } from '../plugins/auth'
-import { jwtUserPlugin } from '../plugins/jwt'
 import { googleUserPlugin } from '../plugins/google'
+import { jwtUserPlugin } from '../plugins/jwt'
 
 export const authController = new Elysia({ prefix: '/auth' })
     .decorate({

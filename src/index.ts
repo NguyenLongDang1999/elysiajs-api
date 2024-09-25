@@ -1,8 +1,7 @@
 // ** Elysia Imports
 import { cors } from '@elysiajs/cors'
 import { swagger } from '@elysiajs/swagger'
-import { env } from '@yolk-oss/elysia-env'
-import { Elysia, t } from 'elysia'
+import { Elysia } from 'elysia'
 
 // ** Libs Imports
 import { RedisClient } from '@libs/ioredis'
@@ -16,8 +15,7 @@ const app = new Elysia({ prefix: '/api', normalize: true })
         if (ctx.query.page && ctx.query.pageSize) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            ctx.query.page = ((ctx.query.page - 1) * ctx.query.pageSize).toString()
-            ctx.query.pageSize = ctx.query.pageSize.toString()
+            ctx.query.page = ((ctx.query.page - 1) * ctx.query.pageSize)
         }
     })
     .onAfterHandle(({ request, set }) => {
@@ -29,16 +27,9 @@ const app = new Elysia({ prefix: '/api', normalize: true })
             set.headers['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers') ?? ''
         }
     })
-    .use(
-        env({
-            REDIS_URL: t.String({
-                default: 'redis://localhost:6379'
-            })
-        })
-    )
-    .decorate(({ env }) => ({
-        redis: new RedisClient(env.REDIS_URL)
-    }))
+    .decorate({
+        redis: new RedisClient(Bun.env.REDIS_URL)
+    })
     .use(swagger())
     .use(
         cors({
@@ -50,11 +41,6 @@ const app = new Elysia({ prefix: '/api', normalize: true })
     .use(admin)
     .use(user)
     .get('/', () => 'Hello Elysia')
-    // .post('seed', async ({ AuthService }) => {
-    //     await AuthService.seed()
-
-    //     return { message: 'Successfully!' }
-    // })
     .listen(Bun.env.PORT || 3333)
 
 console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`)
