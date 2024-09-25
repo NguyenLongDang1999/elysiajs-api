@@ -10,9 +10,10 @@ import prismaClient from '@src/database/prisma'
 import { IDeleteWishlistDTO, IWishlistDTO } from './wishlist.type'
 
 // ** Utils Imports
-import { createRedisKey } from '@utils/index'
 import { REDIS_KEY, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
+import { formatSellingPrice } from '@utils/format'
+import { createRedisKey } from '@utils/index'
 
 export class WishlistService {
     async getList(user_id: string) {
@@ -81,24 +82,34 @@ export class WishlistService {
                 }
             })
 
-            return wishlist.map((_wishlist) => ({
-                ..._wishlist,
-                product: {
-                    ..._wishlist.product,
-                    isWishlist: true,
-                    flashDeal: _wishlist.product.flashDealProducts[0]
-                        ? {
-                            ..._wishlist.product.flashDealProducts[0].flashDeal
-                        }
-                        : undefined,
-                    productPrice: {
-                        price: _wishlist.product.price,
-                        special_price: _wishlist.product.special_price,
-                        special_price_type: _wishlist.product.special_price_type
-                    },
-                    flashDealProducts: undefined
+            return wishlist.map((_wishlist) => {
+                const productPrice = {
+                    price: Number(_wishlist.product.price),
+                    special_price: Number(_wishlist.product.special_price),
+                    special_price_type: Number(_wishlist.product.special_price_type)
                 }
-            }))
+
+                return {
+                    ..._wishlist,
+                    product: {
+                        ..._wishlist.product,
+                        ...productPrice,
+                        selling_price: formatSellingPrice(productPrice),
+                        isWishlist: true,
+                        flashDeal: _wishlist.product.flashDealProducts[0]
+                            ? {
+                                ..._wishlist.product.flashDealProducts[0].flashDeal
+                            }
+                            : undefined,
+                        productPrice: {
+                            price: _wishlist.product.price,
+                            special_price: _wishlist.product.special_price,
+                            special_price_type: _wishlist.product.special_price_type
+                        },
+                        flashDealProducts: undefined
+                    }
+                }
+            })
         } catch (error) {
             handleDatabaseError(error)
         }
