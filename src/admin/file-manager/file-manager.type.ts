@@ -12,7 +12,7 @@ export const fileManagerUploadType = t.Object({
 })
 
 export const fileManagerSearchType = t.Object({
-    path: t.String()
+    path: t.Optional(t.String())
 })
 
 // ** Types
