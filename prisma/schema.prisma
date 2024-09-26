@@ -398,3 +398,21 @@ model CartItem {
 
   @@unique([cart_id, product_variant_id])
 }
+
+model ProductCoupon {
+  id                  String   @id @default(cuid())
+  code                String   @unique @db.VarChar
+  description         String?  @db.Text
+  discount_type       Int      @db.SmallInt
+  discount_value      Decimal  @default(0) @db.Decimal(18, 0)
+  start_date          DateTime
+  end_date            DateTime
+  minimum_order_value Decimal  @default(0) @db.Decimal(18, 0)
+  max_uses            Int?     @default(0)
+  times_used          Int?     @default(0)
+  status              Int?     @default(10) @db.SmallInt
+  user_limit          Int?     @default(1)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  deleted_flg         Boolean  @default(false)
+}

@@ -15,6 +15,7 @@ export enum REDIS_KEY {
     PRODUCT_CATEGORY = 'product_category',
     PRODUCT_BRAND = 'product_brand',
     PRODUCT_COLLECTION = 'product_collection',
+    PRODUCT_COUPON = 'product_coupon',
     SYSTEM_SETTINGS = 'system_settings',
 
     // ** USER
