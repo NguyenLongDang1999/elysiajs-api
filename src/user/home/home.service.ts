@@ -2,6 +2,7 @@
 import { RedisClientType } from '@libs/ioredis'
 
 // ** Prisma Imports
+import { Decimal } from '@prisma/client/runtime/library'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
@@ -190,11 +191,33 @@ export class HomeService {
                 wishlistProductIds = new Set(wishlistItems)
             }
 
+            interface ProductVariants {
+                productVariants: {
+                    productVariantAttributeValues: {
+                        productAttributeValues: {
+                            productAttribute: {
+                                id: string;
+                                name: string;
+                            };
+                            id: string;
+                            value: string;
+                        };
+                    }[];
+                    productPrices: {
+                        price: Decimal;
+                        special_price: Decimal | null;
+                        special_price_type: number | null;
+                    }[];
+                    id: string;
+                }[]
+            }
+
             for (const _flashDeal of productFlashDeals?.flashDealProducts || []) {
                 const isWishlist = wishlistProductIds ? wishlistProductIds.has(_flashDeal.product.id) : false
                 const productAttributes: Record<string, IProductAttribute> = {}
+                const product = _flashDeal.product as ProductVariants
 
-                _flashDeal.product.productVariants.forEach(({ productVariantAttributeValues }) => {
+                product.productVariants.forEach(({ productVariantAttributeValues }) => {
                     productVariantAttributeValues.forEach(({ productAttributeValues }) => {
                         const { id: attributeId, name } = productAttributeValues.productAttribute
                         const attributeValue = {
@@ -220,7 +243,7 @@ export class HomeService {
                     })
                 })
 
-                const productVariants = _flashDeal.product.productVariants.map(
+                const productVariants = product.productVariants.map(
                     ({ productPrices, ..._productVariant }) => {
                         const getPrice = productPrices[0]
 

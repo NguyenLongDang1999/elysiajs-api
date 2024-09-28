@@ -9,12 +9,14 @@ import { WishlistService } from './wishlist.service'
 
 // ** Plugins Imports
 import { authUserPlugin } from '../plugins/auth'
+import { redisPlugin } from '../plugins/redis'
 
 export const wishlistController = new Elysia({ prefix: '/wishlist' })
     .decorate({
         UserWishlistService: new WishlistService()
     })
     .use(WishlistModels)
+    .use(redisPlugin)
     .use(authUserPlugin)
     .get('/', ({ UserWishlistService, user, error }) => {
         if (!user || !user.id) throw error('Not Found')

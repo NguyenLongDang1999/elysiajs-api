@@ -6,10 +6,10 @@ import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
-import { createRedisKey, getNormalizedList, getProductOrderBy } from '@utils/index'
 import { REDIS_KEY, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 import { formatSellingPrice } from '@utils/format'
+import { createRedisKey, getNormalizedList, getProductOrderBy } from '@utils/index'
 
 // ** Types Imports
 import { IProductCategoryNestedListDTO, IProductCategorySearchDTO } from './product-category.type'
@@ -161,11 +161,11 @@ export class ProductCategoryService {
                 ...productCategory,
                 aggregations,
                 product,
-                productBrands: productCategory.productCategoryBrand.map((_item) => _item.productBrand),
-                productAttributes: productCategory.productCategoryAttributes.map((_item) => ({
+                productBrands: productCategory.productCategoryBrand.map((_item: any) => _item.productBrand),
+                productAttributes: productCategory.productCategoryAttributes.map((_item: any) => ({
                     id: _item.productAttribute.id,
                     name: _item.productAttribute.name,
-                    product_attribute_values: _item.productAttribute.productAttributeValues.map((_values) => ({
+                    product_attribute_values: _item.productAttribute.productAttributeValues.map((_values: any) => ({
                         id: _values.id,
                         value: _values.value
                     }))
@@ -223,12 +223,12 @@ export class ProductCategoryService {
                 query.productRating.length > 0 && {
                 OR: getNormalizedList(query.productRating as string[])?.map((rate) => ({
                     total_rating:
-                            Number(rate) === 5
-                                ? Number(rate)
-                                : {
-                                    gte: Number(rate),
-                                    lte: Number(rate) + 1
-                                }
+                        Number(rate) === 5
+                            ? Number(rate)
+                            : {
+                                gte: Number(rate),
+                                lte: Number(rate) + 1
+                            }
                 }))
             })
         }

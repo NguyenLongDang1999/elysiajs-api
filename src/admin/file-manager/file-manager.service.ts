@@ -68,8 +68,11 @@ export class FileManagerService {
         }
     }
 
-    private buildPath(...segments: string[]) {
-        return segments.join('/').replace(/,/g, '/')
+    private buildPath(...segments: (string | undefined)[]) {
+        return segments
+            .filter((segment): segment is string => !!segment) // Loại bỏ `undefined`
+            .join('/')
+            .replace(/,/g, '/')
     }
 
     private async getBaseUrl() {

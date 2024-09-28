@@ -18,18 +18,12 @@ export class ProductInventoryService {
                 deleted_flg: false,
                 product: {
                     deleted_flg: false,
+                    sku: { contains: query.sku || undefined, mode: 'insensitive' },
                     name: { contains: query.name || undefined, mode: 'insensitive' },
                     status: { equals: Number(query.status) || undefined },
                     product_type: { equals: Number(query.product_type) || undefined },
                     product_brand_id: { equals: query.product_brand_id || undefined },
-                    product_category_id: { equals: query.product_category_id || undefined },
-                    productVariants: query.sku
-                        ? {
-                            some: {
-                                sku: { contains: query.sku, mode: 'insensitive' }
-                            }
-                        }
-                        : undefined
+                    product_category_id: { equals: query.product_category_id || undefined }
                 }
             }
 
