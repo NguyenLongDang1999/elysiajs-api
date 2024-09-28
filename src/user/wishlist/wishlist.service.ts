@@ -83,10 +83,15 @@ export class WishlistService {
             })
 
             return wishlist.map((_wishlist) => {
+                const flashDeals = _wishlist.product.flashDealProducts[0] ? _wishlist.product.flashDealProducts[0].flashDeal : undefined
+
                 const productPrice = {
                     price: Number(_wishlist.product.price),
                     special_price: Number(_wishlist.product.special_price),
-                    special_price_type: Number(_wishlist.product.special_price_type)
+                    special_price_type: Number(_wishlist.product.special_price_type),
+                    hasDiscount: !!flashDeals,
+                    discounted_price: !!flashDeals ? Number(flashDeals.discounted_price) : 0,
+                    discounted_price_type: !!flashDeals ? Number(flashDeals.discounted_price_type) : 0
                 }
 
                 return {

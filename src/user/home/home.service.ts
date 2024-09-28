@@ -446,10 +446,15 @@ export class HomeService {
                         product: await Promise.all(
                             _pcd.productCollectionProduct.map(async (_p: any) => {
                                 const isWishlist = wishlistProductIds ? wishlistProductIds.has(_p.product.id) : false
+                                const flashDeals = _p.product.flashDealProducts[0] ? _p.product.flashDealProducts[0].flashDeal : undefined
+
                                 const productPrice = {
                                     price: Number(_p.product.price),
                                     special_price: Number(_p.product.special_price),
-                                    special_price_type: Number(_p.product.special_price_type)
+                                    special_price_type: Number(_p.product.special_price_type),
+                                    hasDiscount: !!flashDeals,
+                                    discounted_price: !!flashDeals ? Number(flashDeals.discounted_price) : 0,
+                                    discounted_price_type: !!flashDeals ? Number(flashDeals.discounted_price_type) : 0
                                 }
 
                                 return {
@@ -457,11 +462,7 @@ export class HomeService {
                                     ...productPrice,
                                     selling_price: formatSellingPrice(productPrice),
                                     isWishlist,
-                                    flashDeal: _p.product.flashDealProducts[0]
-                                        ? {
-                                            ..._p.product.flashDealProducts[0].flashDeal
-                                        }
-                                        : undefined,
+                                    flashDeal: flashDeals,
                                     product_variant_id: _p.product.productVariants
                                         ? _p.product.productVariants[0].id
                                         : undefined,
