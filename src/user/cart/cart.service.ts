@@ -13,6 +13,7 @@ import { ICartDeleteDTO, ICartDTO, ICartUpdateDTO } from './cart.type'
 // ** Utils Imports
 import { JWT, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
+import { formatSellingPrice } from '@utils/format'
 
 export class CartService {
     async getDataList(cookie: Record<string, Cookie<any>>, user_id?: string) {
@@ -116,13 +117,18 @@ export class CartService {
 
                 const cartItem = product?.cartItem.map((_c) => {
                     const { productVariants } = _c
-                    const { productVariantAttributeValues, productPrices } = productVariants
+                    const { productVariantAttributeValues, productPrices, product } = productVariants
                     const { price, special_price, special_price_type } = productPrices[0]
 
+                    const flashDeals = product.flashDealProducts[0] ? product.flashDealProducts[0].flashDeal : undefined
+
                     const productPrice = {
-                        price,
-                        special_price,
-                        special_price_type
+                        price: Number(price),
+                        special_price: Number(special_price),
+                        special_price_type: Number(special_price_type),
+                        hasDiscount: !!flashDeals,
+                        discounted_price: !!flashDeals ? Number(flashDeals.discounted_price) : 0,
+                        discounted_price_type: !!flashDeals ? Number(flashDeals.discounted_price_type) : 0
                     }
 
                     const cartItemProductAttribute = productVariantAttributeValues
@@ -136,7 +142,8 @@ export class CartService {
                         ..._c,
                         product: {
                             ...productVariants.product,
-                            ...productPrice
+                            ...productPrice,
+                            selling_price: formatSellingPrice(productPrice)
                         },
                         cartItemProductAttribute
                     }
