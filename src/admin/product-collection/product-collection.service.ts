@@ -10,9 +10,9 @@ import { IDeleteDTO } from '@src/types/core.type'
 import { IProductCollectionDTO, IProductCollectionSearchDTO } from './product-collection.type'
 
 // ** Utils Imports
-import { createRedisKey, slugTimestamp } from '@utils/index'
-import { EXPIRES_AT, REDIS_KEY, STATUS } from '@utils/enums'
+import { REDIS_KEY, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
+import { createRedisKey, slugTimestamp } from '@utils/index'
 
 export class ProductCollectionService {
     async getTableList(query: IProductCollectionSearchDTO) {
@@ -177,8 +177,7 @@ export class ProductCollectionService {
 
             await redis.set(
                 createRedisKey(REDIS_KEY.PRODUCT_COLLECTION, id),
-                JSON.stringify(productCollection),
-                EXPIRES_AT.REDIS_EXPIRES_AT
+                JSON.stringify(productCollection)
             )
 
             return productCollection
@@ -257,8 +256,7 @@ export class ProductCollectionService {
 
             await redis.set(
                 createRedisKey(REDIS_KEY.PRODUCT_COLLECTION, 'list'),
-                JSON.stringify(productCollection),
-                EXPIRES_AT.REDIS_EXPIRES_AT
+                JSON.stringify(productCollection)
             )
 
             return productCollection

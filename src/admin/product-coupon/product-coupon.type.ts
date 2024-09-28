@@ -10,7 +10,6 @@ import { SPECIAL_PRICE_TYPE } from '@utils/enums'
 // ** Types Definition
 export const productCouponType = t.Object({
     code: t.String({ minLength: 1 }),
-    slug: t.String({ minLength: 1 }),
     description: t.Optional(t.String()),
     discount_value: t.Number({ default: 0 }),
     discount_type: t.Number({ default: SPECIAL_PRICE_TYPE.PRICE }),

@@ -8,6 +8,7 @@ import { productAttributeController } from './product-attribute/product-attribut
 import { productBrandController } from './product-brand/product-brand.controller'
 import { productCategoryController } from './product-category/product-category.controller'
 import { productCollectionController } from './product-collection/product-collection.controller'
+import { productCouponController } from './product-coupon/product-coupon.controller'
 import { productFlashDealsController } from './product-flash-deals/product-flash-deals.controller'
 import { productInventoryController } from './product-inventory/product-inventory.controller'
 import { productController } from './product/product.controller'
@@ -24,6 +25,7 @@ export const admin = new Elysia({ prefix: '/admin' })
     .use(productCollectionController)
     .use(productFlashDealsController)
     .use(productInventoryController)
+    .use(productCouponController)
     .use(productController)
     .use(fileManagerController)
     .use(systemSettingsController)
