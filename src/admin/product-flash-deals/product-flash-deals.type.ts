@@ -1,5 +1,4 @@
 // ** Elysia Imports
-import { StaticDecode } from '@sinclair/typebox'
 import { Static, t } from 'elysia'
 
 // ** Types Imports
@@ -32,4 +31,4 @@ export const productFlashDealsSearchType = t.Object({
 // ** Types
 export type IProductFlashDealsDTO = Static<typeof productFlashDealsType>
 
-export type IProductFlashDealsSearchDTO = StaticDecode<typeof productFlashDealsSearchType>
+export type IProductFlashDealsSearchDTO = Static<typeof productFlashDealsSearchType>
