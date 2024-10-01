@@ -4,8 +4,8 @@ import { swagger } from '@elysiajs/swagger'
 import { Elysia } from 'elysia'
 
 // ** Router Imports
-import { admin } from './admin'
-import { user } from './user'
+import { admin } from './admin/admin'
+import { user } from './user/user'
 
 const app = new Elysia({ prefix: '/api', normalize: true })
     .derive((ctx) => {
