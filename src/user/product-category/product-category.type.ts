@@ -13,7 +13,7 @@ export const productCategory = {
 
 export const productCategoryNestedList = t.Object({
     ...productCategory,
-    children: t.Array(t.Object(productCategory))
+    children: t.Optional(t.Array(t.Object(productCategory)))
 })
 
 export const sortType = t.Union([

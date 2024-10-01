@@ -1,6 +1,9 @@
 // ** Elysia Imports
 import { RedisClientType } from '@libs/ioredis'
 
+// ** Service Imports
+import { ProductCategoryService } from '../product-category/product-category.service'
+
 // ** Prisma Imports
 import prismaClient from '@src/database/prisma'
 
@@ -8,13 +11,14 @@ import prismaClient from '@src/database/prisma'
 import { REDIS_KEY, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 import { formatSellingPrice, type ProductPrice } from '@utils/format'
-import { createRedisKey } from '@utils/index'
+import { createRedisKey, flattenCategories, getBreadcrumbs } from '@utils/index'
 
 // ** Types Imports
 import { IProductAttribute } from '../home/home.type'
+import { IProductCategoryNestedListDTO } from '../product-category/product-category.type'
 
 export class ProductService {
-    async retrieve(slug: string, redis: RedisClientType, user_id?: string) {
+    async retrieve(UserProductCategoryService: ProductCategoryService, slug: string, redis: RedisClientType, user_id?: string) {
         try {
             const product = await prismaClient.product.findFirstOrThrow({
                 where: {
@@ -30,6 +34,7 @@ export class ProductService {
                     id: true,
                     sku: true,
                     name: true,
+                    slug: true,
                     image_uri: true,
                     technical_specifications: true,
                     short_description: true,
@@ -203,8 +208,14 @@ export class ProductService {
                 }
             })
 
-            const formattedProduct = {
+            const productCategoryList = await UserProductCategoryService.getNestedList(redis)
+            const categoryMap: { [key: string]: IProductCategoryNestedListDTO | null } = {}
+
+            flattenCategories(productCategoryList, categoryMap)
+
+            return {
                 ...product,
+                breadcrumb: getBreadcrumbs(categoryMap, product.productCategory.id),
                 isWishlist: wishlistProductIds ? wishlistProductIds.has(product.id) : false,
                 flashDeal: flashDeal
                     ? {
@@ -215,8 +226,6 @@ export class ProductService {
                 productVariants,
                 flashDealProducts: undefined
             }
-
-            return formattedProduct
         } catch (error) {
             handleDatabaseError(error)
         }

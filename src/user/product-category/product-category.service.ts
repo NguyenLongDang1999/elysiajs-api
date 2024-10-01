@@ -9,7 +9,7 @@ import prismaClient from '@src/database/prisma'
 import { REDIS_KEY, STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 import { formatSellingPrice } from '@utils/format'
-import { createRedisKey, getNormalizedList, getProductOrderBy } from '@utils/index'
+import { createRedisKey, flattenCategories, getBreadcrumbs, getNormalizedList, getProductOrderBy } from '@utils/index'
 
 // ** Types Imports
 import { IProductCategoryNestedListDTO, IProductCategorySearchDTO } from './product-category.type'
@@ -157,10 +157,16 @@ export class ProductCategoryService {
                 user_id
             )
 
-            const formattedProductCategory = {
+            const productCategoryList = await this.getNestedList(redis)
+            const categoryMap: { [key: string]: IProductCategoryNestedListDTO | null } = {}
+
+            flattenCategories(productCategoryList, categoryMap)
+
+            return {
                 ...productCategory,
                 aggregations,
                 product,
+                breadcrumb: getBreadcrumbs(categoryMap, productCategory.id),
                 productBrands: productCategory.productCategoryBrand.map((_item: any) => _item.productBrand),
                 productAttributes: productCategory.productCategoryAttributes.map((_item: any) => ({
                     id: _item.productAttribute.id,
@@ -171,8 +177,6 @@ export class ProductCategoryService {
                     }))
                 }))
             }
-
-            return formattedProductCategory
         } catch (error) {
             handleDatabaseError(error)
         }
