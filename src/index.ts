@@ -1,5 +1,5 @@
 // ** Elysia Imports
-import { cors } from '@elysiajs/cors'
+// import { cors } from '@elysiajs/cors'
 import { swagger } from '@elysiajs/swagger'
 import { Elysia } from 'elysia'
 
@@ -25,13 +25,13 @@ const app = new Elysia({ prefix: '/api', normalize: true })
         }
     })
     .use(swagger())
-    .use(
-        cors({
-            credentials: true,
-            origin: [Bun.env.CMS_URL as string, Bun.env.USER_URL as string],
-            allowedHeaders: ['Content-Type', 'Authorization']
-        })
-    )
+    // .use(
+    //     cors({
+    //         credentials: true,
+    //         origin: [Bun.env.CMS_URL as string, Bun.env.USER_URL as string],
+    //         allowedHeaders: ['Content-Type', 'Authorization']
+    //     })
+    // )
     .use(admin)
     .use(user)
     .get('/', () => 'Hello Elysia')
