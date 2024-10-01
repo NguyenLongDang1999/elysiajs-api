@@ -1,6 +1,7 @@
 export default {
     entries: ['./src/index'],
     externals: [
+        '@utils/index',
         '@utils/enums',
         '@utils/error-handling',
         '@utils/format',
