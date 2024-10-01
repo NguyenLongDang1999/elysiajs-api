@@ -7,7 +7,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "bun run --watch src/index.ts",
-        "build": "unbuild",
+        "build": "bun _build.ts",
         "start": "bun run dist/index.js",
         "format": "prettier --write \"src/**/*.ts\"",
         "lint": "eslint \"src/**/*.ts\" --fix"
@@ -32,6 +32,7 @@
         "@types/nodemailer": "^6.4.15",
         "@typescript-eslint/eslint-plugin": "^6.21.0",
         "@typescript-eslint/parser": "^6.21.0",
+        "bun-plugin-dts": "^0.2.3",
         "bun-types": "latest",
         "eslint": "^8.57.0",
         "eslint-config-prettier": "^9.1.0",
@@ -42,13 +43,6 @@
     "files": [
         "dist"
     ],
-    "type": "module",
-    "exports": {
-        ".": {
-            "require": "./dist/index.cjs",
-            "import": "./dist/index.mjs"
-        }
-    },
-    "main": "./dist/index.cjs",
-    "module": "./dist/index.mjs"
+    "main": "dist/index.js",
+	"types": "dist/index.d.ts"
 }
