@@ -1,5 +1,5 @@
 import { treaty } from '@elysiajs/eden'
-import { afterEach, describe, expect, it } from 'bun:test'
+import { describe, expect, it } from 'bun:test'
 import { productCategoryController } from './product-category.controller'
 
 const app = treaty<typeof productCategoryController>('localhost:3333/api/admin')
@@ -18,19 +18,6 @@ const mockProductCategory = {
 }
 
 describe('ProductCategoryService', () => {
-    afterEach(async () => {
-        await app['product-categories:id'].delete(
-            {
-                slug: 'electronics-1'
-            },
-            {
-                query: {
-                    slug: 'electronics-1'
-                }
-            }
-        )
-    })
-
     it('should create a new ProductCategory', async () => {
         const { data, error, status } = await app['product-categories'].index.post(mockProductCategory)
 
