@@ -8,7 +8,7 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "bun run --watch src/index.ts",
         "build": "tsup src/index.ts",
-        "start": "bun run dist/index.js",
+        "start": "bun run build && bun src/index.ts",
         "format": "prettier --write \"src/**/*.ts\"",
         "lint": "eslint \"src/**/*.ts\" --fix"
     },
@@ -40,11 +40,5 @@
         "tsup": "^8.3.0"
     },
     "type": "module",
-    "module": "dist/index.mjs",
-    "files": [
-        "dist",
-        "src"
-    ],
-    "main": "./dist/index.js",
-    "typings": "dist/index.d.ts"
+    "module": "src/index.ts"
 }
