@@ -14,6 +14,7 @@ services:
         depends_on:
             - db
             - redis
+            - redis_insight
         env_file:
             - .env
         volumes:
@@ -44,6 +45,15 @@ services:
             - ${REDIS_PORT}:${REDIS_PORT}
         networks:
             - elysia_network
+
+    redis_insight:
+        image: 'redislabs/redisinsight'
+        ports:
+            - '${REDIS_INSIGHT_PORT:-5540}:${REDIS_INSIGHT_PORT:-5540}'
+        networks:
+            - elysia_network
+        depends_on:
+            - redis
 
 volumes:
     pgdata:
