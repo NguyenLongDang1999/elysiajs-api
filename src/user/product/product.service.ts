@@ -1,8 +1,5 @@
 // ** Elysia Imports
-import { RedisClientType } from '@libs/ioredis'
-
-// ** Service Imports
-import { ProductCategoryService } from '../product-category/product-category.service'
+import { Elysia } from 'elysia'
 
 // ** Prisma Imports
 import prismaClient from '@src/database/prisma'
@@ -23,21 +20,28 @@ import {
     getBreadcrumbs
 } from '@utils/index'
 
+// ** Class Imports
+import { UserProductCategoryClass } from '../product-category/product-category.class'
+
+// ** Plugins Imports
+import { redisPlugin } from '@src/plugins/redis'
+import { authUserPlugin } from '../plugins/auth'
+
 // ** Types Imports
 import { IProductAttribute } from '../home/home.type'
 import { IProductCategoryNestedListDTO } from '../product-category/product-category.type'
 
-export class ProductService {
-    async retrieve(
-        UserProductCategoryService: ProductCategoryService,
-        slug: string,
-        redis: RedisClientType,
-        user_id?: string
-    ) {
+export const productCategoryRetrieve = new Elysia()
+    .decorate({
+        UserProductCategoryClass: new UserProductCategoryClass()
+    })
+    .use(redisPlugin)
+    .use(authUserPlugin)
+    .get('/:slug', async ({ UserProductCategoryClass, params, redis, user }) => {
         try {
             const product = await prismaClient.product.findFirstOrThrow({
                 where: {
-                    slug,
+                    slug: params.slug,
                     deleted_flg: false,
                     status: STATUS.ACTIVE,
                     productCategory: {
@@ -176,19 +180,19 @@ export class ProductService {
             let wishlistProductIds: Set<string> = new Set()
             let wishlistItems: string[] = []
 
-            if (user_id) {
-                wishlistItems = await redis.smembers(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id))
+            if (user?.id) {
+                wishlistItems = await redis.smembers(createRedisKey(REDIS_KEY.USER_WISHLIST, user.id))
 
                 if (!wishlistItems || wishlistItems.length === 0) {
                     const productWishlist = await prismaClient.wishlist.findMany({
-                        where: { user_id },
+                        where: { user_id: user?.id },
                         select: { product_id: true }
                     })
 
                     wishlistItems = productWishlist.map((_product) => _product.product_id)
 
                     if (wishlistItems.length > 0) {
-                        await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id), wishlistItems)
+                        await redis.sadd(createRedisKey(REDIS_KEY.USER_WISHLIST, user.id), wishlistItems)
                     }
                 }
 
@@ -223,7 +227,7 @@ export class ProductService {
                 }
             })
 
-            const productCategoryList = await UserProductCategoryService.getNestedList(redis)
+            const productCategoryList = await UserProductCategoryClass.getNestedList(redis)
             const categoryMap: { [key: string]: IProductCategoryNestedListDTO | null } = {}
 
             flattenCategories(productCategoryList, categoryMap)
@@ -244,5 +248,4 @@ export class ProductService {
         } catch (error) {
             handleDatabaseError(error)
         }
-    }
-}
+    })

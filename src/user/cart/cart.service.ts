@@ -1,18 +1,11 @@
 // ** Elysia Imports
-import { Cookie } from 'elysia'
+import { Elysia } from 'elysia'
 
 // ** Third Party Imports
 import { createId } from '@paralleldrive/cuid2'
 
 // ** Prisma Imports
 import prismaClient from '@src/database/prisma'
-
-// ** Types Imports
-import {
-    ICartDeleteDTO,
-    ICartDTO,
-    ICartUpdateDTO
-} from './cart.type'
 
 // ** Utils Imports
 import {
@@ -22,8 +15,18 @@ import {
 import { handleDatabaseError } from '@utils/error-handling'
 import { formatSellingPrice } from '@utils/format'
 
-export class CartService {
-    async getDataList(cookie: Record<string, Cookie<any>>, user_id?: string) {
+// ** Models Imports
+import { CartModels } from './cart.model'
+
+// ** Class Imports
+import { UserCartClass } from './cart.class'
+
+// ** Plugins Imports
+import { authUserPlugin } from '../plugins/auth'
+
+export const cartDataList = new Elysia()
+    .use(authUserPlugin)
+    .get('/data-list', async ({ cookie }) => {
         try {
             const session_id = cookie.session_id.value
 
@@ -166,9 +169,15 @@ export class CartService {
         } catch (error) {
             handleDatabaseError(error)
         }
-    }
+    })
 
-    async create(cookie: Record<string, Cookie<any>>, data: ICartDTO, user_id?: string) {
+export const cartCreate = new Elysia()
+    .decorate({
+        UserCartClass: new UserCartClass()
+    })
+    .use(authUserPlugin)
+    .use(CartModels)
+    .post('/', async ({ UserCartClass, user, body, cookie }) => {
         try {
             const session_id = cookie.session_id.value
             let session_id_value = session_id
@@ -186,24 +195,24 @@ export class CartService {
             }
 
             return await prismaClient.$transaction(async (prisma) => {
-                const cart = await this.getOrCreateCart(prisma, user_id, session_id_value)
+                const cart = await UserCartClass.getOrCreateCart(prisma, user?.id, session_id_value)
 
                 await prisma.cartItem.upsert({
                     where: {
                         cart_id_product_variant_id: {
                             cart_id: cart.id,
-                            product_variant_id: data.product_variant_id
+                            product_variant_id: body.product_variant_id
                         }
                     },
                     update: {
                         quantity: {
-                            increment: data.quantity
+                            increment: body.quantity
                         }
                     },
                     create: {
                         cart_id: cart.id,
-                        product_variant_id: data.product_variant_id,
-                        quantity: data.quantity
+                        product_variant_id: body.product_variant_id,
+                        quantity: body.quantity
                     },
                     select: { id: true }
                 })
@@ -213,12 +222,20 @@ export class CartService {
         } catch (error) {
             handleDatabaseError(error)
         }
-    }
+    }, {
+        body: 'cart'
+    })
 
-    async update(updateCartDto: ICartUpdateDTO) {
+export const cartUpdate = new Elysia()
+    .decorate({
+        UserCartClass: new UserCartClass()
+    })
+    .use(authUserPlugin)
+    .use(CartModels)
+    .patch('/', async ({ body }) => {
         try {
             return await prismaClient.$transaction(async (prisma) => {
-                for (const _data of updateCartDto.updatedData) {
+                for (const _data of body.updatedData) {
                     await prisma.cartItem.update({
                         where: {
                             id: _data.cart_item_id
@@ -234,40 +251,31 @@ export class CartService {
         } catch (error) {
             handleDatabaseError(error)
         }
-    }
+    }, {
+        body: 'cartUpdate'
+    })
 
-    async delete(id: string, query: ICartDeleteDTO) {
+export const cartDelete = new Elysia()
+    .decorate({
+        UserCartClass: new UserCartClass()
+    })
+    .use(authUserPlugin)
+    .use(CartModels)
+    .delete('/:id', async ({ params, query }) => {
         try {
             if (query.force) {
                 return await prismaClient.carts.delete({
-                    where: { id }
+                    where: { id: params.id }
                 })
             }
 
             return await prismaClient.cartItem.delete({
-                where: { id }
+                where: { id: params.id }
             })
         } catch (error) {
             handleDatabaseError(error)
         }
-    }
+    }, {
+        body: 'cartDelete'
+    })
 
-    private async getOrCreateCart(prisma: any, user_id?: string, session_id?: string) {
-        const cart = session_id
-            ? await prisma.carts.findFirst({
-                where: { session_id },
-                select: { id: true, session_id: true }
-            })
-            : null
-
-        if (cart) return cart
-
-        return prisma.carts.create({
-            data: {
-                user_id: session_id ? null : user_id,
-                session_id: session_id || undefined
-            },
-            select: { id: true, session_id: true }
-        })
-    }
-}

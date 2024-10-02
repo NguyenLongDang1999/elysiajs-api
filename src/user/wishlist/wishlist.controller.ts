@@ -8,8 +8,8 @@ import { WishlistModels } from './wishlist.model'
 import { WishlistService } from './wishlist.service'
 
 // ** Plugins Imports
+import { redisPlugin } from '@src/plugins/redis'
 import { authUserPlugin } from '../plugins/auth'
-import { redisPlugin } from '../plugins/redis'
 
 export const wishlistController = new Elysia({ prefix: '/wishlist' })
     .decorate({

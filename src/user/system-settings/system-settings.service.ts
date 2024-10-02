@@ -1,54 +1,31 @@
 // ** Elysia Imports
-import { RedisClientType } from '@libs/ioredis'
-
-// ** Prisma Imports
-import prismaClient from '@src/database/prisma'
-
-// ** Types Imports
-import { ISystemSettingsSearchDTO } from './system-settings.type'
+import { Elysia } from 'elysia'
 
 // ** Utils Imports
-import { createRedisKey } from '@utils/index'
-import { REDIS_KEY } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
-export class SystemSettingsService {
-    async getDataList(query: ISystemSettingsSearchDTO, redis: RedisClientType) {
+// ** Models Imports
+import { UserSystemSettingsClass } from './system-settings.class'
+
+// ** Plugins Imports
+import { redisPlugin } from '@src/plugins/redis'
+
+export const systemSettingDataList = new Elysia()
+    .decorate({
+        UserSystemSettingsClass: new UserSystemSettingsClass()
+    })
+    .use(redisPlugin)
+    .get('/', async ({ UserSystemSettingsClass, redis, query }) => UserSystemSettingsClass.getDataList(query, redis))
+
+export const systemSettingMetadata = new Elysia()
+    .decorate({
+        UserSystemSettingsClass: new UserSystemSettingsClass()
+    })
+    .use(redisPlugin)
+    .get('/metadata', async ({ UserSystemSettingsClass, redis }) => {
         try {
-            const systemSettingsCached = await redis.get(createRedisKey(REDIS_KEY.USER_SYSTEM_SETTINGS, query.key))
+            const systemSettings = await UserSystemSettingsClass.getDataList({ key: 'system_' }, redis)
 
-            if (systemSettingsCached) {
-                return JSON.parse(systemSettingsCached)
-            }
-
-            const systemSettingsData = await prismaClient.systemSettings.findMany({
-                orderBy: { created_at: 'desc' },
-                where: {
-                    deleted_flg: false,
-                    key: {
-                        startsWith: query.key
-                    }
-                },
-                select: {
-                    key: true,
-                    value: true
-                }
-            })
-
-            await redis.set(
-                createRedisKey(REDIS_KEY.USER_SYSTEM_SETTINGS, query.key),
-                JSON.stringify(systemSettingsData)
-            )
-
-            return systemSettingsData
-        } catch (error) {
-            handleDatabaseError(error)
-        }
-    }
-
-    async metadata(redis: RedisClientType) {
-        try {
-            const systemSettings = await this.getDataList({ key: 'system_' }, redis)
             const theme_colour = systemSettings.find((_s: { key: string }) => _s.key === 'system_theme_colour')
 
             return {
@@ -58,5 +35,4 @@ export class SystemSettingsService {
         } catch (error) {
             handleDatabaseError(error)
         }
-    }
-}
+    })
