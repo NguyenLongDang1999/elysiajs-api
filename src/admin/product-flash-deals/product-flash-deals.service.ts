@@ -17,8 +17,8 @@ export const productFlashDealsTableList = new Elysia().use(productFlashDealsMode
     '/',
     async ({ query }) => {
         try {
-            const take = Number(query.pageSize) || undefined
-            const skip = Number(query.page) || undefined
+            const take = query.pageSize || undefined
+            const skip = query.page || undefined
 
             const search: Prisma.FlashDealsWhereInput = {
                 deleted_flg: false,
@@ -27,7 +27,7 @@ export const productFlashDealsTableList = new Elysia().use(productFlashDealsMode
                     mode: 'insensitive'
                 },
                 status: {
-                    equals: Number(query.status) || undefined
+                    equals: query.status || undefined
                 }
             }
 
