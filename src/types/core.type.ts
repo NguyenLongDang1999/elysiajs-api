@@ -16,10 +16,6 @@ export const paginationType = {
         .Encode((value) => value)
 }
 
-export const paginationObjectType = t.Object({
-    ...paginationType
-})
-
 export const deleteType = t.Object({
     force: t.Optional(t.String()),
     slug: t.Optional(t.String())
