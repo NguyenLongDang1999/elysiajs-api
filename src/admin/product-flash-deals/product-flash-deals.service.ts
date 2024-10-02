@@ -6,9 +6,9 @@ import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
+import { slugTimestamp } from '@src/utils'
 import { STATUS } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
-import { slugTimestamp } from '@utils/index'
 
 // ** Models Imports
 import { productFlashDealsModels } from './product-flash-deals.model'

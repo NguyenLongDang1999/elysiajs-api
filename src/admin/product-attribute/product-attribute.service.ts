@@ -6,8 +6,8 @@ import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
+import { slugTimestamp } from '@src/utils'
 import { handleDatabaseError } from '@utils/error-handling'
-import { slugTimestamp } from '@utils/index'
 
 // ** Models Imports
 import { productAttributeModels } from './product-attribute.model'

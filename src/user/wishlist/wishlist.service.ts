@@ -13,13 +13,13 @@ import {
 } from './wishlist.type'
 
 // ** Utils Imports
+import { createRedisKey } from '@src/utils'
 import {
     REDIS_KEY,
     STATUS
 } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 import { formatSellingPrice } from '@utils/format'
-import { createRedisKey } from '@utils/index'
 
 export class WishlistService {
     async getList(user_id: string) {

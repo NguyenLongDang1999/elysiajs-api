@@ -5,9 +5,9 @@ import { Elysia } from 'elysia'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
+import { createRedisKey } from '@src/utils'
 import { REDIS_KEY } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
-import { createRedisKey } from '@utils/index'
 
 // ** Models Imports
 import { systemSettingsModels } from './system-settings.model'

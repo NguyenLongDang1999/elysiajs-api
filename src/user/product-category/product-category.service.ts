@@ -6,15 +6,15 @@ import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
 import {
+    createRedisKey,
+    flattenCategories,
+    getBreadcrumbs
+} from '@src/utils'
+import {
     REDIS_KEY,
     STATUS
 } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
-import {
-    createRedisKey,
-    flattenCategories,
-    getBreadcrumbs
-} from '@utils/index'
 
 // ** Class Imports
 import { UserProductCategoryClass } from './product-category.class'

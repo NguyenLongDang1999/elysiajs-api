@@ -6,12 +6,12 @@ import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
-import { REDIS_KEY } from '@utils/enums'
-import { handleDatabaseError } from '@utils/error-handling'
 import {
     createRedisKey,
     slugTimestamp
-} from '@utils/index'
+} from '@src/utils'
+import { REDIS_KEY } from '@utils/enums'
+import { handleDatabaseError } from '@utils/error-handling'
 
 // ** Models Imports
 import { productBrandModels } from './product-brand.model'

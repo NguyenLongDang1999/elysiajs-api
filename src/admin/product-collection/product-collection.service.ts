@@ -7,14 +7,14 @@ import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
 import {
+    createRedisKey,
+    slugTimestamp
+} from '@src/utils'
+import {
     REDIS_KEY,
     STATUS
 } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
-import {
-    createRedisKey,
-    slugTimestamp
-} from '@utils/index'
 
 // ** Models Imports
 import { productCollectionModels } from './product-collection.model'

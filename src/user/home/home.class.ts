@@ -6,6 +6,7 @@ import { Decimal } from '@prisma/client/runtime/library'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
+import { createRedisKey } from '@src/utils'
 import {
     REDIS_KEY,
     STATUS
@@ -15,7 +16,6 @@ import {
     formatSellingPrice,
     type ProductPrice
 } from '@utils/format'
-import { createRedisKey } from '@utils/index'
 
 // ** Types Imports
 import {

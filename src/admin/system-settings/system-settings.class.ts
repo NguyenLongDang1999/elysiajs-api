@@ -8,9 +8,9 @@ import prismaClient from '@src/database/prisma'
 import { ISystemSettingsSearchDTO } from './system-settings.type'
 
 // ** Utils Imports
+import { createRedisKey } from '@src/utils'
 import { REDIS_KEY } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
-import { createRedisKey } from '@utils/index'
 
 export class SystemSettingsClass {
     async getDataList(query: ISystemSettingsSearchDTO, redis: RedisClientType) {
