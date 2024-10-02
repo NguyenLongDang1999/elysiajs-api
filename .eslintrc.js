@@ -5,7 +5,7 @@ module.exports = {
     tsconfigRootDir: __dirname,
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint/eslint-plugin'],
+  plugins: ['@typescript-eslint/eslint-plugin', 'import-newlines'],
   extends: [
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
@@ -24,6 +24,11 @@ module.exports = {
       'useTabs': false,
       'tabWidth': 4,
       'trailingComma': 'none'
+    }],
+    'import-newlines/enforce': ['error', {
+      "items": 1,
+      "max-len": 100,
+      "semi": false
     }],
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',

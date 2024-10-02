@@ -5,9 +5,8 @@ import { Elysia } from 'elysia'
 import { RedisClient } from '@libs/ioredis'
 
 const redisPlugin = (app: Elysia) =>
-    app
-        .decorate({
-            adminRedis: new RedisClient(Bun.env.REDIS_URL)
-        })
+    app.decorate({
+        redis: new RedisClient(Bun.env.REDIS_URL)
+    })
 
 export { redisPlugin }

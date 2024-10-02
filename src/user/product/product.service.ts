@@ -8,17 +8,32 @@ import { ProductCategoryService } from '../product-category/product-category.ser
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
-import { REDIS_KEY, STATUS } from '@utils/enums'
+import {
+    REDIS_KEY,
+    STATUS
+} from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
-import { formatSellingPrice, type ProductPrice } from '@utils/format'
-import { createRedisKey, flattenCategories, getBreadcrumbs } from '@utils/index'
+import {
+    formatSellingPrice,
+    type ProductPrice
+} from '@utils/format'
+import {
+    createRedisKey,
+    flattenCategories,
+    getBreadcrumbs
+} from '@utils/index'
 
 // ** Types Imports
 import { IProductAttribute } from '../home/home.type'
 import { IProductCategoryNestedListDTO } from '../product-category/product-category.type'
 
 export class ProductService {
-    async retrieve(UserProductCategoryService: ProductCategoryService, slug: string, redis: RedisClientType, user_id?: string) {
+    async retrieve(
+        UserProductCategoryService: ProductCategoryService,
+        slug: string,
+        redis: RedisClientType,
+        user_id?: string
+    ) {
         try {
             const product = await prismaClient.product.findFirstOrThrow({
                 where: {

@@ -40,7 +40,11 @@ export class AuthService {
 
         if (!user) throw error('Not Found')
 
-        const passwordMatches = await Bun.password.verify(data.password, user.password as string, HASH_PASSWORD.ALGORITHM)
+        const passwordMatches = await Bun.password.verify(
+            data.password,
+            user.password as string,
+            HASH_PASSWORD.ALGORITHM
+        )
 
         if (!passwordMatches) throw error('Bad Request')
 

@@ -1,18 +1,22 @@
+// ** Elysia Imports
+import { Elysia } from 'elysia'
+
 // ** Prisma Imports
 import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
-// ** Types Imports
-import { IProductInventoryDTO, IProductInventorySearchDTO } from './product-inventory.type'
-
 // ** Utils Imports
 import { handleDatabaseError } from '@utils/error-handling'
 
-export class ProductInventoryService {
-    async getTableList(query: IProductInventorySearchDTO) {
+// ** Models Imports
+import { productInventoryModels } from './product-inventory.model'
+
+export const productInventoryTableList = new Elysia().use(productInventoryModels).get(
+    '/',
+    async ({ query }) => {
         try {
-            const take = Number(query.pageSize) || undefined
-            const skip = Number(query.page) || undefined
+            const take = query.pageSize || undefined
+            const skip = query.page || undefined
 
             const search: Prisma.ProductVariantsWhereInput = {
                 deleted_flg: false,
@@ -20,8 +24,8 @@ export class ProductInventoryService {
                     deleted_flg: false,
                     sku: { contains: query.sku || undefined, mode: 'insensitive' },
                     name: { contains: query.name || undefined, mode: 'insensitive' },
-                    status: { equals: Number(query.status) || undefined },
-                    product_type: { equals: Number(query.product_type) || undefined },
+                    status: { equals: query.status || undefined },
+                    product_type: { equals: query.product_type || undefined },
                     product_brand_id: { equals: query.product_brand_id || undefined },
                     product_category_id: { equals: query.product_category_id || undefined }
                 }
@@ -68,12 +72,18 @@ export class ProductInventoryService {
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        query: 'productInventorySearch'
     }
+)
 
-    async create(data: IProductInventoryDTO) {
+export const productInventoryCreate = new Elysia().use(productInventoryModels).post(
+    '/',
+    async ({ body }) => {
         try {
             return await prismaClient.productInventory.create({
-                data,
+                data: body,
                 select: {
                     id: true
                 }
@@ -81,5 +91,8 @@ export class ProductInventoryService {
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        body: 'productInventory'
     }
-}
+)

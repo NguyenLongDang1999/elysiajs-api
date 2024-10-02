@@ -1,21 +1,30 @@
 // ** Elysia Imports
-import { RedisClientType } from '@libs/ioredis'
+import { Elysia } from 'elysia'
 
 // ** Prisma Imports
 import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
-// ** Types Imports
-import { IDeleteDTO } from '@src/types/core.type'
-import { IProductCategoryDTO, IProductCategorySearchDTO } from './product-category.type'
-
 // ** Utils Imports
-import { createRedisKey, slugTimestamp } from '@utils/index'
 import { REDIS_KEY } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
+import {
+    createRedisKey,
+    slugTimestamp
+} from '@utils/index'
 
-export class ProductCategoryService {
-    async getTableList(query: IProductCategorySearchDTO) {
+// ** Models Imports
+import { productCategoryModels } from './product-category.model'
+
+// ** Class Imports
+import { ProductCategoryClass } from './product-category.class'
+
+// ** Plugins Imports
+import { redisPlugin } from '@src/plugins/redis'
+
+export const productCategoryTableList = new Elysia().use(productCategoryModels).get(
+    '/',
+    async ({ query }) => {
         try {
             const take = query.pageSize || undefined
             const skip = query.page || undefined
@@ -95,110 +104,19 @@ export class ProductCategoryService {
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        query: 'productCategorySearch'
     }
+)
 
-    async create(data: IProductCategoryDTO, redis: RedisClientType) {
-        try {
-            const productCategory = await prismaClient.productCategory.create({
-                data,
-                select: {
-                    id: true
-                }
-            })
-
-            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
-
-            return productCategory
-        } catch (error) {
-            handleDatabaseError(error)
-        }
-    }
-
-    async update(id: string, data: IProductCategoryDTO, redis: RedisClientType) {
-        try {
-            const productCategory = await prismaClient.productCategory.update({
-                data,
-                where: { id },
-                select: {
-                    id: true
-                }
-            })
-
-            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
-            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, id))
-
-            return productCategory
-        } catch (error) {
-            handleDatabaseError(error)
-        }
-    }
-
-    async retrieve(id: string, redis: RedisClientType) {
-        try {
-            const productCategoryCached = await redis.get(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, id))
-
-            if (productCategoryCached) {
-                return JSON.parse(productCategoryCached)
-            }
-
-            const productCategory = await prismaClient.productCategory.findFirst({
-                where: {
-                    id,
-                    deleted_flg: false
-                },
-                select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                    status: true,
-                    parent_id: true,
-                    image_uri: true,
-                    description: true,
-                    meta_title: true,
-                    meta_description: true
-                }
-            })
-
-            await redis.set(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, id), JSON.stringify(productCategory))
-
-            return productCategory
-        } catch (error) {
-            handleDatabaseError(error)
-        }
-    }
-
-    async delete(id: string, query: IDeleteDTO, redis: RedisClientType) {
-        try {
-            if (query.force) {
-                await prismaClient.productCategory.delete({
-                    where: { id },
-                    select: {
-                        id: true
-                    }
-                })
-            } else {
-                await prismaClient.productCategory.update({
-                    data: {
-                        deleted_flg: true,
-                        slug: slugTimestamp(query.slug as string)
-                    },
-                    where: { id },
-                    select: {
-                        id: true
-                    }
-                })
-            }
-
-            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
-            await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, id))
-
-            return id
-        } catch (error) {
-            handleDatabaseError(error)
-        }
-    }
-
-    async getDataList(redis: RedisClientType) {
+export const productCategoryDataList = new Elysia()
+    .decorate({
+        ProductCategoryClass: new ProductCategoryClass()
+    })
+    .use(redisPlugin)
+    .use(productCategoryModels)
+    .get('/data-list', async ({ ProductCategoryClass, redis }) => {
         try {
             const productCategoryCached = await redis.get(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
 
@@ -221,7 +139,7 @@ export class ProductCategoryService {
             const categoryNested = []
 
             for (const category of categoryList) {
-                const categories = await this.renderTree(category.id, 1)
+                const categories = await ProductCategoryClass.renderTree(category.id, 1)
                 categoryNested.push(category, ...categories)
             }
 
@@ -231,35 +149,132 @@ export class ProductCategoryService {
         } catch (error) {
             handleDatabaseError(error)
         }
-    }
+    })
 
-    async renderTree(parent_id: string, level: number) {
-        const categories = await prismaClient.productCategory.findMany({
+export const productCategoryRetrieve = new Elysia().use(redisPlugin).get('/:id', async ({ params, redis }) => {
+    try {
+        const productCategoryCached = await redis.get(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, params.id))
+
+        if (productCategoryCached) {
+            return JSON.parse(productCategoryCached)
+        }
+
+        const productCategory = await prismaClient.productCategory.findFirst({
             where: {
-                parent_id,
+                id: params.id,
                 deleted_flg: false
             },
             select: {
                 id: true,
-                name: true
+                name: true,
+                slug: true,
+                status: true,
+                parent_id: true,
+                image_uri: true,
+                description: true,
+                meta_title: true,
+                meta_description: true
             }
         })
 
-        const customLevelName = '|--- '.repeat(level)
+        await redis.set(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, params.id), JSON.stringify(productCategory))
 
-        let categoryNested: {
-            id: string
-            name: string
-        }[] = []
-
-        for (const category of categories) {
-            const name = customLevelName + category.name
-            categoryNested.push({ ...category, name: name })
-
-            const children = await this.renderTree(category.id, level + 1)
-            categoryNested = [...categoryNested, ...children]
-        }
-
-        return categoryNested
+        return productCategory
+    } catch (error) {
+        handleDatabaseError(error)
     }
-}
+})
+
+export const productCategoryCreate = new Elysia()
+    .use(redisPlugin)
+    .use(productCategoryModels)
+    .post(
+        '/',
+        async ({ body, redis }) => {
+            try {
+                const productCategory = await prismaClient.productCategory.create({
+                    data: body,
+                    select: {
+                        id: true
+                    }
+                })
+
+                await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
+
+                return productCategory
+            } catch (error) {
+                handleDatabaseError(error)
+            }
+        },
+        {
+            body: 'productCategory'
+        }
+    )
+
+export const productCategoryUpdate = new Elysia()
+    .use(redisPlugin)
+    .use(productCategoryModels)
+    .patch(
+        '/:id',
+        async ({ body, params, redis }) => {
+            try {
+                const productCategory = await prismaClient.productCategory.update({
+                    data: body,
+                    where: { id: params.id },
+                    select: {
+                        id: true
+                    }
+                })
+
+                await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
+                await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, params.id))
+
+                return productCategory
+            } catch (error) {
+                handleDatabaseError(error)
+            }
+        },
+        {
+            body: 'productCategory'
+        }
+    )
+
+export const productCategoryDelete = new Elysia()
+    .use(redisPlugin)
+    .use(productCategoryModels)
+    .delete(
+        '/:id',
+        async ({ query, params, redis }) => {
+            try {
+                if (query.force) {
+                    await prismaClient.productCategory.delete({
+                        where: { id: params.id },
+                        select: {
+                            id: true
+                        }
+                    })
+                } else {
+                    await prismaClient.productCategory.update({
+                        data: {
+                            deleted_flg: true,
+                            slug: slugTimestamp(query.slug as string)
+                        },
+                        where: { id: params.id },
+                        select: {
+                            id: true
+                        }
+                    })
+                }
+
+                await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
+                await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, params.id))
+
+                return params.id
+            } catch (error) {
+                handleDatabaseError(error)
+            }
+        },
+        {
+            query: 'productCategoryDelete'
+        }
+    )

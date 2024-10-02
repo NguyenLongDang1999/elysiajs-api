@@ -8,10 +8,17 @@ import { createId } from '@paralleldrive/cuid2'
 import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
-import { ICartDeleteDTO, ICartDTO, ICartUpdateDTO } from './cart.type'
+import {
+    ICartDeleteDTO,
+    ICartDTO,
+    ICartUpdateDTO
+} from './cart.type'
 
 // ** Utils Imports
-import { JWT, STATUS } from '@utils/enums'
+import {
+    JWT,
+    STATUS
+} from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 import { formatSellingPrice } from '@utils/format'
 

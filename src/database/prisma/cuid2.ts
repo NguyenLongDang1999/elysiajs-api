@@ -1,6 +1,9 @@
 import { createId } from '@paralleldrive/cuid2'
 import { Prisma } from '@prisma/client'
-import { Draft, produce } from 'immer'
+import {
+    Draft,
+    produce
+} from 'immer'
 
 const cuid2Extension = Prisma.defineExtension({
     name: 'cuid2',

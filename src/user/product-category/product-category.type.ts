@@ -1,6 +1,9 @@
 // ** Elysia Imports
 import { paginationType } from '@src/types/core.type'
-import { Static, t } from 'elysia'
+import {
+    Static,
+    t
+} from 'elysia'
 
 // ** Types Definition
 export const productCategory = {

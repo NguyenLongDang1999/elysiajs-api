@@ -1,5 +1,8 @@
 // ** Elysia Imports
-import { Static, t } from 'elysia'
+import {
+    Static,
+    t
+} from 'elysia'
 
 // ** Types Imports
 import { paginationType } from '@src/types/core.type'

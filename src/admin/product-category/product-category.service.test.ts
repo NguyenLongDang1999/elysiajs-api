@@ -1,5 +1,9 @@
 import { treaty } from '@elysiajs/eden'
-import { describe, expect, it } from 'bun:test'
+import {
+    describe,
+    expect,
+    it
+} from 'bun:test'
 import { productCategoryController } from './product-category.controller'
 
 const app = treaty<typeof productCategoryController>('localhost:3333/api/admin')

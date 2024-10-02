@@ -1,5 +1,8 @@
 // ** Elysia Imports
-import { Static, t } from 'elysia'
+import {
+    Static,
+    t
+} from 'elysia'
 import { JWTPayloadSpec } from '@elysiajs/jwt'
 
 // ** Types Definition

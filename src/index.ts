@@ -12,7 +12,7 @@ const app = new Elysia({ prefix: '/api', normalize: true })
         if (ctx.query.page && ctx.query.pageSize) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            ctx.query.page = ((ctx.query.page - 1) * ctx.query.pageSize)
+            ctx.query.page = (ctx.query.page - 1) * ctx.query.pageSize
         }
     })
     .onAfterHandle(({ request, set }) => {

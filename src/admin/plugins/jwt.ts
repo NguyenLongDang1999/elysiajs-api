@@ -1,6 +1,9 @@
 // ** Elysia Imports
 import { jwt } from '@elysiajs/jwt'
-import { Elysia, t } from 'elysia'
+import {
+    Elysia,
+    t
+} from 'elysia'
 
 // ** Utils Imports
 import { JWT } from '@utils/enums'

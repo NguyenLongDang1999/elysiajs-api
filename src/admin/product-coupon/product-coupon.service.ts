@@ -1,22 +1,23 @@
 // ** Elysia Imports
+import { Elysia } from 'elysia'
 
 // ** Prisma Imports
 import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
-// ** Types Imports
-import { IDeleteDTO } from '@src/types/core.type'
-import { IProductCouponDTO, IProductCouponSearchDTO } from './product-coupon.type'
-
 // ** Utils Imports
 import { handleDatabaseError } from '@utils/error-handling'
 import { slugTimestamp } from '@utils/index'
 
-export class ProductCouponService {
-    async getTableList(query: IProductCouponSearchDTO) {
+// ** Models Imports
+import { productCouponModels } from './product-coupon.model'
+
+export const productCouponTableList = new Elysia().use(productCouponModels).get(
+    '/',
+    async ({ query }) => {
         try {
-            const take = Number(query.pageSize) || undefined
-            const skip = Number(query.page) || undefined
+            const take = query.pageSize || undefined
+            const skip = query.page || undefined
 
             const search: Prisma.ProductCouponWhereInput = {
                 deleted_flg: false,
@@ -25,7 +26,7 @@ export class ProductCouponService {
                     mode: 'insensitive'
                 },
                 status: {
-                    equals: Number(query.status) || undefined
+                    equals: query.status || undefined
                 }
             }
 
@@ -64,13 +65,46 @@ export class ProductCouponService {
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        query: 'productCouponSearch'
     }
+)
 
-    async create(data: IProductCouponDTO) {
+export const productCouponRetrieve = new Elysia().get('/:id', async ({ params }) => {
+    try {
+        return await prismaClient.productCoupon.findFirstOrThrow({
+            where: {
+                id: params.id,
+                deleted_flg: false
+            },
+            select: {
+                id: true,
+                code: true,
+                description: true,
+                status: true,
+                discount_type: true,
+                discount_value: true,
+                start_date: true,
+                end_date: true,
+                max_uses: true,
+                minimum_order_value: true,
+                times_used: true,
+                user_limit: true
+            }
+        })
+    } catch (error) {
+        handleDatabaseError(error)
+    }
+})
+
+export const productCouponCreate = new Elysia().use(productCouponModels).post(
+    '/',
+    async ({ body }) => {
         try {
             return await prismaClient.$transaction(async (prisma) => {
                 return await prisma.productCoupon.create({
-                    data,
+                    data: body,
                     select: {
                         id: true
                     }
@@ -79,54 +113,39 @@ export class ProductCouponService {
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        body: 'productCoupon'
     }
+)
 
-    async update(id: string, data: IProductCouponDTO) {
+export const productCouponUpdate = new Elysia().use(productCouponModels).patch(
+    '/:id',
+    async ({ body, params }) => {
         try {
             return await prismaClient.$transaction(async (prisma) => {
                 return await prisma.productCoupon.update({
-                    data,
-                    where: { id },
+                    data: body,
+                    where: { id: params.id },
                     select: { id: true }
                 })
             })
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        body: 'productCoupon'
     }
+)
 
-    async retrieve(id: string) {
-        try {
-            return await prismaClient.productCoupon.findFirstOrThrow({
-                where: {
-                    id,
-                    deleted_flg: false
-                },
-                select: {
-                    id: true,
-                    code: true,
-                    description: true,
-                    status: true,
-                    discount_type: true,
-                    discount_value: true,
-                    start_date: true,
-                    end_date: true,
-                    max_uses: true,
-                    minimum_order_value: true,
-                    times_used: true,
-                    user_limit: true
-                }
-            })
-        } catch (error) {
-            handleDatabaseError(error)
-        }
-    }
-
-    async delete(id: string, query: IDeleteDTO) {
+export const productCouponDelete = new Elysia().use(productCouponModels).delete(
+    '/:id',
+    async ({ query, params }) => {
         try {
             if (query.force) {
                 await prismaClient.productCoupon.delete({
-                    where: { id },
+                    where: { id: params.id },
                     select: {
                         id: true
                     }
@@ -137,16 +156,19 @@ export class ProductCouponService {
                         deleted_flg: true,
                         code: slugTimestamp(query.slug as string)
                     },
-                    where: { id },
+                    where: { id: params.id },
                     select: {
                         id: true
                     }
                 })
             }
 
-            return id
+            return params.id
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        query: 'productCouponDelete'
     }
-}
+)

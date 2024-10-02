@@ -2,8 +2,11 @@
 import { Elysia } from 'elysia'
 
 // ** Types Imports
-import { productCategoryType, productCategorySearchType } from './product-category.type'
 import { deleteType } from '@src/types/core.type'
+import {
+    productCategorySearchType,
+    productCategoryType
+} from './product-category.type'
 
 export const productCategoryModels = new Elysia().model({
     productCategory: productCategoryType,

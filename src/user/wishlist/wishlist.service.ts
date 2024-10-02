@@ -7,10 +7,16 @@ import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
 // ** Types Imports
-import { IDeleteWishlistDTO, IWishlistDTO } from './wishlist.type'
+import {
+    IDeleteWishlistDTO,
+    IWishlistDTO
+} from './wishlist.type'
 
 // ** Utils Imports
-import { REDIS_KEY, STATUS } from '@utils/enums'
+import {
+    REDIS_KEY,
+    STATUS
+} from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 import { formatSellingPrice } from '@utils/format'
 import { createRedisKey } from '@utils/index'
@@ -83,7 +89,9 @@ export class WishlistService {
             })
 
             return wishlist.map((_wishlist) => {
-                const flashDeals = _wishlist.product.flashDealProducts[0] ? _wishlist.product.flashDealProducts[0].flashDeal : undefined
+                const flashDeals = _wishlist.product.flashDealProducts[0]
+                    ? _wishlist.product.flashDealProducts[0].flashDeal
+                    : undefined
 
                 const productPrice = {
                     price: Number(_wishlist.product.price),

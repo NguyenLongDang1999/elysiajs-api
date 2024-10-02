@@ -1,83 +1,111 @@
-// ** Types Imports
-import { IFileManagerDTO, IFileManagerSearchDTO, IFileManagerUploadDTO } from './file-manager.type'
+// ** Elysia Imports
+import { Elysia } from 'elysia'
 
 // ** Utils Imports
 import { handleDatabaseError } from '@utils/error-handling'
 
-export class FileManagerService {
-    async getTableList(query: IFileManagerSearchDTO) {
-        try {
-            const storageName = Bun.env.BUNNY_STORAGE_NAME
+// ** Models Imports
+import { FileManagerModels } from './file-manager.model'
 
-            const pathName = this.buildPath(query.path)
-            const url = `${await this.getBaseUrl()}${storageName}/${pathName}/`
+// ** Class Imports
+import { FileManagerClass } from './file-manager.class'
 
-            return this.sendRequest('get', url)
-        } catch (error) {
-            handleDatabaseError(error)
+export const fileManagerTableList = new Elysia()
+    .decorate({
+        FileManagerClass: new FileManagerClass()
+    })
+    .use(FileManagerModels)
+    .get(
+        '/',
+        async ({ FileManagerClass, query }) => {
+            try {
+                const storageName = Bun.env.BUNNY_STORAGE_NAME
+
+                const pathName = FileManagerClass.buildPath(query.path)
+                const url = `${await FileManagerClass.getBaseUrl()}${storageName}/${pathName}/`
+
+                return FileManagerClass.sendRequest('get', url)
+            } catch (error) {
+                handleDatabaseError(error)
+            }
+        },
+        {
+            query: 'fileManagerSearch'
         }
-    }
+    )
 
-    async create(createFileManagerDto: IFileManagerDTO, query: IFileManagerSearchDTO) {
-        const storageName = Bun.env.BUNNY_STORAGE_NAME
+export const fileManagerCreate = new Elysia()
+    .decorate({
+        FileManagerClass: new FileManagerClass()
+    })
+    .use(FileManagerModels)
+    .post(
+        '/',
+        async ({ FileManagerClass, body, query }) => {
+            try {
+                const storageName = Bun.env.BUNNY_STORAGE_NAME
 
-        const pathName = this.buildPath(query.path, createFileManagerDto.folder_name + '/')
-        const url = `${await this.getBaseUrl()}${storageName}/${pathName}`
+                const pathName = FileManagerClass.buildPath(query.path, body.folder_name + '/')
+                const url = `${await FileManagerClass.getBaseUrl()}${storageName}/${pathName}`
 
-        return this.sendRequest('put', url)
-    }
-
-    async delete(createFileManagerDto: IFileManagerDTO, query: IFileManagerSearchDTO) {
-        const storageName = Bun.env.BUNNY_STORAGE_NAME
-
-        const pathName = this.buildPath(
-            query.path,
-            createFileManagerDto.folder_name + (createFileManagerDto.is_folder ? '/' : '')
-        )
-        const url = `${await this.getBaseUrl()}${storageName}/${pathName}`
-
-        return this.sendRequest('delete', url)
-    }
-
-    async uploadFile(query: IFileManagerSearchDTO, body: IFileManagerUploadDTO) {
-        const storageName = Bun.env.BUNNY_STORAGE_NAME
-
-        const pathName = this.buildPath(query.path, body.file.name)
-        const url = `${await this.getBaseUrl()}${storageName}/${pathName}`
-        const buffer = await body.file.arrayBuffer()
-
-        return this.sendRequest('put', url, buffer)
-    }
-
-    private async sendRequest(method: string, url: string, data?: any) {
-        try {
-            const accessKey = Bun.env.BUNNY_ACCESS_KEY
-
-            const response = await fetch(url, {
-                method,
-                body: data,
-                headers: {
-                    Accept: '*/*',
-                    Accesskey: accessKey as string
-                }
-            })
-
-            return await response.json()
-        } catch (error) {
-            handleDatabaseError(error)
+                return FileManagerClass.sendRequest('put', url)
+            } catch (error) {
+                handleDatabaseError(error)
+            }
+        },
+        {
+            body: 'fileManager',
+            query: 'fileManagerSearch'
         }
-    }
+    )
 
-    private buildPath(...segments: (string | undefined)[]) {
-        return segments
-            .filter((segment): segment is string => !!segment) // Loại bỏ `undefined`
-            .join('/')
-            .replace(/,/g, '/')
-    }
+export const fileManagerUploadFile = new Elysia()
+    .decorate({
+        FileManagerClass: new FileManagerClass()
+    })
+    .use(FileManagerModels)
+    .put(
+        '/',
+        async ({ FileManagerClass, body, query }) => {
+            try {
+                const storageName = Bun.env.BUNNY_STORAGE_NAME
 
-    private async getBaseUrl() {
-        const storageZone = Bun.env.BUNNY_STORAGE_ZONE
+                const pathName = FileManagerClass.buildPath(query.path, body.file.name)
+                const url = `${await FileManagerClass.getBaseUrl()}${storageName}/${pathName}`
+                const buffer = await body.file.arrayBuffer()
 
-        return storageZone ? `https://${storageZone}.storage.bunnycdn.com/` : 'https://storage.bunnycdn.com/'
-    }
-}
+                return FileManagerClass.sendRequest('put', url, buffer)
+            } catch (error) {
+                handleDatabaseError(error)
+            }
+        },
+        {
+            body: 'fileManagerUpload',
+            query: 'fileManagerSearch'
+        }
+    )
+
+export const fileManagerDelete = new Elysia()
+    .decorate({
+        FileManagerClass: new FileManagerClass()
+    })
+    .use(FileManagerModels)
+    .delete(
+        '/',
+        async ({ FileManagerClass, body, query }) => {
+            try {
+                const storageName = Bun.env.BUNNY_STORAGE_NAME
+
+                const pathName = FileManagerClass.buildPath(query.path, body.folder_name + (body.is_folder ? '/' : ''))
+                const url = `${await FileManagerClass.getBaseUrl()}${storageName}/${pathName}`
+
+                return FileManagerClass.sendRequest('delete', url)
+            } catch (error) {
+                handleDatabaseError(error)
+            }
+        },
+        {
+            body: 'fileManager',
+            query: 'fileManagerSearch'
+        }
+    )

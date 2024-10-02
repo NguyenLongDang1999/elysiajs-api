@@ -1,38 +1,40 @@
+// ** Elysia Imports
+import { Elysia } from 'elysia'
+
 // ** Prisma Imports
 import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
-// ** Types Imports
-import {
-    IProductImagesDTO,
-    IProductRelationsDTO,
-    IProductSearchDTO,
-    IProductSingleDTO,
-    IProductUpdateGeneralVariantDTO,
-    IProductVariantsDTO
-} from './product.type'
-
 // ** Utils Imports
-import { MANAGE_INVENTORY, PRODUCT_TYPE, RELATIONS_TYPE, STATUS } from '@utils/enums'
+import {
+    MANAGE_INVENTORY,
+    PRODUCT_TYPE,
+    RELATIONS_TYPE,
+    STATUS
+} from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
-export class ProductService {
-    async getTableList(query: IProductSearchDTO) {
+// ** Models Imports
+import { productModels } from './product.model'
+
+export const productTableList = new Elysia().use(productModels).get(
+    '/',
+    async ({ query }) => {
         try {
-            const take = Number(query.pageSize) || undefined
-            const skip = Number(query.page) || undefined
+            const take = query.pageSize || undefined
+            const skip = query.page || undefined
 
             const search: Prisma.ProductWhereInput = {
                 deleted_flg: false,
                 sku: { contains: query.sku || undefined, mode: 'insensitive' },
                 name: { contains: query.name || undefined, mode: 'insensitive' },
-                status: { equals: Number(query.status) || undefined },
-                product_type: { equals: Number(query.product_type) || undefined },
+                status: { equals: query.status || undefined },
+                product_type: { equals: query.product_type || undefined },
                 product_brand_id: { equals: query.product_brand_id || undefined },
                 product_category_id: { equals: query.product_category_id || undefined }
             }
 
-            if (query.not_flash_deals && this.stringToBoolean(query.not_flash_deals)) {
+            if (query.not_flash_deals && JSON.parse(query.not_flash_deals)) {
                 search.flashDealProducts = {
                     none: {
                         AND: [
@@ -141,11 +143,170 @@ export class ProductService {
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        query: 'productSearch'
     }
+)
 
-    async createSingle(data: IProductSingleDTO) {
+export const productRetrieve = new Elysia().get('/:id', async ({ params }) => {
+    try {
+        const product = await prismaClient.product.findFirst({
+            where: {
+                id: params.id,
+                deleted_flg: false
+            },
+            select: {
+                id: true,
+                sku: true,
+                name: true,
+                slug: true,
+                status: true,
+                image_uri: true,
+                description: true,
+                short_description: true,
+                meta_title: true,
+                meta_description: true,
+                product_type: true,
+                technical_specifications: true,
+                product_brand_id: true,
+                product_category_id: true,
+                price: true,
+                special_price: true,
+                special_price_type: true,
+                productImages: {
+                    orderBy: { index: 'asc' },
+                    select: {
+                        id: true,
+                        image_uri: true
+                    }
+                },
+                productRelated: {
+                    where: {
+                        product: {
+                            deleted_flg: false
+                        }
+                    },
+                    select: {
+                        related_product_id: true,
+                        relation_type: true
+                    }
+                },
+                productVariants: {
+                    orderBy: { created_at: 'desc' },
+                    select: {
+                        label: true,
+                        manage_inventory: true,
+                        productInventory: {
+                            select: {
+                                quantity: true
+                            }
+                        },
+                        productPrices: {
+                            select: {
+                                is_default: true,
+                                price: true,
+                                special_price: true,
+                                special_price_type: true
+                            }
+                        },
+                        productVariantAttributeValues: {
+                            where: {
+                                productAttributeValues: {
+                                    deleted_flg: false,
+                                    productAttribute: {
+                                        deleted_flg: false
+                                    }
+                                }
+                            },
+                            select: {
+                                productAttributeValues: {
+                                    select: {
+                                        id: true,
+                                        value: true,
+                                        productAttribute: {
+                                            select: {
+                                                id: true,
+                                                name: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        const product_attributes: {
+            id: string
+            name: string
+            values: string[]
+        }[] = []
+
+        product?.productVariants.forEach(({ productVariantAttributeValues }) => {
+            productVariantAttributeValues.forEach(({ productAttributeValues }) => {
+                const { productAttribute: attribute, id: attributeValueId } = productAttributeValues
+
+                const attrObj = product_attributes.find((attr) => attr.id === attribute.id)
+
+                if (attrObj) {
+                    attrObj.values.push(attributeValueId)
+                } else {
+                    product_attributes.push({
+                        id: attribute.id,
+                        name: attribute.name,
+                        values: [attributeValueId]
+                    })
+                }
+            })
+        })
+
+        const productPrice = product?.productVariants.find((variantItem) => variantItem.productPrices[0].is_default)
+
+        const isProductSingle = product?.product_type === PRODUCT_TYPE.SINGLE
+
+        return {
+            ...product,
+            ...(productPrice ? productPrice.productInventory : undefined),
+            manage_inventory: product?.productVariants[0].manage_inventory,
+            product_attribute_id: !isProductSingle ? product_attributes.map((_product) => _product.id) : undefined,
+            product_attributes,
+            product_images: product?.productImages,
+            product_variants: !isProductSingle
+                ? product?.productVariants.map((variantItem) => ({
+                    ...variantItem,
+                    ...variantItem.productPrices[0],
+                    productPrices: undefined,
+                    productVariantAttributeValues: undefined,
+                    quantity: variantItem.productInventory?.quantity || 0
+                }))
+                : undefined,
+            product_upsell: product?.productRelated
+                .filter((relatedItem) => relatedItem.relation_type === RELATIONS_TYPE.UPSELL)
+                .map((relatedItem) => relatedItem.related_product_id),
+            product_cross_sell: product?.productRelated
+                .filter((relatedItem) => relatedItem.relation_type === RELATIONS_TYPE.CROSS_SELL)
+                .map((relatedItem) => relatedItem.related_product_id),
+            product_related: product?.productRelated
+                .filter((relatedItem) => relatedItem.relation_type === RELATIONS_TYPE.RELATED)
+                .map((relatedItem) => relatedItem.related_product_id),
+            productImages: undefined,
+            productRelated: undefined,
+            productVariants: undefined,
+            productVariantAttributeValues: undefined
+        }
+    } catch (error) {
+        handleDatabaseError(error)
+    }
+})
+
+export const productCreateSingle = new Elysia().use(productModels).post(
+    '/create-single',
+    async ({ body }) => {
         try {
-            const { quantity, manage_inventory, ...productData } = data
+            const { quantity, manage_inventory, ...productData } = body
             const hasProductInventory = manage_inventory === MANAGE_INVENTORY.YES && quantity
 
             return await prismaClient.$transaction(async (prisma) => {
@@ -161,9 +322,9 @@ export class ProductService {
                                         create: {
                                             start_date: new Date(),
                                             is_default: true,
-                                            price: data.price,
-                                            special_price: data.special_price,
-                                            special_price_type: data.special_price_type
+                                            price: body.price,
+                                            special_price: body.special_price,
+                                            special_price_type: body.special_price_type
                                         }
                                     },
                                     productInventory: hasProductInventory
@@ -179,11 +340,17 @@ export class ProductService {
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        body: 'productSingle'
     }
+)
 
-    async createVariants(data: IProductVariantsDTO) {
+export const productCreateVariants = new Elysia().use(productModels).post(
+    '/create-variants',
+    async ({ body }) => {
         try {
-            const { product_variants, ...productData } = data
+            const { product_variants, ...productData } = body
             const variantDefault = product_variants.find((productVariantItem) => productVariantItem.is_default)
 
             return await prismaClient.$transaction(async (prisma) => {
@@ -229,192 +396,20 @@ export class ProductService {
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        body: 'productVariants'
     }
+)
 
-    async retrieve(id: string) {
+export const productUpdateSingle = new Elysia().use(productModels).patch(
+    '/:id/update-single',
+    async ({ body, params }) => {
         try {
-            const product = await prismaClient.product.findFirst({
-                where: {
-                    id,
-                    deleted_flg: false
-                },
-                select: {
-                    id: true,
-                    sku: true,
-                    name: true,
-                    slug: true,
-                    status: true,
-                    image_uri: true,
-                    description: true,
-                    short_description: true,
-                    meta_title: true,
-                    meta_description: true,
-                    product_type: true,
-                    technical_specifications: true,
-                    product_brand_id: true,
-                    product_category_id: true,
-                    price: true,
-                    special_price: true,
-                    special_price_type: true,
-                    productImages: {
-                        orderBy: { index: 'asc' },
-                        select: {
-                            id: true,
-                            image_uri: true
-                        }
-                    },
-                    productRelated: {
-                        where: {
-                            product: {
-                                deleted_flg: false
-                            }
-                        },
-                        select: {
-                            related_product_id: true,
-                            relation_type: true
-                        }
-                    },
-                    productVariants: {
-                        orderBy: { created_at: 'desc' },
-                        select: {
-                            // is_default: true,
-                            label: true,
-                            manage_inventory: true,
-                            // price: true,
-                            // special_price: true,
-                            // special_price_type: true,
-                            productInventory: {
-                                select: {
-                                    quantity: true
-                                }
-                            },
-                            productPrices: {
-                                select: {
-                                    is_default: true,
-                                    price: true,
-                                    special_price: true,
-                                    special_price_type: true
-                                }
-                            },
-                            productVariantAttributeValues: {
-                                where: {
-                                    productAttributeValues: {
-                                        deleted_flg: false,
-                                        productAttribute: {
-                                            deleted_flg: false
-                                        }
-                                    }
-                                },
-                                select: {
-                                    productAttributeValues: {
-                                        select: {
-                                            id: true,
-                                            value: true,
-                                            productAttribute: {
-                                                select: {
-                                                    id: true,
-                                                    name: true
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            })
-
-            const product_attributes: {
-                id: string
-                name: string
-                values: string[]
-            }[] = []
-
-            product?.productVariants.forEach(({ productVariantAttributeValues }) => {
-                productVariantAttributeValues.forEach(({ productAttributeValues }) => {
-                    const { productAttribute: attribute, id: attributeValueId } = productAttributeValues
-
-                    const attrObj = product_attributes.find((attr) => attr.id === attribute.id)
-
-                    if (attrObj) {
-                        attrObj.values.push(attributeValueId)
-                    } else {
-                        product_attributes.push({
-                            id: attribute.id,
-                            name: attribute.name,
-                            values: [attributeValueId]
-                        })
-                    }
-                })
-            })
-
-            const productPrice = product?.productVariants.find((variantItem) => variantItem.productPrices[0].is_default)
-
-            const isProductSingle = product?.product_type === PRODUCT_TYPE.SINGLE
-
-            return {
-                ...product,
-                ...(productPrice ? productPrice.productInventory : undefined),
-                manage_inventory: product?.productVariants[0].manage_inventory,
-                product_attribute_id: !isProductSingle ? product_attributes.map((_product) => _product.id) : undefined,
-                product_attributes,
-                product_images: product?.productImages,
-                product_variants: !isProductSingle
-                    ? product?.productVariants.map((variantItem) => ({
-                        ...variantItem,
-                        ...variantItem.productPrices[0],
-                        productPrices: undefined,
-                        productVariantAttributeValues: undefined,
-                        quantity: variantItem.productInventory?.quantity || 0
-                    }))
-                    : undefined,
-                product_upsell: product?.productRelated
-                    .filter((relatedItem) => relatedItem.relation_type === RELATIONS_TYPE.UPSELL)
-                    .map((relatedItem) => relatedItem.related_product_id),
-                product_cross_sell: product?.productRelated
-                    .filter((relatedItem) => relatedItem.relation_type === RELATIONS_TYPE.CROSS_SELL)
-                    .map((relatedItem) => relatedItem.related_product_id),
-                product_related: product?.productRelated
-                    .filter((relatedItem) => relatedItem.relation_type === RELATIONS_TYPE.RELATED)
-                    .map((relatedItem) => relatedItem.related_product_id),
-                productImages: undefined,
-                productRelated: undefined,
-                productVariants: undefined,
-                productVariantAttributeValues: undefined
-            }
-        } catch (error) {
-            handleDatabaseError(error)
-        }
-    }
-
-    // async delete(id: string, query: IDeleteDTO) {
-    //     try {
-    //         if (query.force) {
-    //             return db.delete(productSchema).where(eq(productSchema.id, id))
-    //         } else {
-    //             return await db
-    //                 .update(productSchema)
-    //                 .set({
-    //                     deleted_flg: true,
-    //                     slug: slugTimestamp(query.slug as string)
-    //                 })
-    //                 .where(eq(productSchema.id, id))
-    //                 .returning({
-    //                     id: productSchema.id
-    //                 })
-    //         }
-    //     } catch (error) {
-    //         handleDatabaseError(error)
-    //     }
-    // }
-
-    async updateSingle(id: string, data: IProductSingleDTO) {
-        try {
-            const { quantity: _quantity, manage_inventory: _manage_inventory, ...productData } = data
+            const { quantity: _quantity, manage_inventory: _manage_inventory, ...productData } = body
 
             const product = await prismaClient.product.update({
-                where: { id },
+                where: { id: params.id },
                 data: {
                     ...productData
                 },
@@ -439,23 +434,29 @@ export class ProductService {
                     id: product.productVariants[0].productPrices[0].id
                 },
                 data: {
-                    price: data.price,
-                    special_price: data.special_price,
-                    special_price_type: data.special_price_type
+                    price: body.price,
+                    special_price: body.special_price,
+                    special_price_type: body.special_price_type
                 }
             })
 
-            return { id }
+            return { id: params.id }
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        body: 'productSingle'
     }
+)
 
-    async updateVariants(id: string, data: IProductUpdateGeneralVariantDTO) {
+export const productUpdateGeneralVariants = new Elysia().use(productModels).patch(
+    '/:id/update-variants',
+    async ({ body, params }) => {
         try {
             return await prismaClient.product.update({
-                where: { id },
-                data,
+                where: { id: params.id },
+                data: body,
                 select: {
                     id: true
                 }
@@ -463,20 +464,26 @@ export class ProductService {
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        body: 'productUpdateGeneralVariants'
     }
+)
 
-    async updateRelations(id: string, data: IProductRelationsDTO) {
+export const productUpdateRelations = new Elysia().use(productModels).patch(
+    '/:id/relations',
+    async ({ body, params }) => {
         try {
-            const productData = data.product_id.map((_d) => ({
-                product_id: id,
+            const productData = body.product_id.map((_d) => ({
+                product_id: params.id,
                 related_product_id: _d,
-                relation_type: data.product_relation_type
+                relation_type: body.product_relation_type
             }))
 
             await prismaClient.productRelations.deleteMany({
                 where: {
-                    product_id: id,
-                    relation_type: data.product_relation_type
+                    product_id: params.id,
+                    relation_type: body.product_relation_type
                 }
             })
 
@@ -487,12 +494,18 @@ export class ProductService {
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        body: 'productRelations'
     }
+)
 
-    async updateImages(id: string, data: IProductImagesDTO) {
+export const productUpdateImages = new Elysia().use(productModels).patch(
+    '/:id/images',
+    async ({ body, params }) => {
         try {
             await prismaClient.$transaction(async (prisma) => {
-                const filteredProductImages = data.product_images.filter((img) => Object.keys(img).length > 0)
+                const filteredProductImages = body.product_images.filter((img) => Object.keys(img).length > 0)
                 const productImagesToUpdate = filteredProductImages.filter((imageItem) => imageItem.id)
                 const productImagesToCreate = filteredProductImages.filter((imageItem) => !imageItem.id)
 
@@ -506,7 +519,7 @@ export class ProductService {
 
                 const createOperation = {
                     data: productImagesToCreate.map((imageItem, index) => ({
-                        product_id: id,
+                        product_id: params.id,
                         index,
                         image_uri: imageItem.image_uri || ''
                     })),
@@ -514,9 +527,9 @@ export class ProductService {
                 }
 
                 await prisma.product.update({
-                    where: { id },
+                    where: { id: params.id },
                     data: {
-                        image_uri: data.image_uri
+                        image_uri: body.image_uri
                     }
                 })
 
@@ -529,11 +542,49 @@ export class ProductService {
                 }
             })
 
-            return { id }
+            return { id: params.id }
         } catch (error) {
             handleDatabaseError(error)
         }
+    },
+    {
+        body: 'productImages'
     }
+)
 
-    stringToBoolean = (str: string) => JSON.parse(str)
-}
+export const productDelete = new Elysia().use(productModels).delete(
+    '/:id',
+    async ({ params }) => {
+        try {
+            // if (query.force) {
+            //     await prismaClient.product.delete({
+            //         where: { id: params.id },
+            //         select: {
+            //             id: true
+            //         }
+            //     })
+            // } else {
+            //     await prismaClient.product.update({
+            //         data: {
+            //             deleted_flg: true,
+            //             slug: slugTimestamp(query.slug as string)
+            //         },
+            //         where: { id: params.id },
+            //         select: {
+            //             id: true
+            //         }
+            //     })
+            // }
+
+            // await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, 'list'))
+            // await redis.del(createRedisKey(REDIS_KEY.PRODUCT_CATEGORY, params.id))
+
+            return params.id
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    },
+    {
+        query: 'productDelete'
+    }
+)

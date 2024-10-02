@@ -1,5 +1,8 @@
 // ** Elysia Imports
-import { Static, t } from 'elysia'
+import {
+    Static,
+    t
+} from 'elysia'
 
 // ** Utils Imports
 import { INPUT_TYPE } from '@utils/enums'

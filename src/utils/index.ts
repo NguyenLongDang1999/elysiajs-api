@@ -1,6 +1,9 @@
 // ** Types Imports
 import { Prisma } from '@prisma/client'
-import { IProductCategoryNestedListDTO, ISortDTO } from '@src/user/product-category/product-category.type'
+import {
+    IProductCategoryNestedListDTO,
+    ISortDTO
+} from '@src/user/product-category/product-category.type'
 
 export const slugTimestamp = (slug: string) => {
     const dateSuffix = new Date().toISOString().slice(0, 10).replace(/-/g, '')

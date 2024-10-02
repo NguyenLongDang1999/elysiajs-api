@@ -6,13 +6,25 @@ import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
-import { REDIS_KEY, STATUS } from '@utils/enums'
+import {
+    REDIS_KEY,
+    STATUS
+} from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 import { formatSellingPrice } from '@utils/format'
-import { createRedisKey, flattenCategories, getBreadcrumbs, getNormalizedList, getProductOrderBy } from '@utils/index'
+import {
+    createRedisKey,
+    flattenCategories,
+    getBreadcrumbs,
+    getNormalizedList,
+    getProductOrderBy
+} from '@utils/index'
 
 // ** Types Imports
-import { IProductCategoryNestedListDTO, IProductCategorySearchDTO } from './product-category.type'
+import {
+    IProductCategoryNestedListDTO,
+    IProductCategorySearchDTO
+} from './product-category.type'
 
 export class ProductCategoryService {
     async getNestedList(redis: RedisClientType) {
@@ -227,12 +239,12 @@ export class ProductCategoryService {
                 query.productRating.length > 0 && {
                 OR: getNormalizedList(query.productRating as string[])?.map((rate) => ({
                     total_rating:
-                        Number(rate) === 5
-                            ? Number(rate)
-                            : {
-                                gte: Number(rate),
-                                lte: Number(rate) + 1
-                            }
+                            Number(rate) === 5
+                                ? Number(rate)
+                                : {
+                                    gte: Number(rate),
+                                    lte: Number(rate) + 1
+                                }
                 }))
             })
         }

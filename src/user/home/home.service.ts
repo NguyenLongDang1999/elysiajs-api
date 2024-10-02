@@ -6,16 +6,26 @@ import { Decimal } from '@prisma/client/runtime/library'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
-import { REDIS_KEY, STATUS } from '@utils/enums'
+import {
+    REDIS_KEY,
+    STATUS
+} from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
-import { formatSellingPrice, type ProductPrice } from '@utils/format'
+import {
+    formatSellingPrice,
+    type ProductPrice
+} from '@utils/format'
 import { createRedisKey } from '@utils/index'
 
 // ** Service Imports
 import { SystemSettingsService } from '../system-settings/system-settings.service'
 
 // ** Types Imports
-import { IHomeProductCollectionDTO, IHomeProductFlashDealsDTO, IProductAttribute } from './home.type'
+import {
+    IHomeProductCollectionDTO,
+    IHomeProductFlashDealsDTO,
+    IProductAttribute
+} from './home.type'
 
 export class HomeService {
     async data(SystemSettingsService: SystemSettingsService, redis: RedisClientType, user_id?: string) {
@@ -196,19 +206,19 @@ export class HomeService {
                     productVariantAttributeValues: {
                         productAttributeValues: {
                             productAttribute: {
-                                id: string;
-                                name: string;
-                            };
-                            id: string;
-                            value: string;
-                        };
-                    }[];
+                                id: string
+                                name: string
+                            }
+                            id: string
+                            value: string
+                        }
+                    }[]
                     productPrices: {
-                        price: Decimal;
-                        special_price: Decimal | null;
-                        special_price_type: number | null;
-                    }[];
-                    id: string;
+                        price: Decimal
+                        special_price: Decimal | null
+                        special_price_type: number | null
+                    }[]
+                    id: string
                 }[]
             }
 
@@ -243,27 +253,25 @@ export class HomeService {
                     })
                 })
 
-                const productVariants = product.productVariants.map(
-                    ({ productPrices, ..._productVariant }) => {
-                        const getPrice = productPrices[0]
+                const productVariants = product.productVariants.map(({ productPrices, ..._productVariant }) => {
+                    const getPrice = productPrices[0]
 
-                        const productPrice: ProductPrice = {
-                            price: Number(getPrice.price),
-                            special_price: Number(getPrice.special_price),
-                            special_price_type: Number(getPrice.special_price_type),
-                            hasDiscount: true,
-                            discounted_price: Number(productFlashDeals.discounted_price),
-                            discounted_price_type: Number(productFlashDeals.discounted_price_type)
-                        }
-
-                        return {
-                            ..._productVariant,
-                            ...productPrice,
-                            selling_price: formatSellingPrice(productPrice),
-                            productPrices: undefined
-                        }
+                    const productPrice: ProductPrice = {
+                        price: Number(getPrice.price),
+                        special_price: Number(getPrice.special_price),
+                        special_price_type: Number(getPrice.special_price_type),
+                        hasDiscount: true,
+                        discounted_price: Number(productFlashDeals.discounted_price),
+                        discounted_price_type: Number(productFlashDeals.discounted_price_type)
                     }
-                )
+
+                    return {
+                        ..._productVariant,
+                        ...productPrice,
+                        selling_price: formatSellingPrice(productPrice),
+                        productPrices: undefined
+                    }
+                })
 
                 flashDealProducts.push({
                     ..._flashDeal.product,
@@ -446,7 +454,9 @@ export class HomeService {
                         product: await Promise.all(
                             _pcd.productCollectionProduct.map(async (_p: any) => {
                                 const isWishlist = wishlistProductIds ? wishlistProductIds.has(_p.product.id) : false
-                                const flashDeals = _p.product.flashDealProducts[0] ? _p.product.flashDealProducts[0].flashDeal : undefined
+                                const flashDeals = _p.product.flashDealProducts[0]
+                                    ? _p.product.flashDealProducts[0].flashDeal
+                                    : undefined
 
                                 const productPrice = {
                                     price: Number(_p.product.price),
