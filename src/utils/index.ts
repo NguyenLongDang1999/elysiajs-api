@@ -11,14 +11,6 @@ export const slugTimestamp = (slug: string) => {
     return `${slug}-${dateSuffix}`
 }
 
-export const getExpTimestamp = (seconds: number) => {
-    const currentTimeMilliseconds = Date.now()
-    const secondsIntoMilliseconds = seconds * 1000
-    const expirationTimeMilliseconds = currentTimeMilliseconds + secondsIntoMilliseconds
-
-    return Math.floor(expirationTimeMilliseconds / 1000)
-}
-
 export const createRedisKey = (prefix: string, identifier?: string) => {
     return `${prefix}:${identifier}`
 }
