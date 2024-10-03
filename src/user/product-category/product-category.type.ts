@@ -20,12 +20,12 @@ export const productCategoryNestedList = t.Object({
 })
 
 export const sortType = t.Union([
-    t.Literal('1'),
-    t.Literal('2'),
-    t.Literal('3'),
-    t.Literal('4'),
-    t.Literal('5'),
-    t.Literal('6')
+    t.Literal('created_at-desc'),
+    t.Literal('created_at-asc'),
+    t.Literal('name-desc'),
+    t.Literal('name-asc'),
+    t.Literal('price-asc'),
+    t.Literal('price-desc')
 ])
 
 export const productCategorySearchType = t.Object({

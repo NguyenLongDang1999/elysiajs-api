@@ -17,27 +17,27 @@ export const createRedisKey = (prefix: string, identifier?: string) => {
 
 export const getProductOrderBy = (orderBy?: ISortDTO) => {
     const sortConditions = {
-        '1': {
+        'created_at-desc': {
             created_at: Prisma.SortOrder.desc
         },
-        '2': {
+        'created_at-asc': {
             created_at: Prisma.SortOrder.asc
         },
-        '3': {
-            name: Prisma.SortOrder.asc
-        },
-        '4': {
+        'name-asc': {
             name: Prisma.SortOrder.desc
         },
-        '5': {
+        'name-desc': {
+            name: Prisma.SortOrder.asc
+        },
+        'price-asc': {
             price: Prisma.SortOrder.asc
         },
-        '6': {
+        'price-desc': {
             price: Prisma.SortOrder.desc
         }
     }
 
-    return sortConditions[orderBy ?? '1']
+    return sortConditions[orderBy ?? 'created_at-desc']
 }
 
 export const getNormalizedList = (value: string | string[]) => {
