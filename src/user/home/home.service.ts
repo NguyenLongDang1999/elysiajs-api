@@ -29,7 +29,7 @@ export const homeData = new Elysia()
             const getParseValueWithKey = (key: string) => {
                 const system = homeSystem(key)
 
-                return system && system.key === key ? JSON.parse(system.value) : []
+                return system && system.key === key ? JSON.parse(system.value) : null
             }
 
             const slider = getParseValueWithKey('home_slider')

@@ -30,6 +30,8 @@ export class HomeClass {
         redis: RedisClientType,
         user_id?: string
     ) {
+        if (!product_flash_deals) return
+
         try {
             const cachedKey = createRedisKey(REDIS_KEY.USER_HOME_FLASH_DEALS, product_flash_deals.flash_deals_id)
             const cachedData = await redis.get(cachedKey)
@@ -255,6 +257,8 @@ export class HomeClass {
     }
 
     async getProductCategoryPopular(product_category_popular: string[], redis: RedisClientType) {
+        if (!product_category_popular) return
+
         try {
             const cachedKey = createRedisKey(
                 REDIS_KEY.USER_HOME_PRODUCT_CATEGORY_POPULAR,
@@ -293,6 +297,8 @@ export class HomeClass {
         redis: RedisClientType,
         user_id?: string
     ) {
+        if (!product_collection) return
+
         try {
             const productCollectionData = await Promise.all(
                 product_collection.product_collection.map(async (_pc) => {
@@ -449,6 +455,7 @@ export class HomeClass {
                 })
             )
         } catch (error) {
+            console.log(error)
             handleDatabaseError(error)
         }
     }
