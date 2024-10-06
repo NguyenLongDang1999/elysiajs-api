@@ -138,9 +138,11 @@ export class UserProductCategoryClass {
                 status: STATUS.ACTIVE,
                 id: categoryIds ? { in: categoryIds } : undefined
             },
-            product_brand_id: {
-                in: getNormalizedList(query.productBrands as string[])
-            },
+            ...(query.productBrands && {
+                product_brand_id: {
+                    in: getNormalizedList(query.productBrands as string[])
+                }
+            }),
             ...(query.productAttributes && {
                 productVariants: {
                     some: {

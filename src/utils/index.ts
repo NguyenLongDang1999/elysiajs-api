@@ -41,7 +41,11 @@ export const getProductOrderBy = (orderBy?: ISortDTO) => {
 }
 
 export const getNormalizedList = (value: string | string[]) => {
-    return Array.isArray(value) ? value.map((_v) => _v) : value ? [value] : undefined
+    if (typeof value === 'string') {
+        return value.split(',').map((_v) => _v);
+    }
+
+    return Array.isArray(value) ? [...value] : value ? [value] : undefined
 }
 
 export const getBreadcrumbs = (
