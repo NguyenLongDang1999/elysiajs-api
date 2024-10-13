@@ -276,6 +276,6 @@ export const cartDelete = new Elysia()
             handleDatabaseError(error)
         }
     }, {
-        body: 'cartDelete'
+        query: 'cartDelete'
     })
 
