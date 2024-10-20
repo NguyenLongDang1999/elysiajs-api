@@ -3,6 +3,11 @@ export enum STATUS {
     INACTIVE = 20
 }
 
+export enum PAGE {
+    CURRENT = 1,
+    SIZE = 12
+}
+
 export enum JWT {
     ACCESS_TOKEN_NAME = 'jwtAccessToken',
     ACCESS_TOKEN_EXP = 1 * 60 * 60, // 60 minutes

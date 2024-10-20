@@ -31,9 +31,9 @@ export const sortType = t.Union([
 export const productCategorySearchType = t.Object({
     ...paginationType,
     sort: t.Optional(sortType),
-    productBrands: t.Optional(t.Union([t.Array(t.String()), t.String()])),
-    productRating: t.Optional(t.Union([t.Array(t.String()), t.String()])),
-    productAttributes: t.Optional(t.Union([t.Array(t.String()), t.String()]))
+    productBrands: t.Optional(t.Array(t.String())),
+    productRating: t.Optional(t.Array(t.String())),
+    productAttributes: t.Optional(t.Array(t.String()))
 })
 
 // ** Types

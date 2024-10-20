@@ -7,13 +7,16 @@ import { Elysia } from 'elysia'
 import { admin } from './admin'
 import { user } from './user'
 
+// ** Utils Imports
+import { PAGE } from '@utils/enums'
+
 const app = new Elysia({ prefix: '/api', normalize: true })
     .derive((ctx) => {
-        if (ctx.query.page && ctx.query.pageSize) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            ctx.query.page = (ctx.query.page - 1) * ctx.query.pageSize
-        }
+        const page = Number(ctx.query.page) || PAGE.CURRENT
+        const pageSize = Number(ctx.query.pageSize) || PAGE.SIZE
+
+        ctx.query.page = ((page - 1) * pageSize).toString()
+        ctx.query.pageSize = pageSize.toString()
     })
     .onAfterHandle(({ request, set }) => {
         if (request.method !== 'OPTIONS') return

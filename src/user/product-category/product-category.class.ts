@@ -8,7 +8,6 @@ import prismaClient from '@src/database/prisma'
 // ** Utils Imports
 import {
     createRedisKey,
-    getNormalizedList,
     getProductOrderBy
 } from '@src/utils'
 import {
@@ -140,7 +139,7 @@ export class UserProductCategoryClass {
             },
             ...(query.productBrands && {
                 product_brand_id: {
-                    in: getNormalizedList(query.productBrands as string[])
+                    in: query.productBrands
                 }
             }),
             ...(query.productAttributes && {
@@ -149,7 +148,7 @@ export class UserProductCategoryClass {
                         productVariantAttributeValues: {
                             some: {
                                 product_attribute_value_id: {
-                                    in: getNormalizedList(query.productAttributes as string[])
+                                    in: query.productAttributes
                                 }
                             }
                         }
@@ -158,7 +157,7 @@ export class UserProductCategoryClass {
             }),
             ...(query.productRating &&
                 query.productRating.length > 0 && {
-                OR: getNormalizedList(query.productRating as string[])?.map((rate) => ({
+                OR: query.productRating.map((rate) => ({
                     total_rating:
                         Number(rate) === 5
                             ? Number(rate)
