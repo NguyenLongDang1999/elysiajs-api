@@ -164,6 +164,7 @@ model ProductVariants {
   productInventoryTransactions  ProductInventoryTransactions[]
   productPrices                 ProductPrices[]
   cartItem                      CartItem[]
+  orderItem                     OrderItem[]
 }
 
 model ProductVariantAttributeValues {
@@ -338,6 +339,7 @@ model Users {
   passwordResetToken           PasswordResetToken[]
   carts                        Carts[]
   userSocialAccounts           UserSocialAccounts[]
+  orders                       Orders[]
 }
 
 model UserSocialAccounts {
@@ -415,4 +417,34 @@ model ProductCoupon {
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
   deleted_flg         Boolean  @default(false)
+}
+
+model Orders {
+  id                   String      @id @default(cuid())
+  name                 String      @db.VarChar
+  email                String      @db.VarChar
+  phone                String      @db.VarChar
+  shipping_address     String      @db.VarChar
+  user_id              String?
+  note                 String?     @db.VarChar
+  status               Int?        @default(10) @db.SmallInt
+  total_amount         Decimal     @default(0) @db.Decimal(18, 0)
+  total_after_discount Decimal     @default(0) @db.Decimal(18, 0)
+  created_at           DateTime    @default(now())
+  updated_at           DateTime    @updatedAt
+  deleted_flg          Boolean     @default(false)
+  users                Users?      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  orderItem            OrderItem[]
+}
+
+model OrderItem {
+  id                 String          @id @default(cuid())
+  order_id           String
+  product_variant_id String
+  quantity           Int             @default(1)
+  price              Decimal         @default(0) @db.Decimal(18, 0)
+  created_at         DateTime        @default(now())
+  updated_at         DateTime        @updatedAt
+  orders             Orders          @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  productVariants    ProductVariants @relation(fields: [product_variant_id], references: [id], onDelete: Cascade)
 }

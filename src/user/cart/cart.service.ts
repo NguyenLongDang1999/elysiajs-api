@@ -57,6 +57,7 @@ export const cartDataList = new Elysia()
                                 quantity: true,
                                 productVariants: {
                                     select: {
+                                        id: true,
                                         productPrices: {
                                             select: {
                                                 price: true,
@@ -150,6 +151,7 @@ export const cartDataList = new Elysia()
 
                     return {
                         ..._c,
+                        product_variant_id: _c.productVariants.id,
                         product: {
                             ...productVariants.product,
                             ...productPrice,
