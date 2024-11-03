@@ -55,14 +55,48 @@ export const ordersCreate = new Elysia()
 export const ordersSuccessfully = new Elysia()
     .get('/:id', async ({ params }) => {
         try {
-            return await prismaClient.orders.findFirst({
+            const orders = await prismaClient.orders.findFirst({
                 where: {
                     id: params.id
                 },
                 select: {
-
+                    id: true,
+                    name: true,
+                    email: true,
+                    phone: true,
+                    note: true,
+                    shipping_address: true,
+                    total_amount: true,
+                    total_after_discount: true,
+                    orderItem: {
+                        select: {
+                            id: true,
+                            price: true,
+                            quantity: true,
+                            productVariants: {
+                                select: {
+                                    label: true,
+                                    product: {
+                                        select: {
+                                            slug: true,
+                                            name: true,
+                                            image_uri: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             })
+
+            return {
+                ...orders,
+                orderItem: orders?.orderItem.map(_order => ({
+                    ..._order,
+                    ..._order.productVariants
+                }))
+            }
         } catch (error) {
             handleDatabaseError(error)
         }
