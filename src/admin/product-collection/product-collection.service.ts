@@ -50,6 +50,7 @@ export const productCollectionTableList = new Elysia().use(productCollectionMode
                     where: search,
                     select: {
                         id: true,
+                        slug: true,
                         title: true,
                         status: true,
                         created_at: true,
