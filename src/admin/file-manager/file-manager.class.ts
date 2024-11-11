@@ -29,8 +29,10 @@ export class FileManagerClass {
     }
 
     async getBaseUrl() {
-        const storageZone = Bun.env.BUNNY_STORAGE_ZONE
+        // const storageZone = Bun.env.BUNNY_STORAGE_ZONE
 
-        return storageZone ? `https://${storageZone}.storage.bunnycdn.com/` : 'https://storage.bunnycdn.com/'
+        // return storageZone ? `https://${storageZone}.storage.bunnycdn.com/` : 'https://storage.bunnycdn.com/'
+
+        return `${Bun.env.BUNNY_BASE_URL}/`
     }
 }
