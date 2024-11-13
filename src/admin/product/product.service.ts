@@ -86,6 +86,7 @@ export const productTableList = new Elysia().use(productModels).get(
                         price: true,
                         special_price: true,
                         special_price_type: true,
+                        created_at: true,
                         productCategory: {
                             select: {
                                 id: true,
