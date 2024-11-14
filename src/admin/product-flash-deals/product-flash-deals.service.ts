@@ -48,7 +48,12 @@ export const productFlashDealsTableList = new Elysia().use(productFlashDealsMode
                         end_time: true,
                         created_at: true,
                         discounted_price: true,
-                        discounted_price_type: true
+                        discounted_price_type: true,
+                        _count: {
+                            select: {
+                                flashDealProducts: true
+                            }
+                        }
                     }
                 }),
                 prismaClient.flashDeals.count({
