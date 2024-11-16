@@ -2,7 +2,6 @@
 import { RedisClientType } from '@libs/ioredis'
 
 // ** Prisma Imports
-import { Decimal } from '@prisma/client/runtime/library'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
@@ -13,15 +12,13 @@ import {
 } from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 import {
-    formatSellingPrice,
-    type ProductPrice
+    formatSellingPrice
 } from '@utils/format'
 
 // ** Types Imports
 import {
     IHomeProductCollectionDTO,
-    IHomeProductFlashDealsDTO,
-    IProductAttribute
+    IHomeProductFlashDealsDTO
 } from './home.type'
 
 export class HomeClass {
@@ -55,6 +52,8 @@ export class HomeClass {
                     },
                     select: {
                         title: true,
+                        slug: true,
+                        end_time: true,
                         discounted_price: true,
                         discounted_price_type: true,
                         flashDealProducts: {
@@ -72,23 +71,14 @@ export class HomeClass {
                                 product: {
                                     select: {
                                         id: true,
-                                        sku: true,
                                         slug: true,
                                         name: true,
                                         image_uri: true,
-                                        short_description: true,
+                                        price: true,
+                                        special_price: true,
+                                        special_price_type: true,
                                         total_rating: true,
                                         product_type: true,
-                                        productImages: {
-                                            orderBy: { index: 'asc' },
-                                            select: { image_uri: true }
-                                        },
-                                        productBrand: {
-                                            select: {
-                                                id: true,
-                                                name: true
-                                            }
-                                        },
                                         productCategory: {
                                             select: {
                                                 id: true,
@@ -97,39 +87,11 @@ export class HomeClass {
                                             }
                                         },
                                         productVariants: {
+                                            where: {
+                                                deleted_flg: false
+                                            },
                                             select: {
-                                                id: true,
-                                                productPrices: {
-                                                    select: {
-                                                        price: true,
-                                                        special_price: true,
-                                                        special_price_type: true
-                                                    }
-                                                },
-                                                productVariantAttributeValues: {
-                                                    where: {
-                                                        productAttributeValues: {
-                                                            deleted_flg: false,
-                                                            productAttribute: {
-                                                                deleted_flg: false
-                                                            }
-                                                        }
-                                                    },
-                                                    select: {
-                                                        productAttributeValues: {
-                                                            select: {
-                                                                id: true,
-                                                                value: true,
-                                                                productAttribute: {
-                                                                    select: {
-                                                                        id: true,
-                                                                        name: true
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
+                                                id: true
                                             }
                                         }
                                     }
@@ -144,9 +106,10 @@ export class HomeClass {
                 }
             }
 
+            const formattedProduct = []
+
             let wishlistProductIds: Set<string> = new Set()
             let wishlistItems: string[] = []
-            const flashDealProducts = []
 
             if (user_id) {
                 wishlistItems = await redis.smembers(createRedisKey(REDIS_KEY.USER_WISHLIST, user_id))
@@ -167,91 +130,45 @@ export class HomeClass {
                 wishlistProductIds = new Set(wishlistItems)
             }
 
-            interface ProductVariants {
-                productVariants: {
-                    productVariantAttributeValues: {
-                        productAttributeValues: {
-                            productAttribute: {
-                                id: string
-                                name: string
-                            }
-                            id: string
-                            value: string
-                        }
-                    }[]
-                    productPrices: {
-                        price: Decimal
-                        special_price: Decimal | null
-                        special_price_type: number | null
-                    }[]
-                    id: string
-                }[]
-            }
+            for (const _product of productFlashDeals?.flashDealProducts || []) {
+                const isWishlist = wishlistProductIds ? wishlistProductIds.has(_product.id) : false
 
-            for (const _flashDeal of productFlashDeals?.flashDealProducts || []) {
-                const isWishlist = wishlistProductIds ? wishlistProductIds.has(_flashDeal.product.id) : false
-                const productAttributes: Record<string, IProductAttribute> = {}
-                const product = _flashDeal.product as ProductVariants
+                const productPrice = {
+                    price: Number(_product.product.price),
+                    special_price: Number(_product.product.special_price),
+                    special_price_type: Number(_product.product.special_price_type),
+                    hasDiscount: true,
+                    discounted_price: Number(productFlashDeals.discounted_price),
+                    discounted_price_type: Number(productFlashDeals.discounted_price_type)
+                }
 
-                product.productVariants.forEach(({ productVariantAttributeValues }) => {
-                    productVariantAttributeValues.forEach(({ productAttributeValues }) => {
-                        const { id: attributeId, name } = productAttributeValues.productAttribute
-                        const attributeValue = {
-                            id: productAttributeValues.id,
-                            value: productAttributeValues.value
-                        }
-
-                        if (!productAttributes[attributeId]) {
-                            productAttributes[attributeId] = {
-                                id: attributeId,
-                                name,
-                                product_attribute_values: []
-                            }
-                        }
-
-                        const attributeValuesSet = new Set(
-                            productAttributes[attributeId].product_attribute_values.map((val) => val.id)
-                        )
-
-                        if (!attributeValuesSet.has(attributeValue.id)) {
-                            productAttributes[attributeId].product_attribute_values.push(attributeValue)
-                        }
-                    })
-                })
-
-                const productVariants = product.productVariants.map(({ productPrices, ..._productVariant }) => {
-                    const getPrice = productPrices[0]
-
-                    const productPrice: ProductPrice = {
-                        price: Number(getPrice.price),
-                        special_price: Number(getPrice.special_price),
-                        special_price_type: Number(getPrice.special_price_type),
-                        hasDiscount: true,
-                        discounted_price: Number(productFlashDeals.discounted_price),
-                        discounted_price_type: Number(productFlashDeals.discounted_price_type)
-                    }
-
-                    return {
-                        ..._productVariant,
-                        ...productPrice,
-                        selling_price: formatSellingPrice(productPrice),
-                        productPrices: undefined
-                    }
-                })
-
-                flashDealProducts.push({
-                    ..._flashDeal.product,
+                formattedProduct.push({
+                    ..._product.product,
+                    ...productPrice,
+                    selling_price: formatSellingPrice(productPrice),
                     isWishlist,
-                    productAttributes: Object.values(productAttributes),
-                    productVariants
+                    flashDeal: {
+                        title: productFlashDeals.title,
+                        discounted_price: productFlashDeals.discounted_price,
+                        discounted_price_type: productFlashDeals.discounted_price_type
+                    },
+                    product_variant_id: _product.productVariants ? _product.productVariants[0].id : undefined,
+                    productPrice: {
+                        price: _product.product.price,
+                        special_price: _product.product.special_price,
+                        special_price_type: _product.product.special_price_type
+                    },
+                    productVariants: undefined,
+                    flashDealProducts: undefined
                 })
             }
 
             return {
                 ...productFlashDeals,
-                flashDealProducts
+                flashDealProducts: formattedProduct
             }
         } catch (error) {
+            console.log(error);
             handleDatabaseError(error)
         }
     }
