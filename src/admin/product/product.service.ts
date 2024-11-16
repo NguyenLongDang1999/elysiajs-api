@@ -253,7 +253,7 @@ export const productRetrieve = new Elysia().get('/:id', async ({ params }) => {
                 const attrObj = product_attributes.find((attr) => attr.id === attribute.id)
 
                 if (attrObj) {
-                    attrObj.values.push(attributeValueId)
+                    attrObj.values = [...new Set([...attrObj.values, attributeValueId])]
                 } else {
                     product_attributes.push({
                         id: attribute.id,
