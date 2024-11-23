@@ -29,23 +29,23 @@ export const authController = new Elysia({ prefix: '/auth' })
 
             const accessTokenJWT = await jwtAccessToken.sign({ sub: id })
 
-            // cookie.accessToken.set({
-            //     value: accessTokenJWT,
-            //     maxAge: Number(JWT.ACCESS_TOKEN_EXP),
-            //     secure: Bun.env.NODE_ENV === 'production',
-            //     httpOnly: Bun.env.NODE_ENV === 'production',
-            //     sameSite: Bun.env.NODE_ENV === 'production'
-            // })
+            cookie.accessToken.set({
+                value: accessTokenJWT,
+                maxAge: Number(JWT.ACCESS_TOKEN_EXP),
+                secure: Bun.env.NODE_ENV === 'production',
+                httpOnly: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production'
+            })
 
             const refreshTokenJWT = await jwtRefreshToken.sign({ sub: id })
 
-            // cookie.refreshToken.set({
-            //     value: refreshTokenJWT,
-            //     maxAge: Number(JWT.REFRESH_TOKEN_EXP),
-            //     secure: Bun.env.NODE_ENV === 'production',
-            //     httpOnly: Bun.env.NODE_ENV === 'production',
-            //     sameSite: Bun.env.NODE_ENV === 'production'
-            // })
+            cookie.refreshToken.set({
+                value: refreshTokenJWT,
+                maxAge: Number(JWT.REFRESH_TOKEN_EXP),
+                secure: Bun.env.NODE_ENV === 'production',
+                httpOnly: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production'
+            })
 
             const expireAt = new Date(Date.now() + JWT.REFRESH_TOKEN_EXP * 1000)
 
@@ -89,7 +89,14 @@ export const authController = new Elysia({ prefix: '/auth' })
 
             const expireAt = new Date(Date.now() + JWT.REFRESH_TOKEN_EXP * 1000)
 
-            return await UserAuthService.updateRefreshToken(id, refreshTokenJWT, expireAt)
+            await UserAuthService.updateRefreshToken(id, refreshTokenJWT, expireAt)
+
+            return {
+                token: {
+                    accessToken: accessTokenJWT,
+                    refreshToken: refreshTokenJWT,
+                }
+            }
         },
         {
             body: 'signUp'
