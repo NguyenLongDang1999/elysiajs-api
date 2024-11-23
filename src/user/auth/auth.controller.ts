@@ -133,7 +133,14 @@ export const authController = new Elysia({ prefix: '/auth' })
             sameSite: Bun.env.NODE_ENV === 'production'
         })
 
-        return await UserAuthService.updateRefreshToken(response.id, refreshTokenJWT)
+        await UserAuthService.updateRefreshToken(response.id, refreshTokenJWT)
+
+        return {
+            token: {
+                accessToken: accessTokenJWT,
+                refreshToken: refreshTokenJWT,
+            }
+        }
     })
     .post('forgot-password', ({ UserAuthService, body }) => UserAuthService.forgotPassword(body), {
         body: 'changePassword'
