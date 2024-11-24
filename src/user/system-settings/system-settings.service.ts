@@ -24,13 +24,16 @@ export const systemSettingMetadata = new Elysia()
     .use(redisPlugin)
     .get('/metadata', async ({ UserSystemSettingsClass, redis }) => {
         try {
+            const menuFlashDeals = await UserSystemSettingsClass.getMenuFlashDeals(redis)
+            const menuCollections = await UserSystemSettingsClass.getMenuCollections(redis)
             const systemSettings = await UserSystemSettingsClass.getDataList({ key: 'system_' }, redis)
-
             const theme_colour = systemSettings.find((_s: { key: string }) => _s.key === 'system_theme_colour')
 
             return {
                 theme_colour: theme_colour.value,
-                system: systemSettings
+                system: systemSettings,
+                menuFlashDeals,
+                menuCollections
             }
         } catch (error) {
             handleDatabaseError(error)
