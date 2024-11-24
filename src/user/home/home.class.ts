@@ -152,7 +152,7 @@ export class HomeClass {
                         discounted_price: productFlashDeals.discounted_price,
                         discounted_price_type: productFlashDeals.discounted_price_type
                     },
-                    product_variant_id: _product.productVariants ? _product.productVariants[0].id : undefined,
+                    product_variant_id: _product.product.productVariants ? _product.product.productVariants[0].id : undefined,
                     productPrice: {
                         price: _product.product.price,
                         special_price: _product.product.special_price,
@@ -372,7 +372,6 @@ export class HomeClass {
                 })
             )
         } catch (error) {
-            console.log(error)
             handleDatabaseError(error)
         }
     }
