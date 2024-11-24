@@ -131,7 +131,7 @@ export class HomeClass {
             }
 
             for (const _product of productFlashDeals?.flashDealProducts || []) {
-                const isWishlist = wishlistProductIds ? wishlistProductIds.has(_product.id) : false
+                const isWishlist = wishlistProductIds ? wishlistProductIds.has(_product.product.id) : false
 
                 const productPrice = {
                     price: Number(_product.product.price),
