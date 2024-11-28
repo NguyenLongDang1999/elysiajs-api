@@ -421,6 +421,7 @@ model ProductCoupon {
 
 model Orders {
   id                   String      @id @default(cuid())
+  code                 String      @unique @db.VarChar
   name                 String      @db.VarChar
   email                String      @db.VarChar
   phone                String      @db.VarChar
