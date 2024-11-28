@@ -34,7 +34,7 @@ export const ordersTableList = new Elysia().use(ordersModels).get(
                     where: search,
                     select: {
                         id: true,
-                        // code: true,
+                        code: true,
                         name: true,
                         email: true,
                         phone: true,

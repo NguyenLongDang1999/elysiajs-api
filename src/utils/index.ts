@@ -80,3 +80,11 @@ export const flattenCategories = (
         }
     }
 }
+
+export const generateOrderId = () => {
+    const prefix = 'ORD'
+    const datePart = new Date().toISOString().slice(2, 10).replace(/-/g, '')
+    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase()
+
+    return `${prefix}-${datePart}-${randomPart}`
+}
