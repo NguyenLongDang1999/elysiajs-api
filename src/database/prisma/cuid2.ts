@@ -11,8 +11,10 @@ const cuid2Extension = Prisma.defineExtension({
         $allModels: {
             create({ query, args }) {
                 const argsWithNewId = produce(args, (draft: Draft<typeof args>) => {
-                    if (!('id' in draft.data)) {
-                        ;(draft.data as { id?: string }).id = createId()
+                    if (draft.data && typeof draft.data === 'object' && 'id' in draft.data) {
+                        if (!draft.data.id) {
+                            draft.data.id = createId()
+                        }
                     }
                 })
 
@@ -22,16 +24,11 @@ const cuid2Extension = Prisma.defineExtension({
                 const argsWithNewIds = produce(args, (draft: Draft<typeof args>) => {
                     if (Array.isArray(draft.data)) {
                         draft.data = draft.data.map((item) => {
-                            if (!('id' in item)) {
-                                ;(item as { id?: string }).id = createId()
+                            if (typeof item === 'object' && 'id' in item && !item.id) {
+                                item.id = createId()
                             }
-
                             return item
                         }) as typeof draft.data
-                    } else {
-                        if (!('id' in draft.data)) {
-                            ;(draft.data as { id?: string }).id = createId()
-                        }
                     }
                 })
 
