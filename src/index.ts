@@ -5,6 +5,7 @@ import { Elysia } from 'elysia'
 
 // ** Router Imports
 import { admin } from './admin'
+import { seed } from './seed'
 import { user } from './user'
 
 // ** Utils Imports
@@ -37,6 +38,7 @@ const app = new Elysia({ prefix: '/api', normalize: true })
     )
     .use(admin)
     .use(user)
+    .use(seed)
     .get('/', () => 'Hello Elysia')
     .listen(Bun.env.PORT || 3333)
 
