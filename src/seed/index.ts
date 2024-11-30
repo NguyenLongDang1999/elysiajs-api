@@ -9,6 +9,7 @@ import { SeedProductCategoryClass } from './product-category/product-category.cl
 
 // ** Plugins Imports
 import { redisPlugin } from '@src/plugins/redis'
+import { SeedProductClass } from './product/product.class'
 
 export const seed = new Elysia({ prefix: '/seed' })
     .use(redisPlugin)
@@ -16,14 +17,16 @@ export const seed = new Elysia({ prefix: '/seed' })
         SeedAuthClass: new SeedAuthClass(),
         SeedProductCategoryClass: new SeedProductCategoryClass(),
         SeedProductBrandClass: new SeedProductBrandClass(),
-        SeedProductAttributeClass: new SeedProductAttributeClass()
+        SeedProductAttributeClass: new SeedProductAttributeClass(),
+        SeedProductClass: new SeedProductClass()
     })
-    .get('/', async ({ redis, SeedAuthClass, SeedProductCategoryClass, SeedProductBrandClass, SeedProductAttributeClass }) => {
+    .get('/', async ({ redis, SeedAuthClass, SeedProductCategoryClass, SeedProductBrandClass, SeedProductAttributeClass, SeedProductClass }) => {
         await redis.forgetAll()
         await SeedAuthClass.authSeedCreate()
         await SeedProductCategoryClass.productCategorySeedCreate()
         await SeedProductBrandClass.productBrandSeedCreate()
         await SeedProductAttributeClass.productAttributeSeedCreate()
+        await SeedProductClass.productSeedCreate()
 
         return { message: 'Seed data created successfully' }
     })
