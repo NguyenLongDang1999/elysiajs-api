@@ -47,6 +47,13 @@ export const productCategoryTableList = new Elysia().use(productCategoryModels).
                             product_brand_id: { contains: query.product_brand_id }
                         }
                     }
+                    : undefined,
+                productCategoryAttributes: query.product_attribute_id
+                    ? {
+                        some: {
+                            product_attribute_id: { contains: query.product_attribute_id }
+                        }
+                    }
                     : undefined
             }
 
