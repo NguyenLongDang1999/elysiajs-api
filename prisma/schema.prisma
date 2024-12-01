@@ -237,7 +237,7 @@ model FlashDeals {
   description           String?             @db.VarChar
   status                Int?                @default(10) @db.SmallInt
   discounted_price      Decimal             @default(0) @db.Decimal(18, 0)
-  discounted_price_type Int                 @db.SmallInt
+  discounted_price_type Int                 @db.SmallInt // 10: Fixed, 20: Percentage
   start_time            DateTime
   end_time              DateTime
   created_at            DateTime            @default(now())
