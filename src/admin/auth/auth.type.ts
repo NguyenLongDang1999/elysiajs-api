@@ -29,7 +29,7 @@ export type IAuthJwt = {
     readonly verify: (jwt?: string) => Promise<
         | false
         | ({
-            sub: string
-        } & JWTPayloadSpec)
+              sub: string
+          } & JWTPayloadSpec)
     >
 }

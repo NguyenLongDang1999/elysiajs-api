@@ -16,7 +16,7 @@ export class SeedProductAttributeClass {
                         name: 'Color',
                         slug: 'color',
                         description: 'Product color variations',
-                        status: 10,
+                        status: 10
                     }
                 }),
                 prismaClient.productAttribute.create({
@@ -24,7 +24,7 @@ export class SeedProductAttributeClass {
                         name: 'Size',
                         slug: 'size',
                         description: 'Product size variations',
-                        status: 10,
+                        status: 10
                     }
                 }),
                 prismaClient.productAttribute.create({
@@ -32,7 +32,7 @@ export class SeedProductAttributeClass {
                         name: 'Material',
                         slug: 'material',
                         description: 'Product material type',
-                        status: 10,
+                        status: 10
                     }
                 })
             ])
@@ -40,7 +40,7 @@ export class SeedProductAttributeClass {
             // Create attribute values
             const attributeValues = await Promise.all([
                 // Colors
-                ...['Red', 'Blue', 'Black', 'White', 'Green'].map(color =>
+                ...['Red', 'Blue', 'Black', 'White', 'Green'].map((color) =>
                     prismaClient.productAttributeValues.create({
                         data: {
                             value: color,
@@ -49,7 +49,7 @@ export class SeedProductAttributeClass {
                     })
                 ),
                 // Sizes
-                ...['S', 'M', 'L', 'XL', 'XXL'].map(size =>
+                ...['S', 'M', 'L', 'XL', 'XXL'].map((size) =>
                     prismaClient.productAttributeValues.create({
                         data: {
                             value: size,
@@ -58,7 +58,7 @@ export class SeedProductAttributeClass {
                     })
                 ),
                 // Materials
-                ...['Cotton', 'Polyester', 'Leather', 'Wool', 'Silk'].map(material =>
+                ...['Cotton', 'Polyester', 'Leather', 'Wool', 'Silk'].map((material) =>
                     prismaClient.productAttributeValues.create({
                         data: {
                             value: material,
@@ -93,7 +93,6 @@ export class SeedProductAttributeClass {
                 totalAttributeValues: attributeValues.length,
                 totalCategoryAttributes: await prismaClient.productCategoryAttributes.count()
             }
-
         } catch (error) {
             console.error('Error in productAttributeSeedCreate:', error)
             throw error

@@ -5,5 +5,5 @@ import { Elysia } from 'elysia'
 import { createOrdersType } from './orders.type'
 
 export const orderModels = new Elysia().model({
-    createOrders: createOrdersType,
+    createOrders: createOrdersType
 })

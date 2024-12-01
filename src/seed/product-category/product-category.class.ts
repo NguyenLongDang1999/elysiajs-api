@@ -18,8 +18,8 @@ export class SeedProductCategoryClass {
                 image_uri: faker.image.url(),
                 meta_title: `Product Category ${i + 1}`,
                 meta_description: `Description for product category ${i + 1}`,
-                status: 10,
-            })),
+                status: 10
+            }))
         })
 
         // Get all parent categories
@@ -37,7 +37,7 @@ export class SeedProductCategoryClass {
                     meta_description: `Description for product category ${parent.name}.${i + 1}`,
                     status: 10,
                     parent_id: parent.id
-                })),
+                }))
             })
 
             // Get all children for this parent
@@ -57,7 +57,7 @@ export class SeedProductCategoryClass {
                         meta_description: `Description for product category ${child.name}.${i + 1}`,
                         status: 10,
                         parent_id: child.id
-                    })),
+                    }))
                 })
             }
         }

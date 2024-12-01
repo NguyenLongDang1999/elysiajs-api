@@ -54,7 +54,7 @@ export const authController = new Elysia({ prefix: '/auth' })
             return {
                 token: {
                     accessToken: accessTokenJWT,
-                    refreshToken: refreshTokenJWT,
+                    refreshToken: refreshTokenJWT
                 }
             }
         },
@@ -94,7 +94,7 @@ export const authController = new Elysia({ prefix: '/auth' })
             return {
                 token: {
                     accessToken: accessTokenJWT,
-                    refreshToken: refreshTokenJWT,
+                    refreshToken: refreshTokenJWT
                 }
             }
         },
@@ -138,7 +138,7 @@ export const authController = new Elysia({ prefix: '/auth' })
         return {
             token: {
                 accessToken: accessTokenJWT,
-                refreshToken: refreshTokenJWT,
+                refreshToken: refreshTokenJWT
             }
         }
     })

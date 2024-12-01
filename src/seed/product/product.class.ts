@@ -1,7 +1,11 @@
 // ** Prisma Imports
 import { faker } from '@faker-js/faker'
 import prismaClient from '@src/database/prisma'
-import { MANAGE_INVENTORY, PRODUCT_TYPE, STATUS } from '@utils/enums'
+import {
+    MANAGE_INVENTORY,
+    PRODUCT_TYPE,
+    STATUS
+} from '@utils/enums'
 
 export class SeedProductClass {
     private readonly PRODUCT_COUNT = 100
@@ -19,9 +23,9 @@ export class SeedProductClass {
         ])
 
         return {
-            categoryIds: categories.map(c => c.id),
-            brandIds: brands.map(b => b.id),
-            attributeValueIds: attributeValues.map(av => av.id)
+            categoryIds: categories.map((c) => c.id),
+            brandIds: brands.map((b) => b.id),
+            attributeValueIds: attributeValues.map((av) => av.id)
         }
     }
 
@@ -32,7 +36,9 @@ export class SeedProductClass {
             const { categoryIds, brandIds, attributeValueIds } = await this.getRandomReferences()
 
             if (!categoryIds.length || !brandIds.length || !attributeValueIds.length) {
-                throw new Error('Missing required reference data. Please seed categories, brands, and attribute values first.')
+                throw new Error(
+                    'Missing required reference data. Please seed categories, brands, and attribute values first.'
+                )
             }
 
             for (let i = 0; i < this.PRODUCT_COUNT; i++) {
@@ -58,8 +64,8 @@ export class SeedProductClass {
                                 <h3>Key Features</h3>
                                 <ul>
                                     ${Array.from({ length: faker.number.int({ min: 3, max: 6 }) })
-                                .map(() => `<li>${faker.commerce.productDescription()}</li>`)
-                                .join('')}
+        .map(() => `<li>${faker.commerce.productDescription()}</li>`)
+        .join('')}
                                 </ul>
 
                                 <h3>Details</h3>
@@ -69,13 +75,15 @@ export class SeedProductClass {
                                     <h3>Specifications</h3>
                                     <table>
                                         ${Array.from({ length: faker.number.int({ min: 3, max: 5 }) })
-                                .map(() => `
+        .map(
+            () => `
                                                 <tr>
                                                     <td><strong>${faker.commerce.productMaterial()}</strong></td>
                                                     <td>${faker.commerce.productDescription()}</td>
                                                 </tr>
-                                            `)
-                                .join('')}
+                                            `
+        )
+        .join('')}
                                     </table>
                                 </div>
 
@@ -85,10 +93,12 @@ export class SeedProductClass {
                                 </div>
                             </div>
                         `,
-                        technical_specifications: Array.from({ length: faker.number.int({ min: 2, max: 5 }) }).map(() => ({
-                            title: faker.commerce.productMaterial(),
-                            content: faker.commerce.productDescription()
-                        })),
+                        technical_specifications: Array.from({ length: faker.number.int({ min: 2, max: 5 }) }).map(
+                            () => ({
+                                title: faker.commerce.productMaterial(),
+                                content: faker.commerce.productDescription()
+                            })
+                        ),
                         product_category_id: faker.helpers.arrayElement(categoryIds),
                         product_brand_id: faker.helpers.arrayElement(brandIds),
                         status: STATUS.ACTIVE,
@@ -101,38 +111,13 @@ export class SeedProductClass {
                         productImages: {
                             create: Array.from({ length: faker.number.int({ min: 1, max: 5 }) }).map((_, imgIndex) => ({
                                 image_uri: faker.image.url(),
-                                index: imgIndex,
+                                index: imgIndex
                             }))
                         },
                         productVariants: {
                             create: isSingleProduct
-                                ? [{
-                                    manage_inventory: MANAGE_INVENTORY.YES,
-                                    productInventory: {
-                                        create: {
-                                            quantity: faker.number.int({ min: 0, max: 100 })
-                                        }
-                                    },
-                                    productPrices: {
-                                        create: {
-                                            is_default: true,
-                                            price: basePrice,
-                                            special_price: specialPrice,
-                                            special_price_type: hasSpecialPrice ? 10 : 20,
-                                            start_date: new Date()
-                                        }
-                                    }
-                                }]
-                                : Array.from({ length: faker.number.int({ min: 2, max: 4 }) }).map((_, variantIndex) => {
-                                    const variantPrice = basePrice + (faker.number.int({ min: -100000, max: 100000 }))
-
-                                    // Get unique random attribute values for this variant
-                                    const shuffledAttributeValues = [...attributeValueIds]
-                                        .sort(() => Math.random() - 0.5)
-                                        .slice(0, 2)
-
-                                    return {
-                                        label: `Variant ${variantIndex + 1}`,
+                                ? [
+                                    {
                                         manage_inventory: MANAGE_INVENTORY.YES,
                                         productInventory: {
                                             create: {
@@ -141,20 +126,50 @@ export class SeedProductClass {
                                         },
                                         productPrices: {
                                             create: {
-                                                is_default: variantIndex === 0,
-                                                price: variantPrice,
-                                                special_price: hasSpecialPrice ? variantPrice * 0.8 : undefined,
+                                                is_default: true,
+                                                price: basePrice,
+                                                special_price: specialPrice,
                                                 special_price_type: hasSpecialPrice ? 10 : 20,
                                                 start_date: new Date()
                                             }
-                                        },
-                                        productVariantAttributeValues: {
-                                            create: shuffledAttributeValues.map(attributeValueId => ({
-                                                product_attribute_value_id: attributeValueId
-                                            }))
                                         }
                                     }
-                                })
+                                ]
+                                : Array.from({ length: faker.number.int({ min: 2, max: 4 }) }).map(
+                                    (_, variantIndex) => {
+                                        const variantPrice =
+                                              basePrice + faker.number.int({ min: -100000, max: 100000 })
+
+                                        // Get unique random attribute values for this variant
+                                        const shuffledAttributeValues = [...attributeValueIds]
+                                            .sort(() => Math.random() - 0.5)
+                                            .slice(0, 2)
+
+                                        return {
+                                            label: `Variant ${variantIndex + 1}`,
+                                            manage_inventory: MANAGE_INVENTORY.YES,
+                                            productInventory: {
+                                                create: {
+                                                    quantity: faker.number.int({ min: 0, max: 100 })
+                                                }
+                                            },
+                                            productPrices: {
+                                                create: {
+                                                    is_default: variantIndex === 0,
+                                                    price: variantPrice,
+                                                    special_price: hasSpecialPrice ? variantPrice * 0.8 : undefined,
+                                                    special_price_type: hasSpecialPrice ? 10 : 20,
+                                                    start_date: new Date()
+                                                }
+                                            },
+                                            productVariantAttributeValues: {
+                                                create: shuffledAttributeValues.map((attributeValueId) => ({
+                                                    product_attribute_value_id: attributeValueId
+                                                }))
+                                            }
+                                        }
+                                    }
+                                )
                         }
                     }
                 })

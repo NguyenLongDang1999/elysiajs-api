@@ -20,13 +20,23 @@ export const seed = new Elysia({ prefix: '/seed' })
         SeedProductAttributeClass: new SeedProductAttributeClass(),
         SeedProductClass: new SeedProductClass()
     })
-    .get('/', async ({ redis, SeedAuthClass, SeedProductCategoryClass, SeedProductBrandClass, SeedProductAttributeClass, SeedProductClass }) => {
-        await redis.forgetAll()
-        await SeedAuthClass.authSeedCreate()
-        await SeedProductCategoryClass.productCategorySeedCreate()
-        await SeedProductBrandClass.productBrandSeedCreate()
-        await SeedProductAttributeClass.productAttributeSeedCreate()
-        await SeedProductClass.productSeedCreate()
+    .get(
+        '/',
+        async ({
+            redis,
+            SeedAuthClass,
+            SeedProductCategoryClass,
+            SeedProductBrandClass,
+            SeedProductAttributeClass,
+            SeedProductClass
+        }) => {
+            await redis.forgetAll()
+            await SeedAuthClass.authSeedCreate()
+            await SeedProductCategoryClass.productCategorySeedCreate()
+            await SeedProductBrandClass.productBrandSeedCreate()
+            await SeedProductAttributeClass.productAttributeSeedCreate()
+            await SeedProductClass.productSeedCreate()
 
-        return { message: 'Seed data created successfully' }
-    })
+            return { message: 'Seed data created successfully' }
+        }
+    )

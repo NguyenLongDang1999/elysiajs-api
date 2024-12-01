@@ -159,12 +159,12 @@ export class UserProductCategoryClass {
                 query.productRating.length > 0 && {
                 OR: query.productRating.map((rate) => ({
                     total_rating:
-                        Number(rate) === 5
-                            ? Number(rate)
-                            : {
-                                gte: Number(rate),
-                                lte: Number(rate) + 1
-                            }
+                            Number(rate) === 5
+                                ? Number(rate)
+                                : {
+                                    gte: Number(rate),
+                                    lte: Number(rate) + 1
+                                }
                 }))
             })
         }

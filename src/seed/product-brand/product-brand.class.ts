@@ -20,7 +20,7 @@ export class SeedProductBrandClass {
                             slug: `brand-${i + 1}`,
                             image_uri: faker.image.url(),
                             description: faker.company.catchPhrase(),
-                            status: 10,
+                            status: 10
                         }
                     })
                 })
@@ -63,7 +63,6 @@ export class SeedProductBrandClass {
                 totalBrands,
                 totalRelationships
             }
-
         } catch (error) {
             console.error('Error in productBrandSeedCreate:', error)
             throw error

@@ -9,7 +9,10 @@ import { ISystemSettingsSearchDTO } from './system-settings.type'
 
 // ** Utils Imports
 import { createRedisKey } from '@src/utils'
-import { REDIS_KEY, STATUS } from '@utils/enums'
+import {
+    REDIS_KEY,
+    STATUS
+} from '@utils/enums'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export class UserSystemSettingsClass {
@@ -72,10 +75,7 @@ export class UserSystemSettingsClass {
                 }
             })
 
-            await redis.set(
-                createRedisKey(REDIS_KEY.USER_MENU_FLASH_DEALS),
-                JSON.stringify(menuFlashDeals)
-            )
+            await redis.set(createRedisKey(REDIS_KEY.USER_MENU_FLASH_DEALS), JSON.stringify(menuFlashDeals))
 
             return menuFlashDeals
         } catch (error) {
@@ -103,10 +103,7 @@ export class UserSystemSettingsClass {
                 }
             })
 
-            await redis.set(
-                createRedisKey(REDIS_KEY.USER_MENU_COLLECTIONS),
-                JSON.stringify(menuCollections)
-            )
+            await redis.set(createRedisKey(REDIS_KEY.USER_MENU_COLLECTIONS), JSON.stringify(menuCollections))
 
             return menuCollections
         } catch (error) {
