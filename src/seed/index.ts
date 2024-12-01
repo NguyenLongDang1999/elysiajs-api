@@ -9,6 +9,7 @@ import { SeedProductCategoryClass } from './product-category/product-category.cl
 import { SeedProductCollectionClass } from './product-collection/product-collection.class'
 import { SeedProductFlashDealsClass } from './product-flash-deals/product-flash-deals.class'
 import { SeedProductClass } from './product/product.class'
+import { SeedSystemSettingClass } from './system-settings/system-setting.class'
 
 // ** Plugins Imports
 import { redisPlugin } from '@src/plugins/redis'
@@ -22,7 +23,8 @@ export const seed = new Elysia({ prefix: '/seed' })
         SeedProductAttributeClass: new SeedProductAttributeClass(),
         SeedProductClass: new SeedProductClass(),
         SeedProductCollectionClass: new SeedProductCollectionClass(),
-        SeedProductFlashDealsClass: new SeedProductFlashDealsClass()
+        SeedProductFlashDealsClass: new SeedProductFlashDealsClass(),
+        SeedSystemSettingClass: new SeedSystemSettingClass()
     })
     .get(
         '/',
@@ -34,7 +36,8 @@ export const seed = new Elysia({ prefix: '/seed' })
             SeedProductAttributeClass,
             SeedProductClass,
             SeedProductCollectionClass,
-            SeedProductFlashDealsClass
+            SeedProductFlashDealsClass,
+            SeedSystemSettingClass
         }) => {
             await redis.forgetAll()
             await SeedAuthClass.authSeedCreate()
@@ -44,6 +47,7 @@ export const seed = new Elysia({ prefix: '/seed' })
             await SeedProductClass.productSeedCreate()
             await SeedProductCollectionClass.productCollectionSeedCreate()
             await SeedProductFlashDealsClass.productFlashDealsSeedCreate()
+            await SeedSystemSettingClass.systemSettingSeedCreate()
 
             return { message: 'Seed data created successfully' }
         }
