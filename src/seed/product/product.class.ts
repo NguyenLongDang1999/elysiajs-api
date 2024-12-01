@@ -33,6 +33,22 @@ export class SeedProductClass {
         try {
             console.log('🌱 Starting product seed...')
 
+            // Delete all related data first in the correct order
+            await prismaClient.$transaction([
+                // Delete child tables first
+                prismaClient.productImages.deleteMany(),
+                prismaClient.productPrices.deleteMany(),
+                prismaClient.productInventory.deleteMany(),
+                prismaClient.productVariantAttributeValues.deleteMany(),
+                prismaClient.productVariants.deleteMany(),
+                prismaClient.productRelations.deleteMany(),
+                prismaClient.productCollectionProduct.deleteMany(),
+                prismaClient.flashDealProducts.deleteMany(),
+                prismaClient.wishlist.deleteMany(),
+                // Finally delete products
+                prismaClient.product.deleteMany()
+            ])
+
             const { categoryIds, brandIds, attributeValueIds } = await this.getRandomReferences()
 
             if (!categoryIds.length || !brandIds.length || !attributeValueIds.length) {
@@ -43,9 +59,20 @@ export class SeedProductClass {
 
             for (let i = 0; i < this.PRODUCT_COUNT; i++) {
                 const isSingleProduct = faker.datatype.boolean()
-                const basePrice = faker.number.int({ min: 1000, max: 1000000 })
+                const basePrice = faker.number.int({ min: 10000, max: 100000000, multipleOf: 1000 })
                 const hasSpecialPrice = faker.datatype.boolean()
-                const specialPrice = hasSpecialPrice ? basePrice * 0.8 : undefined
+                const specialPriceType = faker.helpers.arrayElement([10, 20]) // 10: Fixed, 20: Percentage
+
+                // Calculate special price based on type
+                const specialPrice = hasSpecialPrice
+                    ? specialPriceType === 20
+                        ? faker.number.int({ min: 10, max: 50 }) // Percentage discount (10-50%)
+                        : faker.number.int({ // Fixed discount
+                            min: basePrice * 0.1,
+                            max: basePrice * 0.5,
+                            multipleOf: 1000
+                        })
+                    : undefined
 
                 const productName = faker.commerce.productName()
 
@@ -64,33 +91,29 @@ export class SeedProductClass {
                                 <h3>Key Features</h3>
                                 <ul>
                                     ${Array.from({ length: faker.number.int({ min: 3, max: 6 }) })
-        .map(() => `<li>${faker.commerce.productDescription()}</li>`)
-        .join('')}
+                                .map(item => `<li>${faker.commerce.productDescription()}</li>`)
+                                .join('')}
                                 </ul>
 
                                 <h3>Details</h3>
                                 <p>${faker.lorem.paragraph()}</p>
 
-                                <div class="specifications">
-                                    <h3>Specifications</h3>
-                                    <table>
+                                <h3>Specifications</h3>
+                                <table class="specifications">
+                                    <tbody>
                                         ${Array.from({ length: faker.number.int({ min: 3, max: 5 }) })
-        .map(
-            () => `
+                                .map(item => `
                                                 <tr>
-                                                    <td><strong>${faker.commerce.productMaterial()}</strong></td>
+                                                    <th>${faker.commerce.productMaterial()}</th>
                                                     <td>${faker.commerce.productDescription()}</td>
                                                 </tr>
-                                            `
-        )
-        .join('')}
-                                    </table>
-                                </div>
+                                            `)
+                                .join('')}
+                                    </tbody>
+                                </table>
 
-                                <div class="care-instructions">
-                                    <h3>Care Instructions</h3>
-                                    <p>${faker.lorem.paragraph()}</p>
-                                </div>
+                                <h3>Care Instructions</h3>
+                                <p>${faker.lorem.paragraph()}</p>
                             </div>
                         `,
                         technical_specifications: Array.from({ length: faker.number.int({ min: 2, max: 5 }) }).map(
@@ -105,7 +128,7 @@ export class SeedProductClass {
                         product_type: isSingleProduct ? PRODUCT_TYPE.SINGLE : PRODUCT_TYPE.VARIANT,
                         price: basePrice,
                         special_price: specialPrice,
-                        special_price_type: hasSpecialPrice ? 10 : 20,
+                        special_price_type: hasSpecialPrice ? specialPriceType : undefined,
                         meta_title: productName,
                         meta_description: faker.commerce.productDescription(),
                         productImages: {
@@ -129,7 +152,7 @@ export class SeedProductClass {
                                                 is_default: true,
                                                 price: basePrice,
                                                 special_price: specialPrice,
-                                                special_price_type: hasSpecialPrice ? 10 : 20,
+                                                special_price_type: hasSpecialPrice ? specialPriceType : undefined,
                                                 start_date: new Date()
                                             }
                                         }
@@ -137,8 +160,22 @@ export class SeedProductClass {
                                 ]
                                 : Array.from({ length: faker.number.int({ min: 2, max: 4 }) }).map(
                                     (_, variantIndex) => {
-                                        const variantPrice =
-                                              basePrice + faker.number.int({ min: -100000, max: 100000 })
+                                        const variantPrice = basePrice + faker.number.int({
+                                            min: -100000,
+                                            max: 100000,
+                                            multipleOf: 1000
+                                        })
+
+                                        // Calculate variant special price
+                                        const variantSpecialPrice = hasSpecialPrice
+                                            ? specialPriceType === 20
+                                                ? faker.number.int({ min: 10, max: 50 }) // Percentage discount
+                                                : faker.number.int({ // Fixed discount
+                                                    min: variantPrice * 0.1,
+                                                    max: variantPrice * 0.5,
+                                                    multipleOf: 1000
+                                                })
+                                            : undefined
 
                                         // Get unique random attribute values for this variant
                                         const shuffledAttributeValues = [...attributeValueIds]
@@ -157,8 +194,8 @@ export class SeedProductClass {
                                                 create: {
                                                     is_default: variantIndex === 0,
                                                     price: variantPrice,
-                                                    special_price: hasSpecialPrice ? variantPrice * 0.8 : undefined,
-                                                    special_price_type: hasSpecialPrice ? 10 : 20,
+                                                    special_price: variantSpecialPrice,
+                                                    special_price_type: hasSpecialPrice ? specialPriceType : undefined,
                                                     start_date: new Date()
                                                 }
                                             },
