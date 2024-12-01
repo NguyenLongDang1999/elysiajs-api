@@ -50,22 +50,9 @@ export const authSignIn = new Elysia()
 
                 const expireAt = new Date(Date.now() + JWT.REFRESH_TOKEN_EXP * 1000)
 
-                const accessTokenJWT = await jwtAccessToken.sign({
-                    sub: user.id
-                })
+                await AuthClass.setCookie(user.id, jwtAccessToken, jwtRefreshToken, cookie, expireAt)
 
-                const refreshTokenJWT = await jwtRefreshToken.sign({
-                    sub: user.id
-                })
-
-                await AuthClass.updateRefreshToken(user.id, refreshTokenJWT, expireAt)
-
-                return {
-                    token: {
-                        accessToken: accessTokenJWT,
-                        refreshToken: refreshTokenJWT,
-                    }
-                }
+                return { message: 'success' }
             } catch (error) {
                 handleDatabaseError(error)
             }
@@ -106,22 +93,9 @@ export const authRefresh = new Elysia()
 
         if (!refreshTokenMatches) throw error('Forbidden')
 
-        const accessTokenJWT = await jwtAccessToken.sign({
-            sub: user.id
-        })
+        await AuthClass.setCookie(user.id, jwtAccessToken, jwtRefreshToken, cookie)
 
-        const refreshTokenJWT = await jwtRefreshToken.sign({
-            sub: user.id
-        })
-
-        await AuthClass.updateRefreshToken(user.id, refreshTokenJWT)
-
-        return {
-            token: {
-                accessToken: accessTokenJWT,
-                refreshToken: refreshTokenJWT,
-            }
-        }
+        return { message: 'success' }
     })
 
 export const authSignOut = new Elysia().use(authPlugin).get('/sign-out', async ({ user, cookie, error }) => {

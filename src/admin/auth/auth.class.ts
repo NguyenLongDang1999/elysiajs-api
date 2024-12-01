@@ -1,3 +1,6 @@
+// ** Elysia Imports
+import { Cookie } from 'elysia'
+
 // ** Prisma Imports
 import prismaClient from '@src/database/prisma'
 
@@ -7,6 +10,7 @@ import { IAuthJwt } from './auth.type'
 // ** Utils Imports
 import {
     HASH_PASSWORD,
+    JWT
 } from '@utils/enums'
 
 export class AuthClass {
@@ -14,24 +18,34 @@ export class AuthClass {
         user_id: string,
         jwtAccessToken: IAuthJwt,
         jwtRefreshToken: IAuthJwt,
+        cookie: Record<string, Cookie<any>>,
         expireAt?: Date
     ) {
         const accessTokenJWT = await jwtAccessToken.sign({
             sub: user_id
         })
 
+        cookie.accessTokenAdmin.set({
+            value: accessTokenJWT,
+            maxAge: Number(JWT.ACCESS_TOKEN_EXP),
+            secure: Bun.env.NODE_ENV === 'production',
+            httpOnly: Bun.env.NODE_ENV === 'production',
+            sameSite: Bun.env.NODE_ENV === 'production'
+        })
+
         const refreshTokenJWT = await jwtRefreshToken.sign({
             sub: user_id
         })
 
-        await this.updateRefreshToken(user_id, refreshTokenJWT, expireAt)
+        cookie.refreshTokenAdmin.set({
+            value: refreshTokenJWT,
+            maxAge: Number(JWT.REFRESH_TOKEN_EXP),
+            secure: Bun.env.NODE_ENV === 'production',
+            httpOnly: Bun.env.NODE_ENV === 'production',
+            sameSite: Bun.env.NODE_ENV === 'production'
+        })
 
-        return {
-            token: {
-                accessToken: accessTokenJWT,
-                refreshToken: refreshTokenJWT,
-            }
-        }
+        await this.updateRefreshToken(user_id, refreshTokenJWT, expireAt)
     }
 
     hashData(data: string) {

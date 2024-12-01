@@ -1,9 +1,9 @@
 // ** Elysia Imports
+import { JWTPayloadSpec } from '@elysiajs/jwt'
 import {
     Static,
     t
 } from 'elysia'
-import { JWTPayloadSpec } from '@elysiajs/jwt'
 
 // ** Types Definition
 export const signInType = t.Object({
@@ -29,7 +29,7 @@ export type IAuthJwt = {
     readonly verify: (jwt?: string) => Promise<
         | false
         | ({
-              sub: string
-          } & JWTPayloadSpec)
+            sub: string
+        } & JWTPayloadSpec)
     >
 }
