@@ -30,7 +30,7 @@ export class SeedProductCategoryClass {
             await prismaClient.productCategory.createMany({
                 data: Array.from({ length: 10 }, (_, i) => ({
                     name: `${parent.name}.${i + 1}`,
-                    slug: `product-category-${parent.name}-${i + 1}`,
+                    slug: `product-category-${parent.slug}-${i + 1}`,
                     description: `Subcategory ${parent.name}.${i + 1}`,
                     image_uri: faker.image.url(),
                     meta_title: `Product Category ${parent.name}.${i + 1}`,
@@ -50,7 +50,7 @@ export class SeedProductCategoryClass {
                 await prismaClient.productCategory.createMany({
                     data: Array.from({ length: 10 }, (_, i) => ({
                         name: `${child.name}.${i + 1}`,
-                        slug: `product-category-${child.name}-${i + 1}`.replace('.', '-'),
+                        slug: `product-category-${child.slug}-${i + 1}`.replace('.', '-'),
                         description: `Subcategory ${child.name}.${i + 1}`,
                         image_uri: faker.image.url(),
                         meta_title: `Product Category ${child.name}.${i + 1}`,
