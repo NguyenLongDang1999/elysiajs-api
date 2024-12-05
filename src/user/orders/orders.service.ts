@@ -8,6 +8,7 @@ import prismaClient from '@src/database/prisma'
 import { orderModels } from './orders.model'
 
 // ** Utils Imports
+import { generateOrderId } from '@src/utils'
 import { handleDatabaseError } from '@utils/error-handling'
 
 export const ordersCreate = new Elysia().use(orderModels).post(
@@ -20,6 +21,7 @@ export const ordersCreate = new Elysia().use(orderModels).post(
                 const orders = await prisma.orders.create({
                     data: {
                         ...data,
+                        code: generateOrderId(),
                         orderItem: {
                             create: orderItem.map((_order) => ({
                                 product_variant_id: _order.product_variant_id,
