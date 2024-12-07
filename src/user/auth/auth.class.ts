@@ -2,7 +2,6 @@
 import { Cookie } from 'elysia'
 
 // ** Third Party Imports
-// import { createId } from '@paralleldrive/cuid2'
 import fs from 'fs'
 import handlebars from 'handlebars'
 import nodemailer from 'nodemailer'

@@ -321,4 +321,76 @@ export const authChangePassword = new Elysia()
         }
     )
 
+export const authRefreshToken = new Elysia()
+    .decorate({
+        UserAuthClass: new UserAuthClass()
+    })
+    .use(authUserPlugin)
+    .use(AuthModels)
+    .get(
+        '/refresh',
+        async ({ error, cookie, jwtAccessToken, jwtRefreshToken, UserAuthClass }) => {
+            if (!cookie.refreshToken.value) throw error('Forbidden')
 
+            const jwtPayload = await jwtRefreshToken.verify(cookie.refreshToken.value)
+
+            if (!jwtPayload || typeof jwtPayload.sub !== 'string') throw error('Unauthorized')
+
+            const users = await prismaClient.users.findFirst({
+                where: { id: jwtPayload.sub },
+                select: {
+                    id: true,
+                    refresh_token: true,
+                    refresh_token_expire: true
+                }
+            })
+
+            if (!users || !users.refresh_token) throw error('Forbidden')
+
+            const refreshTokenMatches = await Bun.password.verify(
+                cookie.refreshToken.value,
+                users.refresh_token,
+                HASH_PASSWORD.ALGORITHM
+            )
+
+            if (!refreshTokenMatches) throw error('Forbidden')
+
+            const response = {
+                id: users.id,
+                refresh_token_expire: users.refresh_token_expire
+            }
+
+            console.log(response)
+
+            if (!response || !response.id) throw error('Not Found')
+
+            const accessTokenJWT = await jwtAccessToken.sign({ sub: response.id })
+
+            cookie.accessToken.set({
+                value: accessTokenJWT,
+                maxAge: Number(JWT.ACCESS_TOKEN_EXP),
+                secure: Bun.env.NODE_ENV === 'production',
+                httpOnly: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production'
+            })
+
+            const refreshTokenJWT = await jwtRefreshToken.sign({ sub: response.id })
+
+            cookie.refreshToken.set({
+                value: refreshTokenJWT,
+                maxAge: Number(JWT.REFRESH_TOKEN_EXP),
+                secure: Bun.env.NODE_ENV === 'production',
+                httpOnly: Bun.env.NODE_ENV === 'production',
+                sameSite: Bun.env.NODE_ENV === 'production'
+            })
+
+            await UserAuthClass.updateRefreshToken(response.id, refreshTokenJWT)
+
+            return {
+                token: {
+                    accessToken: accessTokenJWT,
+                    refreshToken: refreshTokenJWT
+                }
+            }
+        }
+    )

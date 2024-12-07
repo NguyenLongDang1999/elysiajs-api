@@ -6,6 +6,7 @@ import {
     authChangePassword,
     authForgotPassword,
     authProfile,
+    authRefreshToken,
     authResetPassword,
     authSignIn,
     authSignout,
@@ -20,3 +21,4 @@ export const authController = new Elysia({ prefix: '/auth' })
     .use(authForgotPassword)
     .use(authResetPassword)
     .use(authChangePassword)
+    .use(authRefreshToken)
