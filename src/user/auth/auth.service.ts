@@ -173,33 +173,33 @@ export const authForgotPassword = new Elysia()
     .post(
         '/forgot-password',
         async ({ error, body, UserAuthClass }) => {
+            const user = await prismaClient.users.findUnique({
+                where: {
+                    deleted_flg: false,
+                    email: body.email
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    last_password_reset: true
+                }
+            })
+
+            if (!user) {
+                throw error('Not Found')
+            }
+
+            const now = new Date()
+            const PASSWORD_RESET_INTERVAL = 15
+
+            if (
+                user.last_password_reset &&
+                UserAuthClass.addMinutesToDate(user.last_password_reset, PASSWORD_RESET_INTERVAL) > now
+            ) {
+                throw error('Forbidden')
+            }
+
             try {
-                const user = await prismaClient.users.findUnique({
-                    where: {
-                        deleted_flg: false,
-                        email: body.email
-                    },
-                    select: {
-                        id: true,
-                        name: true,
-                        last_password_reset: true
-                    }
-                })
-
-                if (!user) {
-                    throw error('Not Found')
-                }
-
-                const now = new Date()
-                const PASSWORD_RESET_INTERVAL = 15
-
-                if (
-                    user.last_password_reset &&
-                    UserAuthClass.addMinutesToDate(user.last_password_reset, PASSWORD_RESET_INTERVAL) > now
-                ) {
-                    throw error('Forbidden')
-                }
-
                 const token = createId()
 
                 await prismaClient.passwordResetToken.create({
@@ -215,7 +215,7 @@ export const authForgotPassword = new Elysia()
                     data: { last_password_reset: now }
                 })
 
-                const resetLink = `${Bun.env.USER_URL}/dat-lai-mat-khau?token=${token}`
+                const resetLink = `${Bun.env.USER_URL}/reset-password?token=${token}`
 
                 const emailContent = UserAuthClass.compileEmailTemplate('src/templates/reset-password.hbs', {
                     name: user.name,
