@@ -1,4 +1,5 @@
 // ** Elysia Imports
+import { JWTPayloadSpec } from '@elysiajs/jwt'
 import {
     Static,
     t
@@ -30,6 +31,21 @@ export const signUpType = t.Object({
 })
 
 export const changePasswordType = t.Object({
+    old_password: t.String({
+        minLength: 6,
+        maxLength: 20
+    }),
+    password: t.String({
+        minLength: 6,
+        maxLength: 20
+    }),
+    confirm_password: t.String({
+        minLength: 6,
+        maxLength: 20
+    })
+})
+
+export const forgotPasswordType = t.Object({
     email: t.String({
         minLength: 1,
         format: 'email'
@@ -54,6 +70,22 @@ export type IAuthSignUpDTO = Static<typeof signUpType>
 
 export type IAuthChangePasswordDTO = Static<typeof changePasswordType>
 
+export type IAuthForgotPasswordDTO = Static<typeof forgotPasswordType>
+
 export type IAuthResetPasswordDTO = Static<typeof resetPasswordType>
 
 export type IAuthResetPasswordTokenDTO = Static<typeof resetPasswordTokenType>
+
+export type IAuthJwt = {
+    readonly sign: (
+        morePayload: {
+            sub: string
+        } & JWTPayloadSpec
+    ) => Promise<string>
+    readonly verify: (jwt?: string) => Promise<
+        | false
+        | ({
+            sub: string
+        } & JWTPayloadSpec)
+    >
+}
