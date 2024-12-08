@@ -23,6 +23,9 @@ import {
 // ** Class Imports
 import { UserProductCategoryClass } from '../product-category/product-category.class'
 
+// ** Models Imports
+import { ProductModels } from './product.model'
+
 // ** Plugins Imports
 import { redisPlugin } from '@src/plugins/redis'
 import { authUserPlugin } from '../plugins/auth'
@@ -31,7 +34,7 @@ import { authUserPlugin } from '../plugins/auth'
 import { IProductAttribute } from '../home/home.type'
 import { IProductCategoryNestedListDTO } from '../product-category/product-category.type'
 
-export const productCategoryRetrieve = new Elysia()
+export const productRetrieve = new Elysia()
     .decorate({
         UserProductCategoryClass: new UserProductCategoryClass()
     })
@@ -249,3 +252,28 @@ export const productCategoryRetrieve = new Elysia()
             handleDatabaseError(error)
         }
     })
+
+export const productReviews = new Elysia()
+    .use(ProductModels)
+    .use(authUserPlugin)
+    .post(
+        '/product-reviews', async ({ user, body, error }) => {
+            if (!user || !user.id) throw error('Not Found')
+
+            try {
+                return await prismaClient.productReviews.create({
+                    data: {
+                        user_id: user.id,
+                        product_id: body.product_id,
+                        rating: body.rating,
+                        content: body.content
+                    }
+                })
+            } catch (error) {
+                handleDatabaseError(error)
+            }
+        },
+        {
+            body: 'productReviews'
+        }
+    )

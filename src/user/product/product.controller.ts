@@ -2,6 +2,11 @@
 import { Elysia } from 'elysia'
 
 // ** Service Imports
-import { productCategoryRetrieve } from './product.service'
+import {
+    productRetrieve,
+    productReviews
+} from './product.service'
 
-export const productController = new Elysia({ prefix: '/product' }).use(productCategoryRetrieve)
+export const productController = new Elysia({ prefix: '/product' })
+    .use(productRetrieve)
+    .use(productReviews)

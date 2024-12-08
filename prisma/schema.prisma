@@ -135,7 +135,8 @@ model Product {
   special_price_type       Int?                       @db.SmallInt
   meta_title               String?                    @db.VarChar
   meta_description         String?                    @db.VarChar
-  total_rating             Float?
+  total_rating             Float?                     @default(0)
+  review_count             Int?                       @default(0) @db.Integer
   created_at               DateTime                   @default(now())
   updated_at               DateTime                   @updatedAt
   deleted_flg              Boolean                    @default(false)
@@ -148,6 +149,7 @@ model Product {
   productCollectionProduct ProductCollectionProduct[]
   flashDealProducts        FlashDealProducts[]
   wishlist                 Wishlist[]
+  productReviews           ProductReviews[]
 }
 
 model ProductVariants {
@@ -340,6 +342,7 @@ model Users {
   carts                        Carts[]
   userSocialAccounts           UserSocialAccounts[]
   orders                       Orders[]
+  productReviews               ProductReviews[]
 }
 
 model UserSocialAccounts {
@@ -448,4 +451,19 @@ model OrderItem {
   updated_at         DateTime        @updatedAt
   orders             Orders          @relation(fields: [order_id], references: [id], onDelete: Cascade)
   productVariants    ProductVariants @relation(fields: [product_variant_id], references: [id], onDelete: Cascade)
+}
+
+model ProductReviews {
+  id          String   @id @default(cuid(2))
+  user_id     String
+  product_id  String
+  rating      Int      @db.SmallInt
+  content     String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  deleted_flg Boolean  @default(false)
+  users       Users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, product_id])
 }
