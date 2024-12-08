@@ -11,7 +11,7 @@ export class SeedProductCategoryClass {
 
         // Create 10 parent categories (1, 2, 3, ...)
         await prismaClient.productCategory.createMany({
-            data: Array.from({ length: 10 }, (_, i) => ({
+            data: Array.from({ length: 5 }, (_, i) => ({
                 name: `Product Category ${i + 1}`,
                 slug: `product-category-${i + 1}`,
                 description: `Main category ${i + 1}`,
@@ -28,7 +28,7 @@ export class SeedProductCategoryClass {
         // For each parent, create 10 children (1.1, 1.2, 1.3, ...)
         for (const parent of allParents) {
             await prismaClient.productCategory.createMany({
-                data: Array.from({ length: 10 }, (_, i) => ({
+                data: Array.from({ length: 3 }, (_, i) => ({
                     name: `${parent.name}.${i + 1}`,
                     slug: `product-category-${parent.slug}-${i + 1}`,
                     description: `Subcategory ${parent.name}.${i + 1}`,
@@ -48,7 +48,7 @@ export class SeedProductCategoryClass {
             // For each child, create 10 grandchildren (1.1.1, 1.1.2, ...)
             for (const child of childCategories) {
                 await prismaClient.productCategory.createMany({
-                    data: Array.from({ length: 10 }, (_, i) => ({
+                    data: Array.from({ length: 3 }, (_, i) => ({
                         name: `${child.name}.${i + 1}`,
                         slug: `product-category-${child.slug}-${i + 1}`.replace('.', '-'),
                         description: `Subcategory ${child.name}.${i + 1}`,
