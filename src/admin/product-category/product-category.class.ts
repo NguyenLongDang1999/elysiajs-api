@@ -14,7 +14,7 @@ export class ProductCategoryClass {
             }
         })
 
-        const customLevelName = '|--- '.repeat(level)
+        const customLevelName = '¦-- '.repeat(level)
 
         let categoryNested: {
             id: string
