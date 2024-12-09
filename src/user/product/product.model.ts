@@ -2,8 +2,12 @@
 import { Elysia } from 'elysia'
 
 // ** Types Imports
-import { productReviewsType } from './product.type'
+import {
+    productReviewsSearchType,
+    productReviewsType
+} from './product.type'
 
 export const ProductModels = new Elysia().model({
-    productReviews: productReviewsType
+    productReviews: productReviewsType,
+    productReviewsSearch: productReviewsSearchType
 })

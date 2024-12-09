@@ -2,6 +2,7 @@
 import { Elysia } from 'elysia'
 
 // ** Prisma Imports
+import { Prisma } from '@prisma/client'
 import prismaClient from '@src/database/prisma'
 
 // ** Utils Imports
@@ -280,30 +281,54 @@ export const productReviews = new Elysia()
     )
 
 export const productReviewsPagination = new Elysia()
+    .use(ProductModels)
     .get(
-        '/product-reviews/:slug', async ({ params }) => {
+        '/product-reviews/:slug', async ({ params, query }) => {
             try {
-                return await prismaClient.productReviews.findMany({
-                    where: {
-                        product_id: params.slug,
-                        deleted_flg: false
-                    },
-                    select: {
-                        id: true,
-                        rating: true,
-                        content: true,
-                        created_at: true,
-                        users: {
-                            select: {
-                                id: true,
-                                name: true,
-                                image_uri: true
+                const take = query.pageSize || undefined
+                const skip = query.page || undefined
+
+                const search: Prisma.ProductReviewsWhereInput = {
+                    product_id: params.slug,
+                    deleted_flg: false
+                }
+
+                const [data, count] = await Promise.all([
+                    prismaClient.productReviews.findMany({
+                        take,
+                        skip,
+                        orderBy: {
+                            created_at: 'desc'
+                        },
+                        where: search,
+                        select: {
+                            id: true,
+                            rating: true,
+                            content: true,
+                            created_at: true,
+                            users: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    image_uri: true
+                                }
                             }
                         }
-                    }
-                })
+                    }),
+                    prismaClient.productReviews.count({
+                        where: search
+                    })
+                ])
+
+                return {
+                    data,
+                    aggregations: count
+                }
             } catch (error) {
                 handleDatabaseError(error)
             }
+        },
+        {
+            query: 'productReviewsSearch'
         }
     )
