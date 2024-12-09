@@ -64,6 +64,7 @@ export const productRetrieve = new Elysia()
                     meta_title: true,
                     meta_description: true,
                     total_rating: true,
+                    review_count: true,
                     productImages: {
                         orderBy: { index: 'asc' },
                         select: { image_uri: true }
@@ -275,5 +276,34 @@ export const productReviews = new Elysia()
         },
         {
             body: 'productReviews'
+        }
+    )
+
+export const productReviewsPagination = new Elysia()
+    .get(
+        '/product-reviews/:slug', async ({ params }) => {
+            try {
+                return await prismaClient.productReviews.findMany({
+                    where: {
+                        product_id: params.slug,
+                        deleted_flg: false
+                    },
+                    select: {
+                        id: true,
+                        rating: true,
+                        content: true,
+                        created_at: true,
+                        users: {
+                            select: {
+                                id: true,
+                                name: true,
+                                image_uri: true
+                            }
+                        }
+                    }
+                })
+            } catch (error) {
+                handleDatabaseError(error)
+            }
         }
     )
