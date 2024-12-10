@@ -5,10 +5,12 @@ import { Elysia } from 'elysia'
 import {
     productRetrieve,
     productReviews,
-    productReviewsPagination
+    productReviewsPagination,
+    productReviewsUsers
 } from './product.service'
 
 export const productController = new Elysia({ prefix: '/product' })
     .use(productRetrieve)
     .use(productReviews)
     .use(productReviewsPagination)
+    .use(productReviewsUsers)

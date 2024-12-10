@@ -332,3 +332,28 @@ export const productReviewsPagination = new Elysia()
             query: 'productReviewsSearch'
         }
     )
+
+export const productReviewsUsers = new Elysia()
+    .use(ProductModels)
+    .use(authUserPlugin)
+    .get(
+        '/product-reviews/users/:id', async ({ user, error, params }) => {
+            if (!user || !user.id) throw error('Not Found')
+
+            try {
+                return await prismaClient.productReviews.findFirst({
+                    where: {
+                        user_id: user.id,
+                        product_id: params.id
+                    },
+                    select: {
+                        id: true,
+                        rating: true,
+                        content: true
+                    }
+                })
+            } catch (error) {
+                handleDatabaseError(error)
+            }
+        }
+    )
