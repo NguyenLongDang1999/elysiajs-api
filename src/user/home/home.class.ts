@@ -168,7 +168,6 @@ export class HomeClass {
                 flashDealProducts: formattedProduct
             }
         } catch (error) {
-            console.log(error)
             handleDatabaseError(error)
         }
     }

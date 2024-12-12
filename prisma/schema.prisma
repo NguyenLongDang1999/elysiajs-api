@@ -459,6 +459,7 @@ model ProductReviews {
   product_id  String
   rating      Int      @db.SmallInt
   content     String
+  is_approved Boolean? @default(false)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
   deleted_flg Boolean  @default(false)

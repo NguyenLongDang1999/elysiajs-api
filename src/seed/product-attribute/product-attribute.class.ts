@@ -94,7 +94,6 @@ export class SeedProductAttributeClass {
                 totalCategoryAttributes: await prismaClient.productCategoryAttributes.count()
             }
         } catch (error) {
-            console.error('Error in productAttributeSeedCreate:', error)
             throw error
         }
     }

@@ -291,6 +291,7 @@ export const productReviewsPagination = new Elysia()
                 const search: Prisma.ProductReviewsWhereInput = {
                     product_id: params.slug,
                     deleted_flg: false
+                    // is_approved: true
                 }
 
                 const [data, count] = await Promise.all([
@@ -349,7 +350,8 @@ export const productReviewsUsers = new Elysia()
                     select: {
                         id: true,
                         rating: true,
-                        content: true
+                        content: true,
+                        is_approved: true
                     }
                 })
             } catch (error) {

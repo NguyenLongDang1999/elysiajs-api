@@ -360,8 +360,6 @@ export const authRefreshToken = new Elysia()
                 refresh_token_expire: users.refresh_token_expire
             }
 
-            console.log(response)
-
             if (!response || !response.id) throw error('Not Found')
 
             const accessTokenJWT = await jwtAccessToken.sign({ sub: response.id })

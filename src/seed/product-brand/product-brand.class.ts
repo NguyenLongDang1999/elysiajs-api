@@ -64,7 +64,6 @@ export class SeedProductBrandClass {
                 totalRelationships
             }
         } catch (error) {
-            console.error('Error in productBrandSeedCreate:', error)
             throw error
         }
     }
