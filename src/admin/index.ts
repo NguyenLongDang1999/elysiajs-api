@@ -12,6 +12,7 @@ import { productCollectionController } from './product-collection/product-collec
 import { productCouponController } from './product-coupon/product-coupon.controller'
 import { productFlashDealsController } from './product-flash-deals/product-flash-deals.controller'
 import { productInventoryController } from './product-inventory/product-inventory.controller'
+import { productReviewsController } from './product-reviews/product-reviews.controller'
 import { productController } from './product/product.controller'
 import { systemSettingsController } from './system-settings/system-settings.controller'
 
@@ -28,6 +29,7 @@ export const admin = new Elysia({ prefix: '/admin' })
     .use(productInventoryController)
     .use(productCouponController)
     .use(productController)
+    .use(productReviewsController)
     .use(fileManagerController)
     .use(systemSettingsController)
     .use(ordersController)
