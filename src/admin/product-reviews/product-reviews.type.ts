@@ -13,7 +13,7 @@ export const productReviewsSearchType = t.Object({
     user_id: t.Optional(t.String()),
     product_id: t.Optional(t.String()),
     rating: t.Optional(t.Number()),
-    is_approved: t.Optional(t.Boolean())
+    is_approved: t.Optional(t.String())
 })
 
 // ** Types
