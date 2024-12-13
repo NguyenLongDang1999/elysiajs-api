@@ -8,6 +8,10 @@ import {
 import { paginationType } from '@src/types/core.type'
 
 // ** Types Definition
+export const productReviewsType = t.Object({
+    is_approved: t.Boolean()
+})
+
 export const productReviewsSearchType = t.Object({
     ...paginationType,
     user_id: t.Optional(t.String()),

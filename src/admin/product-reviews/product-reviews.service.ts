@@ -77,3 +77,27 @@ export const productReviewsTableList = new Elysia().use(productReviewsModels).ge
         query: 'productReviewsSearch'
     }
 )
+
+export const productReviewsUpdate = new Elysia()
+    .use(productReviewsModels)
+    .patch(
+        '/:id',
+        async ({ body, params }) => {
+            try {
+                const productReviews = await prismaClient.productReviews.update({
+                    data: body,
+                    where: { id: params.id },
+                    select: {
+                        id: true
+                    }
+                })
+
+                return productReviews
+            } catch (error) {
+                handleDatabaseError(error)
+            }
+        },
+        {
+            body: 'productReviews'
+        }
+    )
