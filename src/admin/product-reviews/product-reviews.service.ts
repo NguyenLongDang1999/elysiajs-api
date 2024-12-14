@@ -84,15 +84,13 @@ export const productReviewsUpdate = new Elysia()
         '/:id',
         async ({ body, params }) => {
             try {
-                const productReviews = await prismaClient.productReviews.update({
+                return await prismaClient.productReviews.update({
                     data: body,
                     where: { id: params.id },
                     select: {
                         id: true
                     }
                 })
-
-                return productReviews
             } catch (error) {
                 handleDatabaseError(error)
             }
