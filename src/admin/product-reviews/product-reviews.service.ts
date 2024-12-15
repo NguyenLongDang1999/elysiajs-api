@@ -20,8 +20,16 @@ export const productReviewsTableList = new Elysia().use(productReviewsModels).ge
 
             const search: Prisma.ProductReviewsWhereInput = {
                 deleted_flg: false,
+                product_id: {
+                    equals: query.product_id || undefined
+                },
+                user_id: {
+                    equals: query.user_id || undefined
+                },
                 is_approved: {
-                    equals: Boolean(query.is_approved) || undefined
+                    equals: query.is_approved !== undefined && query.is_approved !== null
+                        ? query.is_approved
+                        : undefined
                 }
             }
 
