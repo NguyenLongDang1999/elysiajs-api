@@ -589,3 +589,39 @@ export const productDelete = new Elysia().use(productModels).delete(
         query: 'productDelete'
     }
 )
+
+export const productSearch = new Elysia().use(productModels).get(
+    '/search',
+    async ({ query }) => {
+        try {
+            return prismaClient.product.findMany({
+                where: {
+                    deleted_flg: false,
+                    OR: [
+                        {
+                            name: {
+                                contains: query.q || undefined,
+                                mode: 'insensitive'
+                            }
+                        },
+                        {
+                            sku: {
+                                contains: query.q || undefined,
+                                mode: 'insensitive'
+                            }
+                        }
+                    ]
+                },
+                select: {
+                    id: true,
+                    name: true
+                }
+            })
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    },
+    {
+        query: 'productSearchSelected'
+    }
+)

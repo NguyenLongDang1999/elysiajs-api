@@ -6,6 +6,7 @@ import { deleteType } from '@src/types/core.type'
 import {
     productImagesType,
     productRelationsType,
+    productSearchSelectedType,
     productSearchType,
     productSingleType,
     productUpdateGeneralVariantsType,
@@ -19,5 +20,6 @@ export const productModels = new Elysia().model({
     productImages: productImagesType,
     productSingle: productSingleType,
     productVariants: productVariantsType,
-    productUpdateGeneralVariants: productUpdateGeneralVariantsType
+    productUpdateGeneralVariants: productUpdateGeneralVariantsType,
+    productSearchSelected: productSearchSelectedType
 })

@@ -132,6 +132,10 @@ export const productImagesType = t.Object({
     product_images: t.Array(productImageType)
 })
 
+export const productSearchSelectedType = t.Object({
+    q: t.Optional(t.String())
+})
+
 // ** Types
 export type IProductSearchDTO = Static<typeof productSearchType>
 

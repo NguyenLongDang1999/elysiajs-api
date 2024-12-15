@@ -7,6 +7,7 @@ import {
     productCreateVariants,
     productDelete,
     productRetrieve,
+    productSearch,
     productTableList,
     productUpdateGeneralVariants,
     productUpdateImages,
@@ -24,3 +25,4 @@ export const productController = new Elysia({ prefix: '/product' })
     .use(productUpdateRelations)
     .use(productUpdateSingle)
     .use(productDelete)
+    .use(productSearch)
