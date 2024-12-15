@@ -78,6 +78,7 @@ export const ordersRetrieve = new Elysia().get('/:id', async ({ params }) => {
                 email: true,
                 phone: true,
                 note: true,
+                status: true,
                 shipping_address: true,
                 total_amount: true,
                 total_after_discount: true,
@@ -116,3 +117,22 @@ export const ordersRetrieve = new Elysia().get('/:id', async ({ params }) => {
         handleDatabaseError(error)
     }
 })
+
+export const ordersUpdateStatus = new Elysia()
+    .use(ordersModels)
+    .patch('/:id', async ({ body, params }) => {
+        try {
+            return await prismaClient.orders.update({
+                where: {
+                    id: params.id
+                },
+                data: {
+                    status: body.status
+                }
+            })
+        } catch (error) {
+            handleDatabaseError(error)
+        }
+    }, {
+        body: 'orderUpdateStatus'
+    })

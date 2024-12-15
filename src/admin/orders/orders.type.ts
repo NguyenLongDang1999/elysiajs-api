@@ -30,6 +30,11 @@ export const ordersSearchType = t.Object({
         .Encode((value) => value)
 })
 
+export const orderUpdateStatusType = t.Object({
+    id: t.Optional(t.String()),
+    status: t.Optional(t.Number())
+})
+
 // ** Types
 export type IOrdersDTO = Static<typeof ordersType>
 
