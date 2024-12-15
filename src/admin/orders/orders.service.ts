@@ -64,3 +64,55 @@ export const ordersTableList = new Elysia().use(ordersModels).get(
         query: 'ordersSearch'
     }
 )
+
+export const ordersRetrieve = new Elysia().get('/:id', async ({ params }) => {
+    try {
+        const orders = await prismaClient.orders.findFirst({
+            where: {
+                id: params.id
+            },
+            select: {
+                id: true,
+                code: true,
+                name: true,
+                email: true,
+                phone: true,
+                note: true,
+                shipping_address: true,
+                total_amount: true,
+                total_after_discount: true,
+                orderItem: {
+                    select: {
+                        id: true,
+                        price: true,
+                        quantity: true,
+                        productVariants: {
+                            select: {
+                                id: true,
+                                label: true,
+                                product: {
+                                    select: {
+                                        id: true,
+                                        slug: true,
+                                        name: true,
+                                        image_uri: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        return {
+            ...orders,
+            orderItem: orders?.orderItem.map((_order) => ({
+                ..._order,
+                ..._order.productVariants
+            }))
+        }
+    } catch (error) {
+        handleDatabaseError(error)
+    }
+})
