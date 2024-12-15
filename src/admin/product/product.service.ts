@@ -597,20 +597,22 @@ export const productSearch = new Elysia().use(productModels).get(
             return prismaClient.product.findMany({
                 where: {
                     deleted_flg: false,
-                    OR: [
-                        {
-                            name: {
-                                contains: query.q || undefined,
-                                mode: 'insensitive'
+                    ...query.q && {
+                        OR: [
+                            {
+                                name: {
+                                    contains: query.q || undefined,
+                                    mode: 'insensitive'
+                                }
+                            },
+                            {
+                                sku: {
+                                    contains: query.q || undefined,
+                                    mode: 'insensitive'
+                                }
                             }
-                        },
-                        {
-                            sku: {
-                                contains: query.q || undefined,
-                                mode: 'insensitive'
-                            }
-                        }
-                    ]
+                        ]
+                    }
                 },
                 select: {
                     id: true,
